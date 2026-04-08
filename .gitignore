@@ -6,6 +6,7 @@ shell_snapshots/
 vendor_imports/
 models_cache.json
 sessions/
+session_index.jsonl
 
 auth.json
 

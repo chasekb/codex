@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LOG_FILE="outputs/hook-file-logger.log"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+root="$(cd -- "$script_dir/../.." && pwd)"
+LOG_FILE="$root/outputs/hook-file-logger.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 
 payload="$(cat)"
@@ -23,6 +25,7 @@ pre = data.get("preToolUse") or {}
 tool_name = (
     pre.get("toolName")
     or data.get("toolName")
+    or data.get("tool_name")
     or (data.get("tool") or {}).get("name")
     or "unknown"
 )
@@ -33,6 +36,7 @@ tool_input = (
     or pre.get("parameters")
     or pre.get("arguments")
     or data.get("toolInput")
+    or data.get("tool_input")
     or data.get("parameters")
     or data.get("arguments")
     or {}

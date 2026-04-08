@@ -61,6 +61,19 @@ def nested(data, path, default=None):
     return cur
 
 
+def as_dict(value):
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+    return {}
+
+
 def load_json(path, default):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -260,16 +273,20 @@ def parse_skill_loaded_chars(output):
     return 0
 
 
-def usage_from_payload(payload, post):
+def usage_from_payload(payload, post, response):
     candidates = [
         post.get("usage") if isinstance(post, dict) else None,
         payload.get("usage") if isinstance(payload, dict) else None,
         nested(post, ["result", "usage"]) if isinstance(post, dict) else None,
         nested(payload, ["result", "usage"]) if isinstance(payload, dict) else None,
+        response.get("usage") if isinstance(response, dict) else None,
+        nested(response, ["result", "usage"]) if isinstance(response, dict) else None,
         post.get("tokenUsage") if isinstance(post, dict) else None,
         payload.get("tokenUsage") if isinstance(payload, dict) else None,
+        response.get("tokenUsage") if isinstance(response, dict) else None,
         nested(post, ["metrics", "usage"]) if isinstance(post, dict) else None,
         nested(payload, ["metrics", "usage"]) if isinstance(payload, dict) else None,
+        nested(response, ["metrics", "usage"]) if isinstance(response, dict) else None,
     ]
     for c in candidates:
         if isinstance(c, dict):
@@ -277,8 +294,8 @@ def usage_from_payload(payload, post):
     return {}
 
 
-def parse_usage_tokens(payload, post):
-    usage = usage_from_payload(payload, post)
+def parse_usage_tokens(payload, post, response):
+    usage = usage_from_payload(payload, post, response)
 
     input_tokens = to_int(
         first(
@@ -288,8 +305,15 @@ def parse_usage_tokens(payload, post):
             usage.get("prompt_tokens"),
             usage.get("input"),
             post.get("inputTokens") if isinstance(post, dict) else None,
+            post.get("input_tokens") if isinstance(post, dict) else None,
             payload.get("inputTokens") if isinstance(payload, dict) else None,
+            payload.get("input_tokens") if isinstance(payload, dict) else None,
             payload.get("promptTokens") if isinstance(payload, dict) else None,
+            payload.get("prompt_tokens") if isinstance(payload, dict) else None,
+            response.get("inputTokens") if isinstance(response, dict) else None,
+            response.get("input_tokens") if isinstance(response, dict) else None,
+            response.get("promptTokens") if isinstance(response, dict) else None,
+            response.get("prompt_tokens") if isinstance(response, dict) else None,
             0,
         )
     )
@@ -301,8 +325,15 @@ def parse_usage_tokens(payload, post):
             usage.get("completion_tokens"),
             usage.get("output"),
             post.get("outputTokens") if isinstance(post, dict) else None,
+            post.get("output_tokens") if isinstance(post, dict) else None,
             payload.get("outputTokens") if isinstance(payload, dict) else None,
+            payload.get("output_tokens") if isinstance(payload, dict) else None,
             payload.get("completionTokens") if isinstance(payload, dict) else None,
+            payload.get("completion_tokens") if isinstance(payload, dict) else None,
+            response.get("outputTokens") if isinstance(response, dict) else None,
+            response.get("output_tokens") if isinstance(response, dict) else None,
+            response.get("completionTokens") if isinstance(response, dict) else None,
+            response.get("completion_tokens") if isinstance(response, dict) else None,
             0,
         )
     )
@@ -312,7 +343,11 @@ def parse_usage_tokens(payload, post):
             usage.get("total_tokens"),
             usage.get("total"),
             post.get("totalTokens") if isinstance(post, dict) else None,
+            post.get("total_tokens") if isinstance(post, dict) else None,
             payload.get("totalTokens") if isinstance(payload, dict) else None,
+            payload.get("total_tokens") if isinstance(payload, dict) else None,
+            response.get("totalTokens") if isinstance(response, dict) else None,
+            response.get("total_tokens") if isinstance(response, dict) else None,
             input_tokens + output_tokens,
         ),
         input_tokens + output_tokens,
@@ -439,8 +474,23 @@ def main():
 
     elif hook_name == "PreToolUse":
         pre = payload.get("preToolUse") if isinstance(payload.get("preToolUse"), dict) else {}
-        tool_name = first(pre.get("toolName"), payload.get("toolName"), nested(payload, ["tool", "name"]), "unknown")
-        tool_input = first(pre.get("parameters"), pre.get("toolInput"), payload.get("parameters"), payload.get("toolInput"), {})
+        tool_name = first(
+            pre.get("toolName"),
+            pre.get("tool_name"),
+            payload.get("toolName"),
+            payload.get("tool_name"),
+            nested(payload, ["tool", "name"]),
+            "unknown",
+        )
+        tool_input = first(
+            pre.get("parameters"),
+            pre.get("toolInput"),
+            pre.get("tool_input"),
+            payload.get("parameters"),
+            payload.get("toolInput"),
+            payload.get("tool_input"),
+            {},
+        )
         add_tool(state, str(tool_name))
         add_files(state, extract_paths(tool_input))
         state["counters"]["pre_tool"] += 1
@@ -449,14 +499,50 @@ def main():
 
     elif hook_name == "PostToolUse":
         post = payload.get("postToolUse") if isinstance(payload.get("postToolUse"), dict) else {}
-        tool_name = str(first(post.get("toolName"), payload.get("toolName"), nested(payload, ["tool", "name"]), "unknown"))
+        response = as_dict(first(payload.get("tool_response"), payload.get("toolResponse"), post.get("result"), {}))
+        tool_name = str(
+            first(
+                post.get("toolName"),
+                post.get("tool_name"),
+                payload.get("toolName"),
+                payload.get("tool_name"),
+                nested(payload, ["tool", "name"]),
+                response.get("toolName") if isinstance(response, dict) else None,
+                response.get("tool_name") if isinstance(response, dict) else None,
+                "unknown",
+            )
+        )
         add_tool(state, tool_name)
         state["counters"]["post_tool"] += 1
 
-        input_tokens, output_tokens, total_tokens, usage = parse_usage_tokens(payload, post)
-        elapsed_ms = to_int(first(post.get("elapsedMs"), payload.get("elapsedMs"), 0))
-        retries = to_int(first(post.get("retries"), payload.get("retries"), 0))
-        fallbacks = to_int(first(post.get("fallbacks"), payload.get("fallbacks"), 0))
+        input_tokens, output_tokens, total_tokens, usage = parse_usage_tokens(payload, post, response)
+        elapsed_ms = to_int(
+            first(
+                post.get("elapsedMs"),
+                post.get("elapsed_ms"),
+                payload.get("elapsedMs"),
+                payload.get("elapsed_ms"),
+                response.get("elapsedMs") if isinstance(response, dict) else None,
+                response.get("elapsed_ms") if isinstance(response, dict) else None,
+                0,
+            )
+        )
+        retries = to_int(
+            first(
+                post.get("retries"),
+                payload.get("retries"),
+                response.get("retries") if isinstance(response, dict) else None,
+                0,
+            )
+        )
+        fallbacks = to_int(
+            first(
+                post.get("fallbacks"),
+                payload.get("fallbacks"),
+                response.get("fallbacks") if isinstance(response, dict) else None,
+                0,
+            )
+        )
 
         state["tokens"]["input"] += input_tokens
         state["tokens"]["output"] += output_tokens

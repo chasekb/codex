@@ -24,3 +24,8 @@ prefix_rule(
   justification = "Package publishing is high impact.",
   match = ["npm publish"],
 )
+prefix_rule(pattern=["tmux", "capture-pane", "-pt", "0:5", "-S", "-300"], decision="allow")
+prefix_rule(pattern=["tmux", "capture-pane", "-pt", "0:5", "-S", "-4000"], decision="allow")
+prefix_rule(pattern=["/bin/zsh", "-lc", "tmux capture-pane -pt 0:5 -S -4000; tmux show-buffer > outputs/tmux-pane-0-5.log; rg -n \"ETFdb|etfdb|fetch_etfdb|Fetched [0-9]+ symbols from ETFdb\" outputs/tmux-pane-0-5.log | tail -n 40"], decision="allow")
+prefix_rule(pattern=["podman", "ps"], decision="allow")
+prefix_rule(pattern=["gh", "auth", "status"], decision="allow")

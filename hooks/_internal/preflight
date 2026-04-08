@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+root="$(cd -- "$script_dir/../.." && pwd)"
+
+required_rel=(
   "MCP/defaults.yaml"
   "MCP/routing.yaml"
   "MCP/budgets/token-budgets.yaml"
@@ -10,7 +13,6 @@ required=(
   "MCP/memory/facts.jsonl"
   "MCP/memory/decisions.jsonl"
   "MCP/memory/index.yaml"
-  "$HOME/.agents/skills/registry.yaml"
   "workflows/index.yaml"
   "workflows/pipelines/request-standard.yaml"
   "workflows/pipelines/retro.yaml"
@@ -31,10 +33,19 @@ required=(
   "hooks/_internal/ensure-outputs-writable"
 )
 
-for f in "${required[@]}"; do
+for rel in "${required_rel[@]}"; do
+  f="$root/$rel"
   [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }
 done
 
-"hooks/_internal/ensure-outputs-writable" >/dev/null
+required_abs=(
+  "$HOME/.agents/skills/registry.yaml"
+)
+
+for f in "${required_abs[@]}"; do
+  [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }
+done
+
+"$script_dir/ensure-outputs-writable" >/dev/null
 
 echo "preflight:ok"

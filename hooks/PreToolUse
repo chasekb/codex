@@ -9,7 +9,9 @@ mkdir -p "$(dirname "$error_log")"
 touch "$error_log" "$compat_error_log"
 "$script_dir/_internal/event-logger" "PreToolUse" <<<"$payload" 2>>"$error_log" || true
 
-if ! python3 "$script_dir/_internal/hook-pipeline" "PreToolUse" <<<"$payload" >/dev/null 2>>"$error_log"; then
+if python3 "$script_dir/_internal/hook-pipeline" "PreToolUse" <<<"$payload" >/dev/null 2>>"$error_log"; then
+  :
+else
   rc=$?
   printf '%s hook=PreToolUse stage=pipeline rc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$rc" | tee -a "$error_log" "$compat_error_log" >/dev/null
 fi
