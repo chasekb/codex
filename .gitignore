@@ -8,3 +8,5 @@ models_cache.json
 sessions/
 
 auth.json
+
+MCP/memory/
