@@ -4,10 +4,34 @@ selection:
   max_skill_chars: 700
   metadata_only_default: true
 skills:
+  - id: global-runtime
+    file: global-runtime/SKILL.md
+    tags: [global, runtime, routing]
+    priority: 1
+  - id: tool-minimization
+    file: tool-minimization/SKILL.md
+    tags: [routing, tools, token-efficiency]
+    priority: 1
   - id: plan-verify-execute
     file: plan-verify-execute/SKILL.md
     tags: [planning, implementation, verification]
     priority: 1
+  - id: eval-driven-improvement
+    file: eval-driven-improvement/SKILL.md
+    tags: [evals, quality, regression]
+    priority: 2
+  - id: context-compaction
+    file: context-compaction/SKILL.md
+    tags: [context, memory, token-efficiency]
+    priority: 1
+  - id: global-workflow
+    file: global-workflow/SKILL.md
+    tags: [workflow, planning, routing]
+    priority: 2
+  - id: global-output
+    file: global-output/SKILL.md
+    tags: [output, verbosity, formatting]
+    priority: 2
   - id: github-actions-remote-build
     file: github-actions-remote-build/SKILL.md
     tags: [github, actions, ci, build, remote]

@@ -8,6 +8,7 @@ description: Use when a repository has a compose test file and you should run te
 ## When to use
 - The repository contains a dedicated compose file for tests or integration checks.
 - The repo uses `podman-compose` for containerized test execution.
+- The user wants the test stack run in containers instead of locally.
 
 ## Inputs
 - Repo path or checkout.
@@ -28,7 +29,11 @@ description: Use when a repository has a compose test file and you should run te
 - No matching compose file exists or `podman-compose` is unavailable.
 
 ## Instructions
-1. Find the test-specific compose file.
-2. Validate it with `podman-compose config`.
-3. Run the stack with `podman-compose up --build --abort-on-container-exit`.
-4. Inspect logs on failure.
+1. Find `compose.test.yaml`, `compose.test.yml`, `docker-compose.test.yaml`, `docker-compose.test.yml`, `compose-test.yaml`, `compose-test.yml`, or the repo's equivalent test compose file.
+2. Prefer test-specific compose files over generic `compose.yaml` or `docker-compose.yaml` files.
+3. Validate the file first with `podman-compose -f FILE config`.
+4. Run the test stack with `podman-compose -f FILE up --build --abort-on-container-exit`.
+5. If a dedicated test service is obvious, add `--exit-code-from SERVICE`.
+6. On failure, inspect logs with `podman-compose -f FILE logs --no-color`.
+7. Tear down with `podman-compose -f FILE down -v`.
+8. Fall back to non-container tests only if no test compose file exists or `podman-compose` is unavailable.

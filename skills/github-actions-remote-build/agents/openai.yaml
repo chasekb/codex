@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Actions Remote Build"
+  short_description: "Run builds on GitHub Actions"
+  default_prompt: "Use this skill when a repository has a GitHub Actions workflow for build, CI, test, package, or release. Inspect .github/workflows, prefer remote execution over local builds, and report the workflow run and result."

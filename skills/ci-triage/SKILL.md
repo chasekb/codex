@@ -8,6 +8,7 @@ description: Use when a GitHub Actions workflow failed and you need to inspect l
 ## When to use
 - A GitHub Actions workflow failed.
 - You need root-cause evidence before changing code.
+- The repo has workflow/job logs or `gh` access.
 
 ## Inputs
 - Repository, branch, PR, or run ID.
@@ -25,12 +26,13 @@ description: Use when a GitHub Actions workflow failed and you need to inspect l
 - `gh`
 - GitHub Actions workflow files under `.github/workflows/`
 
-## Stop conditions
-- The likely failure source is identified.
-- No matching workflow or logs are available.
-
 ## Instructions
 1. Inspect the failing workflow, run, and job logs first.
 2. Prefer the smallest failing surface over broad retries.
 3. Separate infrastructure flake from code regression.
-4. Report only the evidence-backed cause and the next concrete action.
+4. If the fix is obvious and small, switch back to implementation workflow after triage.
+5. Report only the evidence-backed cause and the next concrete action.
+
+## Stop conditions
+- The likely failure source is identified.
+- No matching workflow or logs are available.

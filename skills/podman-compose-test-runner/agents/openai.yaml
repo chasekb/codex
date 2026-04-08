@@ -1,0 +1,4 @@
+interface:
+  display_name: "Podman Compose Test Runner"
+  short_description: "Run tests with Podman Compose"
+  default_prompt: "Use this skill when a repository contains a compose test file such as compose.test.yaml, docker-compose.test.yml, or compose-test.yaml. Prefer podman-compose for test execution, validate the file first, and collect logs and teardown cleanly."

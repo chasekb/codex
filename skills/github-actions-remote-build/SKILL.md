@@ -30,6 +30,8 @@ description: Use when a repository has a GitHub Actions workflow for build, CI, 
 
 ## Instructions
 1. Inspect `.github/workflows/` for workflows named or triggered as build, ci, test, package, or release.
-2. Run the matching remote workflow first.
-3. Inspect run and job logs with `gh`.
-4. Do not duplicate the build locally unless remote execution is unavailable.
+2. If a matching workflow exists, run it remotely first. If multiple matching workflows exist, run all relevant ones that cover the requested build/test surface.
+3. Use `gh workflow list`, `gh workflow view`, `gh workflow run`, `gh run list`, `gh run watch`, and `gh run view` to trigger and inspect runs.
+4. Prefer the repository's normal trigger if the workflow is not manually dispatchable.
+5. Do not duplicate the build locally unless remote execution is unavailable or the repo lacks a matching workflow.
+6. Report the workflow name, run URL or ID, and final result.

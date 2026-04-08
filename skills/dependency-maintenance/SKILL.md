@@ -8,6 +8,7 @@ description: Use when inspecting, planning, or executing dependency updates, aud
 ## When to use
 - A repo needs package/version inspection or dependency updates.
 - You are checking stale, vulnerable, or incompatible dependencies.
+- The task should start read-only and remain minimal.
 
 ## Inputs
 - Repository and package ecosystem.
@@ -25,12 +26,13 @@ description: Use when inspecting, planning, or executing dependency updates, aud
 - Package-manager inspection tools
 - Repo manifests / lockfiles
 
+## Instructions
+1. Inspect current versions and lockfiles before proposing updates.
+2. Prefer smallest safe upgrade surface.
+3. Group related updates only when validation stays tractable.
+4. Record compatibility or migration risks explicitly.
+5. Validate after changes and keep the result concise.
+
 ## Stop conditions
 - The update plan is validated or the repo is already current.
 - Required manifests or lockfiles are missing.
-
-## Instructions
-1. Inspect current versions and lockfiles before proposing updates.
-2. Prefer the smallest safe upgrade surface.
-3. Record compatibility or migration risks explicitly.
-4. Validate after changes and keep the result concise.

@@ -35,6 +35,17 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/PreCompact",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [
@@ -46,12 +57,34 @@
         ]
       }
     ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/Notification",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/UserPromptSubmit",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "TaskCancel": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/TaskCancel",
             "timeout": 30
           }
         ]

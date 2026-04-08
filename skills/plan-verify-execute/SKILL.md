@@ -10,25 +10,24 @@ description: Run deterministic plan -> change -> verify loop for reliability.
 - bug fixes
 
 ## Inputs
-- objective
-- constraints
-- impacted_files
+- `objective`
+- `constraints`
+- `impacted_files`
 
 ## Outputs
-- phased_plan
-- patch_summary
-- verification_evidence
+- `phased_plan`
+- `patch_summary`
+- `verification_evidence`
 
 ## Tool dependencies
-- `hooks/_internal/implement-small`
-- `hooks/_internal/debug-rca`
+- `workflows/pipelines/implement-small.yaml`
+- `workflows/pipelines/debug-rca.yaml`
 
 ## Stop conditions
 - all checks pass and output contract satisfied
 - no_progress_after_retry
 
 ## Instructions
-1. Keep changes minimal and scoped.
-2. Run the smallest relevant verification gate first.
-3. Prefer deterministic edits over exploratory changes.
-4. Report only contract-required fields.
+- keep changes minimal and scoped
+- run smallest relevant verification gate first
+- report only contract-required fields
