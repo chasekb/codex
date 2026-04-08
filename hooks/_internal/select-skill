@@ -14,8 +14,10 @@ if awk -v c="$confidence" -v t="$low_conf_threshold" 'BEGIN { exit !(c < t) }'; 
   fallback="true"
 else
   case "$task_class" in
+    request|change|general) skill="plan-verify-execute" ;;
     implement) skill="plan-verify-execute" ;;
     debug) skill="plan-verify-execute" ;;
+    retro|retrospective) skill="global-workflow" ;;
     verify) skill="eval-driven-improvement" ;;
     plan|docs|research) skill="tool-minimization" ;;
     *) skill="tool-minimization" ;;
