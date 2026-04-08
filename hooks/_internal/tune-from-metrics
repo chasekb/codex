@@ -43,9 +43,11 @@ def read_policy(path):
 def workflow_to_budget_profile(wf):
     mapping = {
         "plan-only": "plan",
+        "request-standard": "implement",
         "implement-small": "implement",
         "debug-rca": "debug_rca",
         "verify": "verify",
+        "retro": "plan",
     }
     return mapping.get(wf, wf)
 
