@@ -3,6 +3,9 @@ workflows:
   - id: plan-only
     trigger: planning_request
     pipeline: pipelines/plan-only.yaml
+  - id: request-standard
+    trigger: general_change_request
+    pipeline: pipelines/request-standard.yaml
   - id: implement-small
     trigger: scoped_change_request
     pipeline: pipelines/implement-small.yaml
@@ -12,3 +15,6 @@ workflows:
   - id: verify
     trigger: verification_only_request
     pipeline: pipelines/verify.yaml
+  - id: retro
+    trigger: retrospective_request
+    pipeline: pipelines/retro.yaml
