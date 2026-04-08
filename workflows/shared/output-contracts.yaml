@@ -11,6 +11,16 @@ contracts:
       - phased_steps
       - validation
     optional: []
+  request_standard:
+    required:
+      - objective
+      - impact_surface
+      - phased_steps
+      - validation
+      - files_changed
+      - checks_run
+      - status
+    optional: []
   implement:
     required:
       - files_changed
@@ -31,4 +41,9 @@ contracts:
       - checks
       - outcomes
       - conclusion
+    optional: []
+  retro:
+    required:
+      - doctrine_update_summary
+      - session_learnings
     optional: []
