@@ -18,18 +18,18 @@ hooks/_internal/preflight >/dev/null && pass preflight || fail preflight
 skill_out="$(hooks/_internal/select-skill implement 0.9 "build fix")"
 echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_skill_implement || fail select_skill_implement
 
-hooks/_internal/load-skill plan-verify-execute metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
-hooks/_internal/validate-skill "$HOME/.agents/skills/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
-hooks/_internal/load-skill github-actions-remote-build metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote
-hooks/_internal/load-skill podman-compose-test-runner metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_podman_compose || fail load_skill_podman_compose
-hooks/_internal/load-skill ci-triage metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_ci_triage || fail load_skill_ci_triage
-hooks/_internal/load-skill release-publish metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_release_publish || fail load_skill_release_publish
-hooks/_internal/load-skill dependency-maintenance metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_dependency_maintenance || fail load_skill_dependency_maintenance
-hooks/_internal/validate-skill "$HOME/.agents/skills/github-actions-remote-build/SKILL.md" >/dev/null && pass validate_skill_github_remote || fail validate_skill_github_remote
-hooks/_internal/validate-skill "$HOME/.agents/skills/podman-compose-test-runner/SKILL.md" >/dev/null && pass validate_skill_podman_compose || fail validate_skill_podman_compose
-hooks/_internal/validate-skill "$HOME/.agents/skills/ci-triage/SKILL.md" >/dev/null && pass validate_skill_ci_triage || fail validate_skill_ci_triage
-hooks/_internal/validate-skill "$HOME/.agents/skills/release-publish/SKILL.md" >/dev/null && pass validate_skill_release_publish || fail validate_skill_release_publish
-hooks/_internal/validate-skill "$HOME/.agents/skills/dependency-maintenance/SKILL.md" >/dev/null && pass validate_skill_dependency_maintenance || fail validate_skill_dependency_maintenance
+hooks/_internal/load-skill plan-verify-execute metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
+hooks/_internal/validate-skill "$ROOT/skills/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
+hooks/_internal/load-skill github-actions-remote-build metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote
+hooks/_internal/load-skill podman-compose-test-runner metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_podman_compose || fail load_skill_podman_compose
+hooks/_internal/load-skill ci-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_ci_triage || fail load_skill_ci_triage
+hooks/_internal/load-skill release-publish metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_release_publish || fail load_skill_release_publish
+hooks/_internal/load-skill dependency-maintenance metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_dependency_maintenance || fail load_skill_dependency_maintenance
+hooks/_internal/validate-skill "$ROOT/skills/github-actions-remote-build/SKILL.md" >/dev/null && pass validate_skill_github_remote || fail validate_skill_github_remote
+hooks/_internal/validate-skill "$ROOT/skills/podman-compose-test-runner/SKILL.md" >/dev/null && pass validate_skill_podman_compose || fail validate_skill_podman_compose
+hooks/_internal/validate-skill "$ROOT/skills/ci-triage/SKILL.md" >/dev/null && pass validate_skill_ci_triage || fail validate_skill_ci_triage
+hooks/_internal/validate-skill "$ROOT/skills/release-publish/SKILL.md" >/dev/null && pass validate_skill_release_publish || fail validate_skill_release_publish
+hooks/_internal/validate-skill "$ROOT/skills/dependency-maintenance/SKILL.md" >/dev/null && pass validate_skill_dependency_maintenance || fail validate_skill_dependency_maintenance
 hooks/_internal/rule-regression >/dev/null && pass rule_regression || fail rule_regression
 
 github_remote_out="$(hooks/_internal/select-skill request 0.9 "github actions build workflow")"

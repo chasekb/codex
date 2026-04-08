@@ -1,0 +1,30 @@
+version: 1
+selection:
+  low_confidence_skill: context-compaction
+  max_skill_chars: 700
+  metadata_only_default: true
+skills:
+  - id: plan-verify-execute
+    file: plan-verify-execute/SKILL.md
+    tags: [planning, implementation, verification]
+    priority: 1
+  - id: github-actions-remote-build
+    file: github-actions-remote-build/SKILL.md
+    tags: [github, actions, ci, build, remote]
+    priority: 2
+  - id: podman-compose-test-runner
+    file: podman-compose-test-runner/SKILL.md
+    tags: [podman, compose, testing, containers]
+    priority: 2
+  - id: ci-triage
+    file: ci-triage/SKILL.md
+    tags: [github, actions, ci, triage, logs]
+    priority: 2
+  - id: release-publish
+    file: release-publish/SKILL.md
+    tags: [release, publish, versioning, packaging]
+    priority: 2
+  - id: dependency-maintenance
+    file: dependency-maintenance/SKILL.md
+    tags: [dependencies, maintenance, packages, audit]
+    priority: 2

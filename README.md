@@ -10,6 +10,7 @@ This repository is a global Codex runtime with:
 ## Directory Map
 - `hooks/`: Hook entrypoints executed by Codex hook events
 - `hooks/_internal/`: Internal automation scripts used by `hook-pipeline`
+- `skills/`: Repo-local skill registry and skill definitions preferred by the runtime
 - `workflows/`: Workflow registry, pipelines, contracts, guards, and shared step primitives
 - `MCP/`: Routing, prompt atoms, memory storage, budgets, and registry config
 - `rules/`: Policy rules (concise, routing discipline, token budgeting, etc.)
@@ -44,7 +45,7 @@ Main behavior by event:
 - `TaskStart`/`TaskResume`:
   - Select workflow (`select-workflow`)
   - Select skill (`select-skill`)
-  - Load skill metadata (`load-skill`)
+  - Load skill metadata from repo-local `skills/registry.yaml` first, then `~/.agents/skills/registry.yaml` as fallback
   - Load memory context (`load-memory`)
   - Write routing decision memory (`write-memory`)
 - `PreToolUse`:
@@ -68,6 +69,7 @@ Main behavior by event:
 - `file-logger`: file-tool path capture log (`outputs/hook-file-logger.log`)
 - `select-workflow`, `select-skill`: task routing/classification helpers
 - `load-skill`, `validate-skill`: skill metadata load and schema validation
+  - skill registry defaults to repo-local `skills/registry.yaml`
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
 - `validate-output-contract`: required-key contract checks for workflow outputs
 - `postrun-metrics`: appends normalized run metrics row
@@ -176,6 +178,12 @@ Run preflight only:
 
 ```bash
 hooks/_internal/preflight
+```
+
+Repo-local skill registry:
+
+```bash
+skills/registry.yaml
 ```
 
 ## Git/Repo Hygiene

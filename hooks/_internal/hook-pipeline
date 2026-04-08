@@ -11,6 +11,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")
+SKILLS_REGISTRY = os.environ.get("CODEX_SKILLS_REGISTRY") or os.path.join(ROOT, "skills", "registry.yaml")
 
 
 def now_iso() -> str:
@@ -161,6 +162,15 @@ def resolve_output_contract(workflow: str) -> str:
 
     normalized = workflow.replace("-", "_").strip()
     return normalized or workflow
+
+
+def resolve_skills_registry():
+    if os.path.isfile(SKILLS_REGISTRY):
+        return SKILLS_REGISTRY
+    fallback = os.path.expanduser("~/.agents/skills/registry.yaml")
+    if os.path.isfile(fallback):
+        return fallback
+    return SKILLS_REGISTRY
 
 
 def load_state():
@@ -693,7 +703,7 @@ def main():
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
         skill_fallback = any("fallback=true" in l for l in skill_lines)
 
-        _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", os.path.expanduser("~/.agents/skills/registry.yaml")])
+        _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
 
         _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])

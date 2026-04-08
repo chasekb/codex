@@ -39,7 +39,7 @@ for rel in "${required_rel[@]}"; do
 done
 
 required_abs=(
-  "$HOME/.agents/skills/registry.yaml"
+  "$root/skills/registry.yaml"
 )
 
 for f in "${required_abs[@]}"; do
