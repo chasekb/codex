@@ -26,12 +26,15 @@ tool_name = (
     or (data.get("tool") or {}).get("name")
     or "unknown"
 )
+tool_name_norm = str(tool_name).strip().lower()
 
 tool_input = (
     pre.get("toolInput")
     or pre.get("parameters")
+    or pre.get("arguments")
     or data.get("toolInput")
     or data.get("parameters")
+    or data.get("arguments")
     or {}
 )
 
@@ -55,7 +58,7 @@ if isinstance(tool_input, dict):
     if isinstance(tool_input.get("files"), list):
         paths.extend([p for p in tool_input["files"] if isinstance(p, str) and p])
 
-if tool_name == "apply_patch" and not paths:
+if tool_name_norm in {"apply_patch", "applypatch", "patch"} and not paths:
     patch_text = ""
     if isinstance(tool_input, dict):
         for key in ("input", "content", "diff", "patch"):
@@ -67,7 +70,14 @@ if tool_name == "apply_patch" and not paths:
         import re
         paths.extend(re.findall(r"\*\*\* (?:Add|Update|Delete) File: ([^\n]+)", patch_text))
 
-if tool_name in {"read_file", "write_to_file", "replace_in_file", "apply_patch"}:
+file_tools = {
+    "read_file", "read", "readfile",
+    "write_to_file", "write", "writefile",
+    "replace_in_file", "replace", "replacefile",
+    "apply_patch", "applypatch", "patch", "edit", "update_file",
+}
+
+if tool_name_norm in file_tools:
     ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps({

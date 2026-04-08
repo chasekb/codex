@@ -1,6 +1,10 @@
 outputs/
 .tmp/
+tmp/
+shell_snapshots/
 *.sqlite*
 vendor_imports/
 models_cache.json
 sessions/
+
+auth.json

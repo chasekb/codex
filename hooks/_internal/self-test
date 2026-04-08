@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
+cd "$ROOT"
+
+tmpdir="$(mktemp -d /tmp/hooks-internal-self-test.XXXXXX)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+pass() { printf 'PASS %s\n' "$1"; }
+fail() { printf 'FAIL %s\n' "$1"; exit 1; }
+
+hooks/_internal/preflight >/dev/null && pass preflight || fail preflight
+
+[[ "$(hooks/_internal/select-workflow debug 0.9)" == "debug-rca" ]] && pass select_workflow_debug || fail select_workflow_debug
+[[ "$(hooks/_internal/select-workflow implement 0.2)" == "plan-only" ]] && pass select_workflow_low_conf || fail select_workflow_low_conf
+
+skill_out="$(hooks/_internal/select-skill implement 0.9 "build fix")"
+echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_skill_implement || fail select_skill_implement
+
+hooks/_internal/load-skill plan-verify-execute metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
+hooks/_internal/validate-skill "$HOME/.agents/skills/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
+
+mem="$tmpdir/memory"
+mkdir -p "$mem"
+cat > "$mem/session.json" <<'JSON'
+{"version":1,"max_bytes":2048,"task":{"objective":"test objective","constraints":[],"active_files":[]},"updated_at":""}
+JSON
+: > "$mem/facts.jsonl"
+: > "$mem/decisions.jsonl"
+
+wm="$(hooks/_internal/write-memory fact session testtag "remember this fact" self-test 0.9 30 "$mem")"
+echo "$wm" | rg -q 'memory:metrics writes=1 dedups=0' && pass write_memory || fail write_memory
+
+lm="$(hooks/_internal/load-memory general "remember fact" 700 6 "$mem")"
+echo "$lm" | rg -q 'memory:metrics loaded=' && pass load_memory || fail load_memory
+
+cm="$(hooks/_internal/compact-memory "$mem")"
+echo "$cm" | rg -q 'memory:compact_ok' && pass compact_memory || fail compact_memory
+
+ctx="$tmpdir/context.txt"
+printf 'alpha\nbeta target\ngamma\ndelta target\n' > "$ctx"
+trunc="$(hooks/_internal/truncate-context "$ctx" 3 target)"
+[[ -n "$trunc" ]] && pass truncate_context || fail truncate_context
+
+contracts="$tmpdir/contracts.yaml"
+cat > "$contracts" <<'YAML'
+workflows:
+  debug-rca:
+    required:
+      - findings
+      - root_cause
+YAML
+out="$tmpdir/out.txt"
+printf 'findings: yes\nroot_cause: yes\n' > "$out"
+hooks/_internal/validate-output-contract debug-rca "$out" "$contracts" >/dev/null && pass validate_output_contract || fail validate_output_contract
+
+hooks/_internal/enforce-budget 10 20 30 >/dev/null && pass enforce_budget_ok || fail enforce_budget_ok
+set +e
+hooks/_internal/enforce-budget 40 20 30 >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
+
+hooks/_internal/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+
+base="$tmpdir/baseline.csv"
+hooks/_internal/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
+hooks/_internal/regression-guard debug-rca 105 10 "$base" >/dev/null && pass regression_ok || fail regression_ok
+set +e
+hooks/_internal/regression-guard debug-rca 200 10 "$base" >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass regression_fail || fail regression_fail
+
+metrics="$tmpdir/token-metrics.csv"
+cat > "$metrics" <<'CSV'
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+CSV
+policy="$tmpdir/tuning-policy.yaml"
+cat > "$policy" <<'YAML'
+mode: observe
+min_samples_per_workflow: 5
+max_budget_shift_pct: 10
+max_contract_invalid_rate: 0.02
+min_pass_rate: 0.95
+max_retry_rate: 0.20
+max_fallback_rate: 0.20
+YAML
+budgets="$tmpdir/token-budgets.yaml"
+cat > "$budgets" <<'YAML'
+budgets:
+  debug_rca:
+    input_soft: 1000
+    output_soft: 1000
+    memory_read_soft: 500
+    skill_read_soft: 700
+YAML
+proposals="$tmpdir/proposals.json"
+hooks/_internal/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
+
+canary="$tmpdir/canary-token-budgets.yaml"
+report="$tmpdir/canary-report.json"
+hooks/_internal/apply-tuning-canary "$proposals" "$policy" "$budgets" "$canary" "$report" >/dev/null && pass apply_tuning_canary || fail apply_tuning_canary
+
+target="$tmpdir/target-budgets.yaml"
+cp "$budgets" "$target"
+hooks/_internal/promote-tuning "$report" "$canary" "$target" "$tmpdir/history.csv" >/dev/null && pass promote_tuning || fail promote_tuning
+hooks/_internal/rollback-tuning "$target" "$target.bak" manual "$tmpdir/history.csv" >/dev/null && pass rollback_tuning || fail rollback_tuning
+
+echo 'ALL_INTERNAL_TESTS_PASS'

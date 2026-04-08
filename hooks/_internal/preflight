@@ -24,6 +24,7 @@ required=(
   "hooks/_internal/promote-tuning"
   "hooks/_internal/rollback-tuning"
   "hooks/_internal/file-logger"
+  "hooks/_internal/event-logger"
 )
 
 for f in "${required[@]}"; do

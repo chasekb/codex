@@ -3,5 +3,15 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 payload="$(cat)"
-python3 "$script_dir/_internal/hook-pipeline" "TaskCancel" <<<"$payload" >/dev/null 2>&1 || true
-echo '{}'
+error_log="$script_dir/../outputs/hook-errors.log"
+compat_error_log="$script_dir/../outputs/hook-file-error.log"
+mkdir -p "$(dirname "$error_log")"
+touch "$error_log" "$compat_error_log"
+"$script_dir/_internal/event-logger" "TaskCancel" <<<"$payload" 2>>"$error_log" || true
+
+if ! python3 "$script_dir/_internal/hook-pipeline" "TaskCancel" <<<"$payload" >/dev/null 2>>"$error_log"; then
+  rc=$?
+  printf '%s hook=TaskCancel stage=pipeline rc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$rc" | tee -a "$error_log" "$compat_error_log" >/dev/null
+fi
+
+printf '{}\n'
