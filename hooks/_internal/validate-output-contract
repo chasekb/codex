@@ -1,42 +1,166 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env python3
+from __future__ import annotations
 
-workflow="${1:-}"
-output_file="${2:-}"
-contracts_file="${3:-workflows/shared/output-contracts.yaml}"
+import sys
+from pathlib import Path
 
-[[ -n "$workflow" ]] || { echo "contract:error missing_workflow"; exit 1; }
-[[ -f "$output_file" ]] || { echo "contract:error missing_output_file"; exit 1; }
-[[ -f "$contracts_file" ]] || { echo "contract:error missing_contracts_file"; exit 1; }
+import yaml
 
-required_keys="$({
-  awk -v wf="$workflow" '
-    BEGIN { in_wf=0; in_req=0 }
-    $0 ~ "^  " wf ":" { in_wf=1; next }
-    in_wf && $0 ~ "^    required:" { in_req=1; next }
-    in_wf && in_req && $0 ~ "^      - " {
-      gsub(/^      - /, "", $0)
-      print $0
-      next
-    }
-    in_wf && in_req && $0 ~ "^    " && $0 !~ "^      - " { exit }
-    in_wf && $0 ~ "^  [a-zA-Z0-9_]+:" && $0 !~ "^  " wf ":" { exit }
-  ' "$contracts_file"
-} || true)"
 
-[[ -n "$required_keys" ]] || { echo "contract:error unknown_workflow=$workflow"; exit 1; }
+def load_contracts(contracts_file: Path) -> dict:
+    data = yaml.safe_load(contracts_file.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("contracts file must parse to a mapping")
+    return data
 
-missing=0
-while IFS= read -r key; do
-  [[ -n "$key" ]] || continue
-  if ! grep -Eq "(^|[[:space:]-])${key}:[[:space:]]*|\"${key}\"[[:space:]]*:" "$output_file"; then
-    echo "contract:missing workflow=$workflow key=$key"
-    missing=1
-  fi
-done <<< "$required_keys"
 
-if (( missing == 1 )); then
-  exit 1
-fi
+def resolve_contract(data: dict, workflow: str) -> tuple[str, list[str]]:
+    contracts = data.get("contracts")
+    if not isinstance(contracts, dict):
+        raise ValueError("contracts file missing contracts mapping")
 
-echo "contract:ok workflow=$workflow"
+    candidates = [workflow]
+    normalized = workflow.replace("-", "_").strip()
+    if normalized and normalized not in candidates:
+        candidates.append(normalized)
+
+    for candidate in candidates:
+        contract = contracts.get(candidate)
+        if isinstance(contract, dict):
+            required = contract.get("required")
+            if isinstance(required, list):
+                keys = [str(item).strip() for item in required if str(item).strip()]
+                if keys:
+                    return candidate, keys
+
+    raise KeyError(workflow)
+
+
+def value_is_present(value) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, dict, tuple, set)):
+        return len(value) > 0
+    return True
+
+
+def collect_yaml_keys(node, present: set[str], required: set[str]) -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(key, str) and key in required and value_is_present(value):
+                present.add(key)
+            collect_yaml_keys(value, present, required)
+    elif isinstance(node, list):
+        for item in node:
+            collect_yaml_keys(item, present, required)
+
+
+def scan_text_output(output_text: str, required: set[str]) -> set[str]:
+    present: set[str] = set()
+    lines = output_text.splitlines()
+    for idx, raw_line in enumerate(lines):
+        line = raw_line.rstrip()
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(line) - len(stripped)
+
+        # YAML-style mapping or bullet item.
+        for prefix in ("- ", "* ", "+ "):
+            if stripped.startswith(prefix):
+                item = stripped[len(prefix):].lstrip()
+                if item.startswith("[") and "]" in item:
+                    item = item.split("]", 1)[1].lstrip()
+                if ":" in item:
+                    key, value = item.split(":", 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if key in required and (value or any(
+                        (len(next_line) - len(next_line.lstrip()) > indent)
+                        and next_line.lstrip()
+                        and not next_line.lstrip().startswith(("#", "|"))
+                        for next_line in lines[idx + 1 : idx + 4]
+                    )):
+                        present.add(key)
+                break
+        else:
+            # Table row.
+            if stripped.startswith("|") and stripped.endswith("|"):
+                cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+                if len(cells) >= 2:
+                    key = cells[0]
+                    value = cells[1]
+                    if key in required and value:
+                        present.add(key)
+                continue
+
+            # Plain mapping line.
+            if ":" in stripped:
+                key, value = stripped.split(":", 1)
+                key = key.strip()
+                value = value.strip()
+                if key in required and value:
+                    present.add(key)
+
+    return present
+
+
+def main() -> int:
+    workflow = sys.argv[1] if len(sys.argv) > 1 else ""
+    output_file = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("")
+    contracts_file = Path(sys.argv[3]) if len(sys.argv) > 3 else Path("workflows/shared/output-contracts.yaml")
+
+    if not workflow:
+        print("contract:error missing_workflow")
+        return 1
+    if not output_file.is_file():
+        print("contract:error missing_output_file")
+        return 1
+    if not contracts_file.is_file():
+        print("contract:error missing_contracts_file")
+        return 1
+
+    try:
+        contract_data = load_contracts(contracts_file)
+        contract_name, required_keys = resolve_contract(contract_data, workflow)
+    except KeyError:
+        print(f"contract:error unknown_workflow={workflow}")
+        return 1
+    except Exception as exc:
+        print(f"contract:error invalid_contract_file detail={exc}")
+        return 1
+
+    output_text = output_file.read_text(encoding="utf-8")
+    required_set = set(required_keys)
+    present: set[str] = set()
+
+    parsed_output = None
+    try:
+        parsed_output = yaml.safe_load(output_text)
+    except Exception:
+        parsed_output = None
+
+    if isinstance(parsed_output, (dict, list)):
+        collect_yaml_keys(parsed_output, present, required_set)
+
+    if not present:
+        present = scan_text_output(output_text, required_set)
+
+    missing = False
+    for key in required_keys:
+        if key not in present:
+            print(f"contract:missing workflow={contract_name} key={key}")
+            missing = True
+
+    if missing:
+        return 1
+
+    print(f"contract:ok workflow={contract_name}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

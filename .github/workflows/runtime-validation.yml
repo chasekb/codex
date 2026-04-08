@@ -1,0 +1,50 @@
+name: runtime-validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run runtime self-test
+        shell: bash
+        run: hooks/_internal/self-test
+
+      - name: Run command-policy regression
+        shell: bash
+        run: hooks/_internal/rule-regression
+
+      - name: Shell syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            case "$(head -n1 "$file")" in
+              '#!/usr/bin/env bash'|'#!/bin/bash')
+                bash -n "$file"
+                ;;
+            esac
+          done < <(find hooks -maxdepth 1 -type f -print0)
+          while IFS= read -r -d '' file; do
+            case "$(head -n1 "$file")" in
+              '#!/usr/bin/env bash'|'#!/bin/bash')
+                bash -n "$file"
+                ;;
+            esac
+          done < <(find hooks/_internal -maxdepth 1 -type f ! -name 'hook-pipeline' -print0)
+
+      - name: Python syntax check
+        shell: bash
+        env:
+          PYTHONPYCACHEPREFIX: ${{ runner.temp }}/python-pycaches
+        run: python3 -m py_compile hooks/_internal/hook-pipeline hooks/_internal/validate-output-contract hooks/_internal/rule-regression

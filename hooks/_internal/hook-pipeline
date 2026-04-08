@@ -97,6 +97,7 @@ def default_state():
             "updated_at": "",
             "task_class": "general",
             "workflow": "unknown",
+            "output_contract": "",
             "skill_id": "none",
             "confidence": 0.0,
             "objective": "",
@@ -139,6 +140,21 @@ def deep_fill_defaults(value, defaults):
     if isinstance(defaults, list):
         return value if isinstance(value, list) else []
     return value if isinstance(value, type(defaults)) else defaults
+
+
+def resolve_output_contract(workflow: str) -> str:
+    pipeline_path = os.path.join(ROOT, "workflows", "pipelines", f"{workflow}.yaml")
+    if os.path.isfile(pipeline_path):
+        with open(pipeline_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("output_contract:"):
+                    contract = text(line.split(":", 1)[1])
+                    if contract:
+                        return contract
+
+    normalized = workflow.replace("-", "_").strip()
+    return normalized or workflow
 
 
 def load_state():
@@ -436,6 +452,7 @@ def main():
         keywords = " ".join(objective.split()[:20])
         _, wf_out = run_internal("select-workflow", [str(task_class), f"{confidence:.3f}"])
         workflow = text(wf_out.splitlines()[-1] if wf_out.splitlines() else "unknown") or "unknown"
+        output_contract = resolve_output_contract(workflow)
         _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
@@ -453,6 +470,7 @@ def main():
                 "started_at": state["session"].get("started_at") or now_iso(),
                 "task_class": str(task_class),
                 "workflow": workflow,
+                "output_contract": output_contract,
                 "skill_id": skill_id,
                 "confidence": confidence,
                 "objective": objective,
@@ -600,11 +618,12 @@ def main():
             )
         )
         workflow = str(state["session"].get("workflow", "unknown"))
+        output_contract = str(state["session"].get("output_contract", workflow))
         if contract_output:
             output_path = contract_output if os.path.isabs(contract_output) else os.path.join(ROOT, contract_output)
             rc, _ = run_internal(
                 "validate-output-contract",
-                [workflow, output_path, "workflows/shared/output-contracts.yaml"],
+                [output_contract, output_path, "workflows/shared/output-contracts.yaml"],
             )
             state["metrics"]["contract_valid"] = rc == 0
         else:

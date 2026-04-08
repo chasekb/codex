@@ -158,6 +158,12 @@ Run internal regression suite:
 hooks/_internal/self-test
 ```
 
+Run command-policy regression only:
+
+```bash
+hooks/_internal/rule-regression
+```
+
 Run preflight only:
 
 ```bash

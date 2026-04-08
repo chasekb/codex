@@ -13,15 +13,21 @@ if awk -v c="$confidence" -v t="$low_conf_threshold" 'BEGIN { exit !(c < t) }'; 
   skill="context-compaction"
   fallback="true"
 else
-  case "$task_class" in
-    request|change|general) skill="plan-verify-execute" ;;
-    implement) skill="plan-verify-execute" ;;
-    debug) skill="plan-verify-execute" ;;
-    retro|retrospective) skill="global-workflow" ;;
-    verify) skill="eval-driven-improvement" ;;
-    plan|docs|research) skill="tool-minimization" ;;
-    *) skill="tool-minimization" ;;
-  esac
+  if echo "$keywords" | grep -Eiq 'github actions|\\.github/workflows|gh workflow|workflow_dispatch|build workflow|ci workflow|package workflow|release workflow'; then
+    skill="github-actions-remote-build"
+  elif echo "$keywords" | grep -Eiq 'compose\\.test|docker-compose\\.test|compose-test|podman-compose|podman compose|compose test'; then
+    skill="podman-compose-test-runner"
+  else
+    case "$task_class" in
+      request|change|general) skill="plan-verify-execute" ;;
+      implement) skill="plan-verify-execute" ;;
+      debug) skill="plan-verify-execute" ;;
+      retro|retrospective) skill="global-workflow" ;;
+      verify) skill="eval-driven-improvement" ;;
+      plan|docs|research) skill="tool-minimization" ;;
+      *) skill="tool-minimization" ;;
+    esac
+  fi
 
   if echo "$keywords" | grep -Eiq 'eval|metric|regression|baseline'; then
     skill="eval-driven-improvement"

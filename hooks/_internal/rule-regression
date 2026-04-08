@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+RULES_FILE = ROOT / "rules" / "default.rules"
+
+
+def parse_rules(text: str) -> list[dict[str, object]]:
+    rules: list[dict[str, object]] = []
+    for block in re.findall(r"prefix_rule\((.*?)\)\s*", text, flags=re.S):
+        pattern_match = re.search(r"pattern\s*=\s*\[(.*?)\]", block, flags=re.S)
+        decision_match = re.search(r'decision\s*=\s*"([^"]+)"', block)
+        if not pattern_match or not decision_match:
+            continue
+        pattern_text = pattern_match.group(1)
+        pattern = re.findall(r'"([^"]+)"', pattern_text)
+        rules.append(
+            {
+                "pattern": tuple(pattern),
+                "decision": decision_match.group(1),
+                "raw": block,
+            }
+        )
+    return rules
+
+
+def require_rule(rules: list[dict[str, object]], pattern: tuple[str, ...], decision: str) -> None:
+    for rule in rules:
+        if rule["pattern"] == pattern and rule["decision"] == decision:
+            return
+    print(f"rules:error missing pattern={list(pattern)} decision={decision}")
+    raise SystemExit(1)
+
+
+def forbid_rule(rules: list[dict[str, object]], pattern: tuple[str, ...]) -> None:
+    for rule in rules:
+        if rule["pattern"] == pattern:
+            print(f"rules:error unexpected pattern={list(pattern)} decision={rule['decision']}")
+            raise SystemExit(1)
+
+
+def main() -> int:
+    if not RULES_FILE.is_file():
+        print(f"rules:error missing_file={RULES_FILE}")
+        return 1
+
+    rules = parse_rules(RULES_FILE.read_text(encoding="utf-8"))
+
+    required = [
+        (("rm", "-rf"), "forbidden"),
+        (("git", "push"), "prompt"),
+        (("npm", "publish"), "prompt"),
+        (("tmux", "capture-pane"), "allow"),
+        (("pwd",), "allow"),
+        (("rg",), "allow"),
+        (("ps",), "allow"),
+        (("podman", "ps"), "allow"),
+        (("gh", "auth", "status"), "allow"),
+        (("git", "status"), "allow"),
+        (("npm", "ls"), "allow"),
+        (("cargo", "tree"), "allow"),
+        (("npm", "explain"), "allow"),
+        (("brew", "search"), "allow"),
+    ]
+    for pattern, decision in required:
+        require_rule(rules, pattern, decision)
+
+    forbidden = [
+        ("gh", "api"),
+        ("gh", "auth"),
+        ("git", "add"),
+        ("git", "commit"),
+        ("podman", "run"),
+        ("podman", "exec"),
+        ("podman", "pull"),
+        ("podman", "push"),
+    ]
+    for pattern in forbidden:
+        forbid_rule(rules, pattern)
+
+    print("rules:ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -20,6 +20,17 @@ echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_ski
 
 hooks/_internal/load-skill plan-verify-execute metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
 hooks/_internal/validate-skill "$HOME/.agents/skills/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
+hooks/_internal/load-skill github-actions-remote-build metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote
+hooks/_internal/load-skill podman-compose-test-runner metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_podman_compose || fail load_skill_podman_compose
+hooks/_internal/validate-skill "$HOME/.agents/skills/github-actions-remote-build/SKILL.md" >/dev/null && pass validate_skill_github_remote || fail validate_skill_github_remote
+hooks/_internal/validate-skill "$HOME/.agents/skills/podman-compose-test-runner/SKILL.md" >/dev/null && pass validate_skill_podman_compose || fail validate_skill_podman_compose
+hooks/_internal/rule-regression >/dev/null && pass rule_regression || fail rule_regression
+
+github_remote_out="$(hooks/_internal/select-skill request 0.9 "github actions build workflow")"
+echo "$github_remote_out" | tail -n1 | grep -qx 'github-actions-remote-build' && pass select_skill_github_remote || fail select_skill_github_remote
+
+podman_compose_out="$(hooks/_internal/select-skill implement 0.9 "podman-compose compose test")"
+echo "$podman_compose_out" | tail -n1 | grep -qx 'podman-compose-test-runner' && pass select_skill_podman_compose || fail select_skill_podman_compose
 
 mem="$tmpdir/memory"
 mkdir -p "$mem"
@@ -45,8 +56,8 @@ trunc="$(hooks/_internal/truncate-context "$ctx" 3 target)"
 
 contracts="$tmpdir/contracts.yaml"
 cat > "$contracts" <<'YAML'
-workflows:
-  debug-rca:
+contracts:
+  debug_rca:
     required:
       - findings
       - root_cause
@@ -54,6 +65,14 @@ YAML
 out="$tmpdir/out.txt"
 printf 'findings: yes\nroot_cause: yes\n' > "$out"
 hooks/_internal/validate-output-contract debug-rca "$out" "$contracts" >/dev/null && pass validate_output_contract || fail validate_output_contract
+
+out_bad="$tmpdir/out-bad.txt"
+printf 'findings: yes\nThe root cause is described here, but not as a contract key.\n' > "$out_bad"
+set +e
+hooks/_internal/validate-output-contract debug-rca "$out_bad" "$contracts" >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass validate_output_contract_rejects_prose || fail validate_output_contract_rejects_prose
 
 hooks/_internal/enforce-budget 10 20 30 >/dev/null && pass enforce_budget_ok || fail enforce_budget_ok
 set +e
