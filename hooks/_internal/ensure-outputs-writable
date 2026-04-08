@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
+OUT_DIR="$ROOT/outputs"
+
+mkdir -p "$OUT_DIR"
+chmod u+rwx "$OUT_DIR" || true
+
+required_files=(
+  "hook-errors.log"
+  "hook-file-error.log"
+  "hook-events.log"
+  "hook-file-logger.log"
+  "hook-runtime-state.json"
+  "hook-token-debug.log"
+  "token-metrics.csv"
+  "token-baselines.csv"
+  "tuning-history.csv"
+  "tuning-proposals.json"
+  "canary-report.json"
+  "canary-token-budgets.yaml"
+)
+
+for file in "${required_files[@]}"; do
+  target="$OUT_DIR/$file"
+  touch "$target"
+  chmod u+rw "$target" || true
+done
+
+probe="$(mktemp "$OUT_DIR/.write-test.XXXXXX")"
+echo "ok" > "$probe"
+rm -f "$probe"
+
+echo "outputs:writable dir=$OUT_DIR"
