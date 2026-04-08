@@ -3,3 +3,4 @@ outputs/
 *.sqlite*
 vendor_imports/
 models_cache.json
+sessions/
