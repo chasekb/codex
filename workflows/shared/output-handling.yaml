@@ -1,0 +1,9 @@
+version: 1
+output_defaults:
+  directory: outputs
+  preferred_format: csv
+  write_mode: write_as_read
+  organize_existing_outputs_first: true
+exceptions:
+  - when_spec_overrides_defaults
+  - when_output_is_not_tabular
