@@ -28,10 +28,13 @@ required=(
   "hooks/_internal/rollback-tuning"
   "hooks/_internal/file-logger"
   "hooks/_internal/event-logger"
+  "hooks/_internal/ensure-outputs-writable"
 )
 
 for f in "${required[@]}"; do
   [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }
 done
+
+"hooks/_internal/ensure-outputs-writable" >/dev/null
 
 echo "preflight:ok"
