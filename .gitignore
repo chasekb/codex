@@ -9,5 +9,6 @@ sessions/
 session_index.jsonl
 
 auth.json
+config.toml
 
 MCP/memory/
