@@ -16,15 +16,12 @@ has_files() {
   local root="$1"
   shift
   [[ -d "$root" ]] || return 1
-  (
-    cd "$root" &&
-      for pattern in "$@"; do
-        if rg --hidden --files -g "$pattern" | head -n 1 >/dev/null 2>&1; then
-          return 0
-        fi
-      done
-      return 1
-  )
+  for pattern in "$@"; do
+    if compgen -G "$root/$pattern" >/dev/null; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 keywords_lc="$(printf '%s' "$keywords" | tr '[:upper:]' '[:lower:]')"
