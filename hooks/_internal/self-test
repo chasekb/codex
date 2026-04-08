@@ -22,8 +22,14 @@ hooks/_internal/load-skill plan-verify-execute metadata 200 "$HOME/.agents/skill
 hooks/_internal/validate-skill "$HOME/.agents/skills/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
 hooks/_internal/load-skill github-actions-remote-build metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote
 hooks/_internal/load-skill podman-compose-test-runner metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_podman_compose || fail load_skill_podman_compose
+hooks/_internal/load-skill ci-triage metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_ci_triage || fail load_skill_ci_triage
+hooks/_internal/load-skill release-publish metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_release_publish || fail load_skill_release_publish
+hooks/_internal/load-skill dependency-maintenance metadata 200 "$HOME/.agents/skills/registry.yaml" >/dev/null && pass load_skill_dependency_maintenance || fail load_skill_dependency_maintenance
 hooks/_internal/validate-skill "$HOME/.agents/skills/github-actions-remote-build/SKILL.md" >/dev/null && pass validate_skill_github_remote || fail validate_skill_github_remote
 hooks/_internal/validate-skill "$HOME/.agents/skills/podman-compose-test-runner/SKILL.md" >/dev/null && pass validate_skill_podman_compose || fail validate_skill_podman_compose
+hooks/_internal/validate-skill "$HOME/.agents/skills/ci-triage/SKILL.md" >/dev/null && pass validate_skill_ci_triage || fail validate_skill_ci_triage
+hooks/_internal/validate-skill "$HOME/.agents/skills/release-publish/SKILL.md" >/dev/null && pass validate_skill_release_publish || fail validate_skill_release_publish
+hooks/_internal/validate-skill "$HOME/.agents/skills/dependency-maintenance/SKILL.md" >/dev/null && pass validate_skill_dependency_maintenance || fail validate_skill_dependency_maintenance
 hooks/_internal/rule-regression >/dev/null && pass rule_regression || fail rule_regression
 
 github_remote_out="$(hooks/_internal/select-skill request 0.9 "github actions build workflow")"
@@ -31,6 +37,45 @@ echo "$github_remote_out" | tail -n1 | grep -qx 'github-actions-remote-build' &&
 
 podman_compose_out="$(hooks/_internal/select-skill implement 0.9 "podman-compose compose test")"
 echo "$podman_compose_out" | tail -n1 | grep -qx 'podman-compose-test-runner' && pass select_skill_podman_compose || fail select_skill_podman_compose
+
+ci_triage_skill_out="$(hooks/_internal/select-skill general 0.9 "failed github actions workflow")"
+echo "$ci_triage_skill_out" | tail -n1 | grep -qx 'ci-triage' && pass select_skill_ci_triage || fail select_skill_ci_triage
+
+release_skill_out="$(hooks/_internal/select-skill general 0.9 "release publish changelog")"
+echo "$release_skill_out" | tail -n1 | grep -qx 'release-publish' && pass select_skill_release_publish || fail select_skill_release_publish
+
+deps_skill_out="$(hooks/_internal/select-skill general 0.9 "dependency update audit")"
+echo "$deps_skill_out" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_maintenance || fail select_skill_dependency_maintenance
+
+repo="$tmpdir/repo"
+mkdir -p "$repo/.github/workflows"
+touch "$repo/.github/workflows/build.yml"
+touch "$repo/compose.test.yaml"
+touch "$repo/package.json"
+
+wf_ci="$(hooks/_internal/select-workflow general 0.9 "failed github actions workflow" "$repo")"
+echo "$wf_ci" | tail -n1 | grep -qx 'ci-triage' && pass select_workflow_ci_triage || fail select_workflow_ci_triage
+
+wf_release="$(hooks/_internal/select-workflow general 0.9 "release publish changelog" "$repo")"
+echo "$wf_release" | tail -n1 | grep -qx 'release-publish' && pass select_workflow_release_publish || fail select_workflow_release_publish
+
+wf_deps="$(hooks/_internal/select-workflow general 0.9 "dependency update audit" "$repo")"
+echo "$wf_deps" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_workflow_dependency_maintenance || fail select_workflow_dependency_maintenance
+
+skill_ci="$(hooks/_internal/select-skill general 0.9 "github actions build workflow" "$repo")"
+echo "$skill_ci" | tail -n1 | grep -qx 'github-actions-remote-build' && pass select_skill_github_remote_artifact || fail select_skill_github_remote_artifact
+
+skill_compose="$(hooks/_internal/select-skill general 0.9 "podman compose test" "$repo")"
+echo "$skill_compose" | tail -n1 | grep -qx 'podman-compose-test-runner' && pass select_skill_podman_compose_artifact || fail select_skill_podman_compose_artifact
+
+skill_ci_triage_artifact="$(hooks/_internal/select-skill general 0.9 "failed workflow" "$repo")"
+echo "$skill_ci_triage_artifact" | tail -n1 | grep -qx 'ci-triage' && pass select_skill_ci_triage_artifact || fail select_skill_ci_triage_artifact
+
+skill_release_artifact="$(hooks/_internal/select-skill general 0.9 "release publish" "$repo")"
+echo "$skill_release_artifact" | tail -n1 | grep -qx 'release-publish' && pass select_skill_release_artifact || fail select_skill_release_artifact
+
+skill_deps_artifact="$(hooks/_internal/select-skill general 0.9 "dependency maintenance" "$repo")"
+echo "$skill_deps_artifact" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_artifact || fail select_skill_dependency_artifact
 
 mem="$tmpdir/memory"
 mkdir -p "$mem"
@@ -61,10 +106,43 @@ contracts:
     required:
       - findings
       - root_cause
+  ci_triage:
+    required:
+      - failure_summary
+      - likely_cause
+      - evidence
+      - next_action
+      - confidence
+  release_publish:
+    required:
+      - objective
+      - files_changed
+      - validation
+      - publish_result
+      - rollback_note
+  dependency_maintenance:
+    required:
+      - current_state
+      - candidate_updates
+      - risk_assessment
+      - validation_plan
+      - status
 YAML
 out="$tmpdir/out.txt"
 printf 'findings: yes\nroot_cause: yes\n' > "$out"
 hooks/_internal/validate-output-contract debug-rca "$out" "$contracts" >/dev/null && pass validate_output_contract || fail validate_output_contract
+
+out_ci="$tmpdir/out-ci.txt"
+printf 'failure_summary: yes\nlikely_cause: yes\nevidence: yes\nnext_action: yes\nconfidence: yes\n' > "$out_ci"
+hooks/_internal/validate-output-contract ci-triage "$out_ci" "$contracts" >/dev/null && pass validate_output_contract_ci_triage || fail validate_output_contract_ci_triage
+
+out_release="$tmpdir/out-release.txt"
+printf 'objective: yes\nfiles_changed: yes\nvalidation: yes\npublish_result: yes\nrollback_note: yes\n' > "$out_release"
+hooks/_internal/validate-output-contract release-publish "$out_release" "$contracts" >/dev/null && pass validate_output_contract_release_publish || fail validate_output_contract_release_publish
+
+out_deps="$tmpdir/out-deps.txt"
+printf 'current_state: yes\ncandidate_updates: yes\nrisk_assessment: yes\nvalidation_plan: yes\nstatus: yes\n' > "$out_deps"
+hooks/_internal/validate-output-contract dependency-maintenance "$out_deps" "$contracts" >/dev/null && pass validate_output_contract_dependency_maintenance || fail validate_output_contract_dependency_maintenance
 
 out_bad="$tmpdir/out-bad.txt"
 printf 'findings: yes\nThe root cause is described here, but not as a contract key.\n' > "$out_bad"

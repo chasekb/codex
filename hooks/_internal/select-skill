@@ -4,19 +4,56 @@ set -euo pipefail
 task_class="${1:-general}"
 confidence="${2:-1.0}"
 keywords="${3:-}"
+workspace_root="${4:-$(pwd)}"
 
 low_conf_threshold="0.70"
 skill="tool-minimization"
 fallback="false"
 
+keywords_lc="$(printf '%s' "$keywords" | tr '[:upper:]' '[:lower:]')"
+
+has_files() {
+  local root="$1"
+  shift
+  [[ -d "$root" ]] || return 1
+  (
+    cd "$root" &&
+      for pattern in "$@"; do
+        if rg --hidden --files -g "$pattern" | head -n 1 >/dev/null 2>&1; then
+          return 0
+        fi
+      done
+      return 1
+  )
+}
+
+has_ci_workflows="false"
+has_compose_test_files="false"
+has_package_markers="false"
+if has_files "$workspace_root" ".github/workflows/*.yml" ".github/workflows/*.yaml"; then
+  has_ci_workflows="true"
+fi
+if has_files "$workspace_root" "compose.test.yaml" "compose.test.yml" "docker-compose.test.yaml" "docker-compose.test.yml"; then
+  has_compose_test_files="true"
+fi
+if has_files "$workspace_root" "package.json" "pyproject.toml" "Cargo.toml" "go.mod" "requirements.txt" "Pipfile" "poetry.lock"; then
+  has_package_markers="true"
+fi
+
 if awk -v c="$confidence" -v t="$low_conf_threshold" 'BEGIN { exit !(c < t) }'; then
   skill="context-compaction"
   fallback="true"
 else
-  if echo "$keywords" | grep -Eiq 'github actions|\\.github/workflows|gh workflow|workflow_dispatch|build workflow|ci workflow|package workflow|release workflow'; then
+  if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(ci triage|failed ci|failed[[:space:]]+(github actions[[:space:]]+)?workflow|workflow failure|job log|build log|investigate ci|triage ci)([[:space:]]|$)'; then
+    skill="ci-triage"
+  elif [[ "$has_ci_workflows" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(github actions build|workflow build|remote build|build workflow|ci build)([[:space:]]|$)'; then
     skill="github-actions-remote-build"
-  elif echo "$keywords" | grep -Eiq 'compose\\.test|docker-compose\\.test|compose-test|podman-compose|podman compose|compose test'; then
+  elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(compose\\.test|docker-compose\\.test|compose-test|podman-compose|podman compose|compose test)([[:space:]]|$)'; then
     skill="podman-compose-test-runner"
+  elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(release|publish|changelog|version bump|ship it)([[:space:]]|$)'; then
+    skill="release-publish"
+  elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(dependency|dependencies|outdated|audit|upgrade|update package|update dependency)([[:space:]]|$)'; then
+    skill="dependency-maintenance"
   else
     case "$task_class" in
       request|change|general) skill="plan-verify-execute" ;;
@@ -29,7 +66,7 @@ else
     esac
   fi
 
-  if echo "$keywords" | grep -Eiq 'eval|metric|regression|baseline'; then
+  if [[ "$skill" == "tool-minimization" || "$skill" == "plan-verify-execute" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(eval|metric|regression|baseline)([[:space:]]|$)'; then
     skill="eval-driven-improvement"
   fi
 fi

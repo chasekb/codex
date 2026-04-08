@@ -685,10 +685,10 @@ def main():
         )
 
         keywords = " ".join(objective.split()[:20])
-        _, wf_out = run_internal("select-workflow", [str(task_class), f"{confidence:.3f}"])
+        _, wf_out = run_internal("select-workflow", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         workflow = text(wf_out.splitlines()[-1] if wf_out.splitlines() else "unknown") or "unknown"
         output_contract = resolve_output_contract(workflow)
-        _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords])
+        _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
         skill_fallback = any("fallback=true" in l for l in skill_lines)

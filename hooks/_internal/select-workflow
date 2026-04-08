@@ -3,6 +3,8 @@ set -euo pipefail
 
 task_class="${1:-}"
 confidence="${2:-1.0}"
+keywords="${3:-}"
+workspace_root="${4:-$(pwd)}"
 
 low_confidence_threshold="0.70"
 
@@ -10,14 +12,61 @@ is_low_confidence() {
   awk -v c="$confidence" -v t="$low_confidence_threshold" 'BEGIN { exit !(c < t) }'
 }
 
+has_files() {
+  local root="$1"
+  shift
+  [[ -d "$root" ]] || return 1
+  (
+    cd "$root" &&
+      for pattern in "$@"; do
+        if rg --hidden --files -g "$pattern" | head -n 1 >/dev/null 2>&1; then
+          return 0
+        fi
+      done
+      return 1
+  )
+}
+
+keywords_lc="$(printf '%s' "$keywords" | tr '[:upper:]' '[:lower:]')"
+has_ci_workflows="false"
+has_compose_test_files="false"
+has_package_markers="false"
+if has_files "$workspace_root" ".github/workflows/*.yml" ".github/workflows/*.yaml"; then
+  has_ci_workflows="true"
+fi
+if has_files "$workspace_root" "compose.test.yaml" "compose.test.yml" "docker-compose.test.yaml" "docker-compose.test.yml"; then
+  has_compose_test_files="true"
+fi
+if has_files "$workspace_root" "package.json" "pyproject.toml" "Cargo.toml" "go.mod" "requirements.txt" "Pipfile" "poetry.lock"; then
+  has_package_markers="true"
+fi
+
 if is_low_confidence; then
   echo "plan-only"
+  exit 0
+fi
+
+if [[ "$has_ci_workflows" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(ci triage|failed[[:space:]]+(github actions[[:space:]]+)?workflow|failed ci|workflow failure|build log|job log|triage ci|investigate ci)([[:space:]]|$)'; then
+  echo "ci-triage"
+  exit 0
+fi
+
+if [[ "$has_ci_workflows" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(release|publish|changelog|version bump|ship it)([[:space:]]|$)'; then
+  echo "release-publish"
+  exit 0
+fi
+
+if [[ "$has_package_markers" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(dependency|dependencies|outdated|audit|upgrade|update package|update dependency)([[:space:]]|$)'; then
+  echo "dependency-maintenance"
   exit 0
 fi
 
 case "$task_class" in
   plan) echo "plan-only" ;;
   docs|research) echo "research" ;;
+  ci|triage) echo "ci-triage" ;;
+  release|publish) echo "release-publish" ;;
+  deps|dependency|maintenance) echo "dependency-maintenance" ;;
   request|change|general) echo "request-standard" ;;
   implement) echo "implement-small" ;;
   debug) echo "debug-rca" ;;

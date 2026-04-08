@@ -42,6 +42,30 @@ contracts:
       - outcomes
       - conclusion
     optional: []
+  ci_triage:
+    required:
+      - failure_summary
+      - likely_cause
+      - evidence
+      - next_action
+      - confidence
+    optional: []
+  release_publish:
+    required:
+      - objective
+      - files_changed
+      - validation
+      - publish_result
+      - rollback_note
+    optional: []
+  dependency_maintenance:
+    required:
+      - current_state
+      - candidate_updates
+      - risk_assessment
+      - validation_plan
+      - status
+    optional: []
   research:
     required:
       - objective

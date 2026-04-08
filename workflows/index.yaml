@@ -15,6 +15,15 @@ workflows:
   - id: verify
     trigger: verification_only_request
     pipeline: pipelines/verify.yaml
+  - id: ci-triage
+    trigger: ci_failure_investigation
+    pipeline: pipelines/ci-triage.yaml
+  - id: release-publish
+    trigger: release_publish_request
+    pipeline: pipelines/release-publish.yaml
+  - id: dependency-maintenance
+    trigger: dependency_maintenance_request
+    pipeline: pipelines/dependency-maintenance.yaml
   - id: research
     trigger: research_request
     pipeline: pipelines/research.yaml

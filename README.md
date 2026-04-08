@@ -87,6 +87,9 @@ Current workflow targets:
 - `implement-small`
 - `debug-rca`
 - `verify`
+- `ci-triage`
+- `release-publish`
+- `dependency-maintenance`
 - `research`
 - `retro`
 
@@ -97,6 +100,9 @@ Pipeline files:
 - `workflows/pipelines/implement-small.yaml`
 - `workflows/pipelines/debug-rca.yaml`
 - `workflows/pipelines/verify.yaml`
+- `workflows/pipelines/ci-triage.yaml`
+- `workflows/pipelines/release-publish.yaml`
+- `workflows/pipelines/dependency-maintenance.yaml`
 - `workflows/pipelines/research.yaml`
 - `workflows/pipelines/retro.yaml`
 
