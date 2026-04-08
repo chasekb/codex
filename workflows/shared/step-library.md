@@ -4,6 +4,11 @@
 - list target files
 - read only relevant sections
 
+## plan
+- define objective and success criteria
+- map impact surface and phased steps
+- define verification before mutation
+
 ## skill_select
 - choose skill by task class, confidence, and keywords
 - fallback to context-compaction when confidence is low
