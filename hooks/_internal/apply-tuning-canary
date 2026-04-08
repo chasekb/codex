@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+proposals_file="${1:-outputs/tuning-proposals.json}"
+policy_file="${2:-MCP/budgets/tuning-policy.yaml}"
+budgets_file="${3:-MCP/budgets/token-budgets.yaml}"
+canary_file="${4:-outputs/canary-token-budgets.yaml}"
+report_file="${5:-outputs/canary-report.json}"
+
+[[ -f "$proposals_file" ]] || { echo "canary:error missing_proposals"; exit 1; }
+[[ -f "$policy_file" ]] || { echo "canary:error missing_policy"; exit 1; }
+[[ -f "$budgets_file" ]] || { echo "canary:error missing_budgets"; exit 1; }
+
+mkdir -p outputs
+
+python3 - <<'PY' "$proposals_file" "$policy_file" "$budgets_file" "$canary_file" "$report_file"
+import json
+import re
+import sys
+from datetime import datetime, timezone
+
+proposals_file, policy_file, budgets_file, canary_file, report_file = sys.argv[1:]
+
+def read_policy(path):
+    p = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#") or ":" not in s:
+                continue
+            k, v = s.split(":", 1)
+            p[k.strip()] = v.strip()
+    return {"max_shift": float(p.get("max_budget_shift_pct", "10"))}
+
+with open(proposals_file, "r", encoding="utf-8") as f:
+    proposals = json.load(f)
+
+with open(budgets_file, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+policy = read_policy(policy_file)
+max_shift = policy["max_shift"] / 100.0
+
+# Build fast lookup
+changes = {}
+for p in proposals.get("proposals", []):
+    profile = p.get("budget_profile")
+    changes.setdefault(profile, {}).update(p.get("changes", {}))
+
+current_profile = None
+updated = 0
+for i, line in enumerate(lines):
+    m_profile = re.match(r"^\s{2}([a-zA-Z0-9_]+):\s*$", line)
+    if m_profile:
+        current_profile = m_profile.group(1)
+        continue
+    m_val = re.match(r"^(\s{4})([a-zA-Z0-9_]+):\s*([0-9.]+)\s*$", line)
+    if m_val and current_profile in changes:
+        indent, key, old_val = m_val.group(1), m_val.group(2), float(m_val.group(3))
+        if key in changes[current_profile]:
+            new_val = float(changes[current_profile][key])
+            low = old_val * (1 - max_shift)
+            high = old_val * (1 + max_shift)
+            if new_val < low or new_val > high:
+                continue
+            lines[i] = f"{indent}{key}: {int(new_val)}\n"
+            updated += 1
+
+with open(canary_file, "w", encoding="utf-8") as f:
+    f.writelines(lines)
+
+status = "pass" if proposals.get("proposal_count", 0) == 0 or updated > 0 else "fail"
+report = {
+    "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "status": status,
+    "proposal_count": proposals.get("proposal_count", 0),
+    "applied_changes": updated,
+    "canary_file": canary_file,
+}
+with open(report_file, "w", encoding="utf-8") as f:
+    json.dump(report, f, separators=(",", ":"))
+
+print(f"canary:status={status} applied_changes={updated} file={canary_file}")
+PY

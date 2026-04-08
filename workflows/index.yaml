@@ -1,0 +1,14 @@
+version: 1
+workflows:
+  - id: plan-only
+    trigger: planning_request
+    pipeline: pipelines/plan-only.yaml
+  - id: implement-small
+    trigger: scoped_change_request
+    pipeline: pipelines/implement-small.yaml
+  - id: debug-rca
+    trigger: bug_or_failure_report
+    pipeline: pipelines/debug-rca.yaml
+  - id: verify
+    trigger: verification_only_request
+    pipeline: pipelines/verify.yaml

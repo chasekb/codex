@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+payload="$(cat)"
+"$script_dir/_internal/preflight" >/dev/null || true
+python3 "$script_dir/_internal/hook-pipeline" "TaskStart" <<<"$payload" >/dev/null 2>&1 || true
+echo '{}'

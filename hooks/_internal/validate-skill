@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+skill_file="${1:-}"
+[[ -f "$skill_file" ]] || { echo "skill:error missing_file"; exit 1; }
+
+first_line="$(head -n 1 "$skill_file")"
+[[ "$first_line" == "---" ]] || { echo "skill:error missing_frontmatter_start file=$skill_file"; exit 1; }
+
+name="$(awk 'NR>1 && /^name:[[:space:]]*/ { sub(/^name:[[:space:]]*/, "", $0); print; exit }' "$skill_file")"
+description="$(awk 'NR>1 && /^description:[[:space:]]*/ { sub(/^description:[[:space:]]*/, "", $0); print; exit }' "$skill_file")"
+
+[[ -n "$name" ]] || { echo "skill:error missing_key=name file=$skill_file"; exit 1; }
+[[ -n "$description" ]] || { echo "skill:error missing_key=description file=$skill_file"; exit 1; }
+
+frontmatter_end_line="$(awk 'NR>1 && /^---$/ { print NR; exit }' "$skill_file")"
+[[ -n "$frontmatter_end_line" ]] || { echo "skill:error missing_frontmatter_end file=$skill_file"; exit 1; }
+
+skill_dir="$(basename "$(dirname "$skill_file")")"
+[[ "$name" == "$skill_dir" ]] || { echo "skill:error name_dir_mismatch name=$name dir=$skill_dir file=$skill_file"; exit 1; }
+
+for section in "## When to use" "## Inputs" "## Outputs" "## Tool dependencies" "## Stop conditions" "## Instructions"; do
+  grep -Fq "$section" "$skill_file" || { echo "skill:error missing_section=$section file=$skill_file"; exit 1; }
+done
+
+# Basic secret leak guard.
+if grep -Eiq '(api[_-]?key|secret|token|password)\s*:\s*[^\[]' "$skill_file"; then
+  echo "skill:error possible_secret_in_skill file=$skill_file"
+  exit 1
+fi
+
+chars="$(wc -c < "$skill_file" | tr -d ' ')"
+echo "skill:valid file=$skill_file chars=$chars"

@@ -1,0 +1,427 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
+SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def to_int(v, default=0):
+    try:
+        if v is None or v == "":
+            return default
+        return int(float(str(v)))
+    except Exception:
+        return default
+
+
+def to_float(v, default=0.0):
+    try:
+        if v is None or v == "":
+            return default
+        return float(str(v))
+    except Exception:
+        return default
+
+
+def text(v) -> str:
+    if isinstance(v, str):
+        return " ".join(v.split()).strip()
+    return ""
+
+
+def first(*values):
+    for v in values:
+        if isinstance(v, str) and text(v):
+            return text(v)
+        if v not in (None, "", [], {}):
+            return v
+    return None
+
+
+def nested(data, path, default=None):
+    cur = data
+    for key in path:
+        if not isinstance(cur, dict):
+            return default
+        cur = cur.get(key)
+        if cur is None:
+            return default
+    return cur
+
+
+def load_json(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def load_state():
+    default = {
+        "version": 1,
+        "session": {
+            "status": "idle",
+            "started_at": "",
+            "updated_at": "",
+            "task_class": "general",
+            "workflow": "unknown",
+            "skill_id": "none",
+            "confidence": 0.0,
+            "objective": "",
+        },
+        "counters": {
+            "pre_tool": 0,
+            "post_tool": 0,
+            "user_prompt": 0,
+            "notification": 0,
+            "tools": 0,
+        },
+        "tokens": {"input": 0, "output": 0, "total": 0},
+        "metrics": {
+            "elapsed_ms": 0,
+            "retries": 0,
+            "fallbacks": 0,
+            "memory_loaded": 0,
+            "memory_chars": 0,
+            "memory_write_count": 0,
+            "memory_dedup_count": 0,
+            "memory_compact_kept": 0,
+            "skill_loaded_chars": 0,
+            "skill_fallback": False,
+            "contract_valid": False,
+        },
+        "tools_used": [],
+        "files_touched": [],
+        "updated_at": "",
+    }
+    state = load_json(STATE_PATH, default)
+    if not isinstance(state, dict):
+        return default
+    for k, v in default.items():
+        if k not in state or not isinstance(state[k], type(v)):
+            state[k] = v
+    return state
+
+
+def run_internal(script_name, args=None, stdin_text=None):
+    args = args or []
+    script = os.path.join(ROOT, "hooks", "_internal", script_name)
+    proc = subprocess.run(
+        ["/bin/bash", script, *args],
+        input=stdin_text,
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=ROOT,
+    )
+    out = (proc.stdout or "") + (proc.stderr or "")
+    return proc.returncode, out
+
+
+def parse_kv_metric(line, key):
+    m = re.search(rf"\b{re.escape(key)}=([0-9]+)", line)
+    return int(m.group(1)) if m else 0
+
+
+def apply_memory_metrics(state, output):
+    for line in output.splitlines():
+        if line.startswith("memory:metrics"):
+            state["metrics"]["memory_write_count"] += parse_kv_metric(line, "writes")
+            state["metrics"]["memory_dedup_count"] += parse_kv_metric(line, "dedups")
+
+
+def extract_paths(tool_input):
+    paths = []
+    if isinstance(tool_input, dict):
+        for key in (
+            "path",
+            "file_path",
+            "target_file",
+            "sourcePath",
+            "destinationPath",
+            "source_path",
+            "destination_path",
+            "filePath",
+        ):
+            value = tool_input.get(key)
+            if isinstance(value, str) and text(value):
+                paths.append(text(value))
+        for key in ("paths", "files"):
+            value = tool_input.get(key)
+            if isinstance(value, list):
+                paths.extend([text(v) for v in value if isinstance(v, str) and text(v)])
+    return sorted(set(paths))
+
+
+def update_session_memory(state):
+    session = load_json(
+        SESSION_PATH,
+        {
+            "version": 1,
+            "max_bytes": 2048,
+            "task": {
+                "objective": "",
+                "constraints": [],
+                "active_files": [],
+                "latest_decisions": [],
+                "blockers": [],
+            },
+            "updated_at": "",
+        },
+    )
+    task = session.get("task") if isinstance(session.get("task"), dict) else {}
+    task["objective"] = state["session"].get("objective", "")
+    task["active_files"] = state.get("files_touched", [])[:12]
+    session["task"] = task
+    session["updated_at"] = now_iso()
+    save_json(SESSION_PATH, session)
+
+
+def add_files(state, paths):
+    if not paths:
+        return
+    merged = set(state.get("files_touched", []))
+    merged.update(paths)
+    state["files_touched"] = sorted(merged)[:100]
+
+
+def add_tool(state, tool_name):
+    if not isinstance(tool_name, str) or not text(tool_name):
+        return
+    used = set(state.get("tools_used", []))
+    used.add(text(tool_name))
+    state["tools_used"] = sorted(used)
+    state["counters"]["tools"] = len(state["tools_used"])
+
+
+def write_memory(state, record_type, scope, tags_csv, content, source="hook-pipeline", confidence="0.8", ttl_days="30"):
+    if not text(content):
+        return
+    _, out = run_internal(
+        "write-memory",
+        [record_type, scope, tags_csv, text(content)[:220], source, str(confidence), str(ttl_days), "MCP/memory"],
+    )
+    apply_memory_metrics(state, out)
+
+
+def parse_memory_load_metrics(output):
+    loaded = 0
+    chars = 0
+    for line in output.splitlines():
+        if line.startswith("memory:metrics"):
+            loaded = parse_kv_metric(line, "loaded")
+            chars = parse_kv_metric(line, "chars")
+    return loaded, chars
+
+
+def parse_compact_kept(output):
+    kept = 0
+    for line in output.splitlines():
+        if line.startswith("memory:metrics"):
+            kept = parse_kv_metric(line, "compact_kept")
+    return kept
+
+
+def parse_skill_loaded_chars(output):
+    for line in output.splitlines():
+        if line.startswith("skill:metrics"):
+            return parse_kv_metric(line, "loaded_chars")
+    return 0
+
+
+def main():
+    hook_name = sys.argv[1] if len(sys.argv) > 1 else "unknown"
+    raw = sys.stdin.read()
+    try:
+        payload = json.loads(raw) if raw.strip() else {}
+    except Exception:
+        payload = {}
+
+    state = load_state()
+    state["updated_at"] = now_iso()
+    state["session"]["updated_at"] = state["updated_at"]
+
+    if hook_name in ("TaskStart", "TaskResume"):
+        task_class = first(
+            nested(payload, ["task", "class"]),
+            nested(payload, [hook_name[0].lower() + hook_name[1:], "taskClass"]),
+            payload.get("taskClass"),
+            "general",
+        )
+        confidence = to_float(
+            first(
+                nested(payload, ["classification", "confidence"]),
+                nested(payload, [hook_name[0].lower() + hook_name[1:], "confidence"]),
+                payload.get("confidence"),
+                0.0,
+            ),
+            0.0,
+        )
+        objective = text(
+            first(
+                nested(payload, ["task", "objective"]),
+                nested(payload, [hook_name[0].lower() + hook_name[1:], "prompt"]),
+                payload.get("prompt"),
+                payload.get("message"),
+                state["session"].get("objective", ""),
+            )
+        )
+
+        keywords = " ".join(objective.split()[:20])
+        _, wf_out = run_internal("select-workflow", [str(task_class), f"{confidence:.3f}"])
+        workflow = text(wf_out.splitlines()[-1] if wf_out.splitlines() else "unknown") or "unknown"
+        _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords])
+        skill_lines = [l for l in skill_out.splitlines() if text(l)]
+        skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
+        skill_fallback = any("fallback=true" in l for l in skill_lines)
+
+        _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", os.path.expanduser("~/.agents/skills/registry.yaml")])
+        skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
+
+        _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])
+        mem_loaded, mem_chars = parse_memory_load_metrics(load_mem_out)
+
+        state["session"].update(
+            {
+                "status": "running",
+                "started_at": state["session"].get("started_at") or now_iso(),
+                "task_class": str(task_class),
+                "workflow": workflow,
+                "skill_id": skill_id,
+                "confidence": confidence,
+                "objective": objective,
+            }
+        )
+        state["metrics"]["memory_loaded"] = mem_loaded
+        state["metrics"]["memory_chars"] = mem_chars
+        state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
+        state["metrics"]["skill_fallback"] = bool(skill_fallback)
+
+        write_memory(
+            state,
+            "decision",
+            "workflow",
+            "routing,workflow",
+            f"Selected workflow={workflow} skill={skill_id} class={task_class} confidence={confidence:.2f}",
+        )
+        update_session_memory(state)
+
+    elif hook_name == "PreToolUse":
+        pre = payload.get("preToolUse") if isinstance(payload.get("preToolUse"), dict) else {}
+        tool_name = first(pre.get("toolName"), payload.get("toolName"), nested(payload, ["tool", "name"]), "unknown")
+        tool_input = first(pre.get("parameters"), pre.get("toolInput"), payload.get("parameters"), payload.get("toolInput"), {})
+        add_tool(state, str(tool_name))
+        add_files(state, extract_paths(tool_input))
+        state["counters"]["pre_tool"] += 1
+        run_internal("file-logger", stdin_text=raw)
+        update_session_memory(state)
+
+    elif hook_name == "PostToolUse":
+        post = payload.get("postToolUse") if isinstance(payload.get("postToolUse"), dict) else {}
+        add_tool(state, str(first(post.get("toolName"), payload.get("toolName"), nested(payload, ["tool", "name"]), "unknown")))
+        state["counters"]["post_tool"] += 1
+
+        usage = first(post.get("usage"), payload.get("usage"), {})
+        if not isinstance(usage, dict):
+            usage = {}
+        input_tokens = to_int(first(usage.get("inputTokens"), usage.get("input_tokens"), post.get("inputTokens"), payload.get("inputTokens"), 0))
+        output_tokens = to_int(first(usage.get("outputTokens"), usage.get("output_tokens"), post.get("outputTokens"), payload.get("outputTokens"), 0))
+        total_tokens = to_int(first(usage.get("totalTokens"), usage.get("total_tokens"), post.get("totalTokens"), payload.get("totalTokens"), input_tokens + output_tokens), input_tokens + output_tokens)
+        elapsed_ms = to_int(first(post.get("elapsedMs"), payload.get("elapsedMs"), 0))
+        retries = to_int(first(post.get("retries"), payload.get("retries"), 0))
+        fallbacks = to_int(first(post.get("fallbacks"), payload.get("fallbacks"), 0))
+
+        state["tokens"]["input"] += input_tokens
+        state["tokens"]["output"] += output_tokens
+        state["tokens"]["total"] += total_tokens
+        state["metrics"]["elapsed_ms"] += elapsed_ms
+        state["metrics"]["retries"] += retries
+        state["metrics"]["fallbacks"] += fallbacks
+
+    elif hook_name == "UserPromptSubmit":
+        state["counters"]["user_prompt"] += 1
+        prompt = text(
+            first(
+                nested(payload, ["userPromptSubmit", "prompt"]),
+                payload.get("prompt"),
+                payload.get("message"),
+                nested(payload, ["user", "prompt"]),
+                "",
+            )
+        )
+        if prompt:
+            state["session"]["objective"] = state["session"].get("objective") or prompt[:220]
+            write_memory(state, "fact", "session", "prompt,user", prompt[:220], confidence="0.85", ttl_days="14")
+            update_session_memory(state)
+
+    elif hook_name == "Notification":
+        state["counters"]["notification"] += 1
+        level = text(first(nested(payload, ["notification", "level"]), payload.get("level"), "info")).lower()
+        message = text(first(nested(payload, ["notification", "message"]), payload.get("message"), payload.get("text"), ""))
+        if message and level in {"warning", "warn", "error"}:
+            write_memory(state, "fact", "runtime", f"notification,{level}", message[:220], confidence="0.9", ttl_days="21")
+
+    elif hook_name == "PreCompact":
+        _, compact_out = run_internal("compact-memory", ["MCP/memory"])
+        state["metrics"]["memory_compact_kept"] = parse_compact_kept(compact_out)
+
+    elif hook_name in ("TaskComplete", "TaskCancel"):
+        status = "pass" if hook_name == "TaskComplete" else "cancelled"
+        if hook_name == "TaskComplete":
+            _, compact_out = run_internal("compact-memory", ["MCP/memory"])
+            state["metrics"]["memory_compact_kept"] = parse_compact_kept(compact_out)
+        state["session"]["status"] = status
+
+        summary = text(first(payload.get("summary"), payload.get("message"), ""))
+        if summary:
+            write_memory(state, "decision", "session", "completion,status", summary[:220], confidence="0.9", ttl_days="45")
+
+        run_internal(
+            "postrun-metrics",
+            [
+                str(state["session"].get("task_class", "general")),
+                str(state["session"].get("workflow", "unknown")),
+                str(state["session"].get("confidence", 0.0)),
+                str(state["tokens"].get("input", 0)),
+                str(state["tokens"].get("output", 0)),
+                str(state["metrics"].get("retries", 0)),
+                str(state["metrics"].get("fallbacks", 0)),
+                str(state["counters"].get("tools", 0)),
+                str(state["metrics"].get("elapsed_ms", 0)),
+                status,
+                str(state["metrics"].get("contract_valid", False)).lower(),
+                str(state["metrics"].get("memory_loaded", 0)),
+                str(state["metrics"].get("memory_chars", 0)),
+                str(state["metrics"].get("memory_write_count", 0)),
+                str(state["metrics"].get("memory_dedup_count", 0)),
+                str(state["metrics"].get("memory_compact_kept", 0)),
+                str(state["session"].get("skill_id", "none")),
+                str(state["metrics"].get("skill_loaded_chars", 0)),
+                str(state["metrics"].get("skill_fallback", False)).lower(),
+            ],
+        )
+        update_session_memory(state)
+
+    save_json(STATE_PATH, state)
+
+
+if __name__ == "__main__":
+    main()

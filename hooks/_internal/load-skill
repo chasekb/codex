@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+skill_id="${1:-}"
+mode="${2:-metadata}"
+max_chars="${3:-700}"
+registry_file="${4:-$HOME/.agents/skills/registry.yaml}"
+
+[[ -n "$skill_id" ]] || { echo "skill:error missing_id"; exit 1; }
+[[ -f "$registry_file" ]] || { echo "skill:error missing_registry"; exit 1; }
+
+skill_file="$(awk -v id="$skill_id" '
+  $0 ~ "^  - id: "id"$" { found=1; next }
+  found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
+' "$registry_file")"
+
+registry_dir="$(cd -- "$(dirname -- "$registry_file")" && pwd)"
+if [[ "$skill_file" != /* ]]; then
+  skill_file="$registry_dir/$skill_file"
+fi
+
+[[ -n "$skill_file" && -f "$skill_file" ]] || { echo "skill:error missing_file_for_id=$skill_id"; exit 1; }
+
+extract_metadata() {
+  awk '
+    BEGIN { in_frontmatter=0; frontmatter_seen=0; in_instructions=0 }
+    NR==1 && $0=="---" { in_frontmatter=1; frontmatter_seen=1; print; next }
+    frontmatter_seen && in_frontmatter {
+      print
+      if ($0=="---") { in_frontmatter=0 }
+      next
+    }
+    /^##[[:space:]]+Instructions$/ { in_instructions=1; exit }
+    {
+      if (!in_instructions) print
+    }
+  ' "$skill_file"
+}
+
+if [[ "$mode" == "metadata" ]]; then
+  extract_metadata | awk -v m="$max_chars" '
+    { out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } }
+    END { if (length(out) < m) print out }
+  '
+else
+  awk -v m="$max_chars" '{ out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } } END { if (length(out) < m) print out }' "$skill_file"
+fi
+
+loaded_chars="$(wc -c < "$skill_file" | tr -d ' ')"
+if (( loaded_chars > max_chars )); then
+  loaded_chars="$max_chars"
+fi
+
+echo "skill:metrics id=$skill_id loaded_chars=$loaded_chars"

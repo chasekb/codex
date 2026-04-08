@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+record_type="${1:-fact}"
+scope="${2:-global}"
+tags_csv="${3:-}"
+content="${4:-}"
+source="${5:-manual}"
+confidence="${6:-0.8}"
+ttl_days="${7:-30}"
+memory_root="${8:-MCP/memory}"
+
+[[ -n "$content" ]] || { echo "memory:skip empty_content"; exit 0; }
+
+if [[ "$record_type" != "fact" && "$record_type" != "decision" ]]; then
+  echo "memory:error invalid_type=$record_type"
+  exit 1
+fi
+
+target_file="$memory_root/facts.jsonl"
+if [[ "$record_type" == "decision" ]]; then
+  target_file="$memory_root/decisions.jsonl"
+fi
+
+mkdir -p "$memory_root"
+touch "$target_file"
+
+python3 - <<'PY' "$record_type" "$scope" "$tags_csv" "$content" "$source" "$confidence" "$ttl_days" "$target_file"
+import json
+import sys
+import hashlib
+from datetime import datetime, timezone
+
+record_type, scope, tags_csv, content, source, confidence, ttl_days, target_file = sys.argv[1:]
+
+content = " ".join(content.split())[:220]
+if not content:
+    print("memory:skip empty_after_normalize")
+    raise SystemExit(0)
+
+tags = [t.strip() for t in tags_csv.split(",") if t.strip()]
+tags = tags[:8]
+
+seed = f"{record_type}|{scope}|{content}".encode("utf-8")
+rid = hashlib.sha1(seed).hexdigest()[:12]
+ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+record = {
+    "id": rid,
+    "type": record_type,
+    "scope": scope,
+    "tags": tags,
+    "content_1line": content,
+    "source": source,
+    "confidence": float(confidence),
+    "ts": ts,
+    "ttl_days": int(ttl_days),
+}
+
+# Dedup by id
+existing_ids = set()
+try:
+    with open(target_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+                if obj.get("id"):
+                    existing_ids.add(obj["id"])
+            except Exception:
+                continue
+except FileNotFoundError:
+    pass
+
+if rid in existing_ids:
+    print(f"memory:dedup id={rid}")
+    print("memory:metrics writes=0 dedups=1")
+    raise SystemExit(0)
+
+with open(target_file, "a", encoding="utf-8") as f:
+    f.write(json.dumps(record, separators=(",", ":")) + "\n")
+
+print(f"memory:write_ok type={record_type} id={rid}")
+print("memory:metrics writes=1 dedups=0")
+PY

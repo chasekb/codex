@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+metrics_file="${1:-outputs/token-metrics.csv}"
+policy_file="${2:-MCP/budgets/tuning-policy.yaml}"
+budgets_file="${3:-MCP/budgets/token-budgets.yaml}"
+out_file="${4:-outputs/tuning-proposals.json}"
+
+[[ -f "$metrics_file" ]] || { echo "tuning:error missing_metrics"; exit 1; }
+[[ -f "$policy_file" ]] || { echo "tuning:error missing_policy"; exit 1; }
+[[ -f "$budgets_file" ]] || { echo "tuning:error missing_budgets"; exit 1; }
+
+mkdir -p outputs
+
+python3 - <<'PY' "$metrics_file" "$policy_file" "$budgets_file" "$out_file"
+import csv
+import json
+import re
+import sys
+from datetime import datetime, timezone
+
+metrics_file, policy_file, budgets_file, out_file = sys.argv[1:]
+
+def read_policy(path):
+    p = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#") or ":" not in s:
+                continue
+            k, v = s.split(":", 1)
+            p[k.strip()] = v.strip()
+    return {
+        "mode": p.get("mode", "observe"),
+        "min_samples": int(float(p.get("min_samples_per_workflow", "5"))),
+        "max_shift": float(p.get("max_budget_shift_pct", "10")),
+        "max_contract_invalid": float(p.get("max_contract_invalid_rate", "0.02")),
+        "min_pass_rate": float(p.get("min_pass_rate", "0.95")),
+        "max_retry_rate": float(p.get("max_retry_rate", "0.20")),
+        "max_fallback_rate": float(p.get("max_fallback_rate", "0.20")),
+    }
+
+def workflow_to_budget_profile(wf):
+    mapping = {
+        "plan-only": "plan",
+        "implement-small": "implement",
+        "debug-rca": "debug_rca",
+        "verify": "verify",
+    }
+    return mapping.get(wf, wf)
+
+def parse_budgets(path):
+    current = {}
+    profile = None
+    in_budgets = False
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            if re.match(r"^budgets:\s*$", line):
+                in_budgets = True
+                continue
+            if in_budgets and re.match(r"^[A-Za-z_]", line):
+                # next top-level section
+                break
+            m_profile = re.match(r"^\s{2}([a-zA-Z0-9_]+):\s*$", line)
+            if m_profile:
+                profile = m_profile.group(1)
+                current.setdefault(profile, {})
+                continue
+            m_val = re.match(r"^\s{4}([a-zA-Z0-9_]+):\s*([0-9.]+)\s*$", line)
+            if m_val and profile:
+                k, v = m_val.group(1), m_val.group(2)
+                current[profile][k] = float(v)
+    return current
+
+policy = read_policy(policy_file)
+budgets = parse_budgets(budgets_file)
+
+stats = {}
+with open(metrics_file, "r", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for r in reader:
+        wf = r.get("workflow", "unknown")
+        s = stats.setdefault(wf, {
+            "n": 0,
+            "pass": 0,
+            "contract_bad": 0,
+            "retry_sum": 0.0,
+            "fallback_sum": 0.0,
+            "total_tokens_sum": 0.0,
+            "memory_chars_sum": 0.0,
+            "skill_chars_sum": 0.0,
+        })
+        s["n"] += 1
+        if str(r.get("status", "")).lower() == "pass":
+            s["pass"] += 1
+        if str(r.get("contract_valid", "")).lower() != "true":
+            s["contract_bad"] += 1
+        s["retry_sum"] += float(r.get("retries", 0) or 0)
+        s["fallback_sum"] += float(r.get("fallbacks", 0) or 0)
+        s["total_tokens_sum"] += float(r.get("total_tokens", 0) or 0)
+        s["memory_chars_sum"] += float(r.get("memory_chars", 0) or 0)
+        s["skill_chars_sum"] += float(r.get("skill_loaded_chars", 0) or 0)
+
+proposals = []
+for wf, s in stats.items():
+    n = s["n"]
+    if n < policy["min_samples"]:
+        continue
+
+    pass_rate = s["pass"] / n
+    contract_invalid = s["contract_bad"] / n
+    retry_rate = s["retry_sum"] / n
+    fallback_rate = s["fallback_sum"] / n
+    avg_tokens = s["total_tokens_sum"] / n
+    avg_memory_chars = s["memory_chars_sum"] / n
+    avg_skill_chars = s["skill_chars_sum"] / n
+
+    profile = workflow_to_budget_profile(wf)
+    if profile not in budgets:
+        continue
+
+    profile_cfg = budgets[profile]
+    proposed_changes = {}
+
+    healthy = (
+        pass_rate >= policy["min_pass_rate"] and
+        contract_invalid <= policy["max_contract_invalid"] and
+        retry_rate <= policy["max_retry_rate"] and
+        fallback_rate <= policy["max_fallback_rate"]
+    )
+
+    shift = min(policy["max_shift"], 5.0) / 100.0
+    if healthy and avg_tokens > 1000:
+        for k in ("input_soft", "output_soft"):
+            if k in profile_cfg:
+                proposed_changes[k] = max(1, int(round(profile_cfg[k] * (1 - shift))))
+
+    if healthy and avg_memory_chars < 120 and "memory_read_soft" in profile_cfg:
+        proposed_changes["memory_read_soft"] = max(1, int(round(profile_cfg["memory_read_soft"] * (1 - shift))))
+
+    if healthy and avg_skill_chars < 220 and "skill_read_soft" in profile_cfg:
+        proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 - shift))))
+
+    if proposed_changes:
+        proposals.append({
+            "workflow": wf,
+            "budget_profile": profile,
+            "changes": proposed_changes,
+            "evidence": {
+                "samples": n,
+                "pass_rate": round(pass_rate, 4),
+                "contract_invalid_rate": round(contract_invalid, 4),
+                "retry_rate": round(retry_rate, 4),
+                "fallback_rate": round(fallback_rate, 4),
+                "avg_total_tokens": round(avg_tokens, 2),
+                "avg_memory_chars": round(avg_memory_chars, 2),
+                "avg_skill_loaded_chars": round(avg_skill_chars, 2),
+            }
+        })
+
+result = {
+    "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "mode": policy["mode"],
+    "proposal_count": len(proposals),
+    "proposals": proposals,
+}
+
+with open(out_file, "w", encoding="utf-8") as f:
+    json.dump(result, f, separators=(",", ":"))
+
+print(f"tuning:proposals file={out_file} count={len(proposals)}")
+PY

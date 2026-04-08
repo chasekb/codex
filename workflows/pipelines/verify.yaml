@@ -1,0 +1,9 @@
+id: verify
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: verify
+  - use: report
+  - use: memory_commit
+budget_profile: verify
+output_contract: verify

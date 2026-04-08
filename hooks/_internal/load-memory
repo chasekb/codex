@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+task_class="${1:-general}"
+keywords="${2:-}"
+max_chars="${3:-500}"
+max_results="${4:-6}"
+memory_root="${5:-MCP/memory}"
+
+session_file="$memory_root/session.json"
+facts_file="$memory_root/facts.jsonl"
+decisions_file="$memory_root/decisions.jsonl"
+
+[[ -f "$session_file" ]] || { echo "memory:error missing_session"; exit 1; }
+[[ -f "$facts_file" ]] || { echo "memory:error missing_facts"; exit 1; }
+[[ -f "$decisions_file" ]] || { echo "memory:error missing_decisions"; exit 1; }
+
+python3 - <<'PY' "$task_class" "$keywords" "$max_chars" "$max_results" "$session_file" "$facts_file" "$decisions_file"
+import json
+import sys
+from datetime import datetime
+
+task_class, keywords, max_chars, max_results, session_file, facts_file, decisions_file = sys.argv[1:]
+max_chars = int(max_chars)
+max_results = int(max_results)
+terms = [t.lower() for t in keywords.split() if len(t) > 1]
+
+def safe_jsonl(path):
+    out = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if not obj.get("id"):
+                continue
+            out.append(obj)
+    return out
+
+def score_record(r):
+    txt = (r.get("content_1line", "") + " " + " ".join(r.get("tags", []))).lower()
+    score = 0.0
+    if task_class and task_class in txt:
+        score += 0.5
+    if terms:
+        score += sum(1 for t in terms if t in txt)
+    score += float(r.get("confidence", 0.0))
+    ts = r.get("ts", "")
+    try:
+        if ts:
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            age_days = (datetime.now(dt.tzinfo) - dt).days
+            score += max(0, 0.5 - age_days / 60.0)
+    except Exception:
+        pass
+    return score
+
+with open(session_file, "r", encoding="utf-8") as f:
+    session = json.load(f)
+
+records = safe_jsonl(facts_file) + safe_jsonl(decisions_file)
+ranked = sorted(records, key=score_record, reverse=True)
+
+result = []
+used_chars = 0
+
+session_blob = {
+    "type": "session",
+    "objective": session.get("task", {}).get("objective", ""),
+    "constraints": session.get("task", {}).get("constraints", [])[:4],
+    "active_files": session.get("task", {}).get("active_files", [])[:6],
+}
+session_str = json.dumps(session_blob, separators=(",", ":"))
+if len(session_str) <= max_chars:
+    result.append(session_blob)
+    used_chars += len(session_str)
+
+seen = set()
+for r in ranked:
+    compact = {
+        "id": r.get("id", ""),
+        "type": r.get("type", ""),
+        "tags": r.get("tags", [])[:5],
+        "content_1line": str(r.get("content_1line", ""))[:220],
+        "confidence": r.get("confidence", 0.0),
+        "ts": r.get("ts", ""),
+    }
+    key = (compact["type"], compact["content_1line"])
+    if key in seen:
+        continue
+    encoded = json.dumps(compact, separators=(",", ":"))
+    if len(result) >= max_results:
+        break
+    if used_chars + len(encoded) > max_chars:
+        break
+    seen.add(key)
+    result.append(compact)
+    used_chars += len(encoded)
+
+print(json.dumps({
+    "memory_loaded": len(result),
+    "chars": used_chars,
+    "results": result
+}, separators=(",", ":")))
+
+print(f"memory:metrics loaded={len(result)} chars={used_chars}")
+PY

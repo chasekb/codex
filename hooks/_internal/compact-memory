@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+memory_root="${1:-MCP/memory}"
+now_epoch="$(date -u +%s)"
+
+facts_file="$memory_root/facts.jsonl"
+decisions_file="$memory_root/decisions.jsonl"
+
+[[ -f "$facts_file" ]] || { echo "memory:error missing_facts"; exit 1; }
+[[ -f "$decisions_file" ]] || { echo "memory:error missing_decisions"; exit 1; }
+
+compact_file() {
+  local file="$1"
+  python3 - <<'PY' "$file" "$now_epoch"
+import json
+import sys
+from datetime import datetime, timezone
+
+path, now_epoch = sys.argv[1], int(sys.argv[2])
+
+seen = set()
+kept = []
+
+def parse_ts(ts):
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+with open(path, "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+
+        rid = obj.get("id", "")
+        content = str(obj.get("content_1line", "")).strip()
+        ttl_days = int(obj.get("ttl_days", 30))
+        ts = obj.get("ts", "")
+
+        if not rid or not content:
+            continue
+
+        created = parse_ts(ts)
+        if created is not None:
+            age_days = (now_epoch - created) / 86400.0
+            if age_days > ttl_days:
+                continue
+
+        dedup_key = (obj.get("type", ""), content)
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+
+        obj["content_1line"] = " ".join(content.split())[:220]
+        kept.append(obj)
+
+with open(path + ".tmp", "w", encoding="utf-8") as out:
+    for obj in kept:
+        out.write(json.dumps(obj, separators=(",", ":")) + "\n")
+
+print(f"memory:compacted file={path} kept={len(kept)}")
+print(f"memory:kept={len(kept)}")
+PY
+ 
+  mv "$file.tmp" "$file"
+}
+
+facts_out="$(compact_file "$facts_file")"
+decisions_out="$(compact_file "$decisions_file")"
+
+echo "$facts_out" | grep '^memory:compacted ' || true
+echo "$decisions_out" | grep '^memory:compacted ' || true
+
+facts_kept="$(echo "$facts_out" | sed -n 's/^memory:kept=\([0-9][0-9]*\)$/\1/p' | tail -n1)"
+decisions_kept="$(echo "$decisions_out" | sed -n 's/^memory:kept=\([0-9][0-9]*\)$/\1/p' | tail -n1)"
+facts_kept="${facts_kept:-0}"
+decisions_kept="${decisions_kept:-0}"
+total_kept=$(( facts_kept + decisions_kept ))
+
+echo "memory:metrics compact_kept=$total_kept"
+
+echo "memory:compact_ok"

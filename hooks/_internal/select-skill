@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+task_class="${1:-general}"
+confidence="${2:-1.0}"
+keywords="${3:-}"
+
+low_conf_threshold="0.70"
+skill="tool-minimization"
+fallback="false"
+
+if awk -v c="$confidence" -v t="$low_conf_threshold" 'BEGIN { exit !(c < t) }'; then
+  skill="context-compaction"
+  fallback="true"
+else
+  case "$task_class" in
+    implement) skill="plan-verify-execute" ;;
+    debug) skill="plan-verify-execute" ;;
+    verify) skill="eval-driven-improvement" ;;
+    plan|docs|research) skill="tool-minimization" ;;
+    *) skill="tool-minimization" ;;
+  esac
+
+  if echo "$keywords" | grep -Eiq 'eval|metric|regression|baseline'; then
+    skill="eval-driven-improvement"
+  fi
+fi
+
+echo "skill:selected id=$skill fallback=$fallback"
+echo "$skill"

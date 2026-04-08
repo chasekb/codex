@@ -1,0 +1,22 @@
+version: 1
+files:
+  session: MCP/memory/session.json
+  facts: MCP/memory/facts.jsonl
+  decisions: MCP/memory/decisions.jsonl
+lookup:
+  max_results: 6
+  max_chars_per_record: 220
+  retrieval_order:
+    - session
+    - exact_tag
+    - recent_high_confidence
+schema:
+  required:
+    - id
+    - type
+    - scope
+    - tags
+    - content_1line
+    - source
+    - confidence
+    - ts

@@ -1,0 +1,13 @@
+version: 1
+limits:
+  max_steps_per_workflow: 8
+  max_retries_per_step: 1
+  max_total_fallbacks: 1
+stops:
+  - missing_required_input
+  - no_progress_after_retry
+  - budget_exceeded
+  - schema_violation
+rules:
+  fail_fast: true
+  deterministic_selection: true

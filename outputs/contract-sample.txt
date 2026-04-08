@@ -1,0 +1,4 @@
+objective: x
+impact_surface: y
+phased_steps: z
+validation: q

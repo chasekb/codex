@@ -1,0 +1,11 @@
+id: debug-rca
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: verify
+  - use: patch
+  - use: verify
+  - use: report
+  - use: memory_commit
+budget_profile: debug_rca
+output_contract: debug_rca

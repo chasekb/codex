@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+canary_report="${1:-outputs/canary-report.json}"
+canary_budgets="${2:-outputs/canary-token-budgets.yaml}"
+target_budgets="${3:-MCP/budgets/token-budgets.yaml}"
+history_file="${4:-outputs/tuning-history.csv}"
+
+[[ -f "$canary_report" ]] || { echo "promote:error missing_canary_report"; exit 1; }
+[[ -f "$canary_budgets" ]] || { echo "promote:error missing_canary_budgets"; exit 1; }
+[[ -f "$target_budgets" ]] || { echo "promote:error missing_target_budgets"; exit 1; }
+
+status="$(python3 - <<'PY' "$canary_report"
+import json,sys
+with open(sys.argv[1], 'r', encoding='utf-8') as f:
+    data=json.load(f)
+print(data.get('status','fail'))
+PY
+)"
+
+[[ "$status" == "pass" ]] || { echo "promote:error canary_not_pass"; exit 1; }
+
+backup_file="${target_budgets}.bak"
+cp "$target_budgets" "$backup_file"
+cp "$canary_budgets" "$target_budgets"
+
+mkdir -p outputs
+if [[ ! -f "$history_file" ]]; then
+  printf 'timestamp,action,status,target,backup\n' > "$history_file"
+fi
+printf '%s,promote,pass,%s,%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$target_budgets" "$backup_file" >> "$history_file"
+
+echo "promote:ok target=$target_budgets backup=$backup_file"

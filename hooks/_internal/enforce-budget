@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+used="${1:-0}"
+soft_cap="${2:-0}"
+hard_cap="${3:-$soft_cap}"
+
+if (( used > hard_cap )); then
+  echo "budget:hard_exceeded used=$used soft=$soft_cap hard=$hard_cap"
+  exit 1
+fi
+
+if (( used > soft_cap )); then
+  echo "budget:soft_exceeded used=$used soft=$soft_cap hard=$hard_cap"
+  exit 2
+fi
+
+echo "budget:ok used=$used soft=$soft_cap hard=$hard_cap"

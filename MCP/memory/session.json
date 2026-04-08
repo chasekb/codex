@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "max_bytes": 2048,
+  "task": {
+    "objective": "Pipeline smoke",
+    "constraints": [],
+    "active_files": [
+      ".",
+      "/var/folders/wx/6932psjd12q26mdykb339kdc0000gn/T/cline/large-output-1775594044270-8oh0jjm.log",
+      "Hooks/PreToolUse",
+      "Hooks/TaskStart",
+      "Hooks/_internal",
+      "Hooks/_internal/hook-pipeline",
+      "Hooks/_internal/load-skill",
+      "Hooks/_internal/preflight",
+      "Hooks/_internal/select-skill",
+      "Hooks/_internal/select-workflow",
+      "Hooks/_internal/validate-skill",
+      "MCP/memory/facts.jsonl"
+    ],
+    "latest_decisions": [],
+    "blockers": []
+  },
+  "updated_at": "2026-04-08T14:18:47.029743Z"
+}

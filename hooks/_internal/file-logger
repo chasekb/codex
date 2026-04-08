@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_FILE="outputs/hook-file-logger.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+payload="$(cat)"
+
+python3 - <<'PY' "$payload" "$LOG_FILE"
+import json
+import sys
+from datetime import datetime, timezone
+
+raw = sys.argv[1]
+log_file = sys.argv[2]
+
+try:
+    data = json.loads(raw) if raw else {}
+except Exception:
+    data = {}
+
+pre = data.get("preToolUse") or {}
+tool_name = (
+    pre.get("toolName")
+    or data.get("toolName")
+    or (data.get("tool") or {}).get("name")
+    or "unknown"
+)
+
+tool_input = (
+    pre.get("toolInput")
+    or pre.get("parameters")
+    or data.get("toolInput")
+    or data.get("parameters")
+    or {}
+)
+
+paths = []
+if isinstance(tool_input, dict):
+    for key in (
+        "path",
+        "file_path",
+        "target_file",
+        "sourcePath",
+        "destinationPath",
+        "source_path",
+        "destination_path",
+        "filePath",
+    ):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value:
+            paths.append(value)
+    if isinstance(tool_input.get("paths"), list):
+        paths.extend([p for p in tool_input["paths"] if isinstance(p, str) and p])
+    if isinstance(tool_input.get("files"), list):
+        paths.extend([p for p in tool_input["files"] if isinstance(p, str) and p])
+
+if tool_name == "apply_patch" and not paths:
+    patch_text = ""
+    if isinstance(tool_input, dict):
+        for key in ("input", "content", "diff", "patch"):
+            value = tool_input.get(key)
+            if isinstance(value, str) and value:
+                patch_text = value
+                break
+    if patch_text:
+        import re
+        paths.extend(re.findall(r"\*\*\* (?:Add|Update|Delete) File: ([^\n]+)", patch_text))
+
+if tool_name in {"read_file", "write_to_file", "replace_in_file", "apply_patch"}:
+    ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps({
+            "timestamp": ts,
+            "tool": tool_name,
+            "paths": sorted(set(paths)),
+        }) + "\n")
+PY
+
+echo '{}'

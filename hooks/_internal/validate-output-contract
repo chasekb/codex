@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workflow="${1:-}"
+output_file="${2:-}"
+contracts_file="${3:-workflows/shared/output-contracts.yaml}"
+
+[[ -n "$workflow" ]] || { echo "contract:error missing_workflow"; exit 1; }
+[[ -f "$output_file" ]] || { echo "contract:error missing_output_file"; exit 1; }
+[[ -f "$contracts_file" ]] || { echo "contract:error missing_contracts_file"; exit 1; }
+
+required_keys="$({
+  awk -v wf="$workflow" '
+    BEGIN { in_wf=0; in_req=0 }
+    $0 ~ "^  " wf ":" { in_wf=1; next }
+    in_wf && $0 ~ "^    required:" { in_req=1; next }
+    in_wf && in_req && $0 ~ "^      - " {
+      gsub(/^      - /, "", $0)
+      print $0
+      next
+    }
+    in_wf && in_req && $0 ~ "^    " && $0 !~ "^      - " { exit }
+    in_wf && $0 ~ "^  [a-zA-Z0-9_]+:" && $0 !~ "^  " wf ":" { exit }
+  ' "$contracts_file"
+} || true)"
+
+[[ -n "$required_keys" ]] || { echo "contract:error unknown_workflow=$workflow"; exit 1; }
+
+missing=0
+while IFS= read -r key; do
+  [[ -n "$key" ]] || continue
+  if ! grep -Eq "(^|[[:space:]-])${key}:[[:space:]]*|\"${key}\"[[:space:]]*:" "$output_file"; then
+    echo "contract:missing workflow=$workflow key=$key"
+    missing=1
+  fi
+done <<< "$required_keys"
+
+if (( missing == 1 )); then
+  exit 1
+fi
+
+echo "contract:ok workflow=$workflow"

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target_budgets="${1:-MCP/budgets/token-budgets.yaml}"
+backup_file="${2:-MCP/budgets/token-budgets.yaml.bak}"
+reason="${3:-manual_rollback}"
+history_file="${4:-outputs/tuning-history.csv}"
+
+[[ -f "$backup_file" ]] || { echo "rollback:error missing_backup"; exit 1; }
+[[ -f "$target_budgets" ]] || { echo "rollback:error missing_target"; exit 1; }
+
+cp "$backup_file" "$target_budgets"
+
+mkdir -p outputs
+if [[ ! -f "$history_file" ]]; then
+  printf 'timestamp,action,status,target,backup,reason\n' > "$history_file"
+fi
+printf '%s,rollback,pass,%s,%s,%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$target_budgets" "$backup_file" "$reason" >> "$history_file"
+
+echo "rollback:ok target=$target_budgets reason=$reason"

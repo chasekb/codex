@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+input_file="${1:-}"
+max_lines="${2:-200}"
+query_terms="${3:-}"
+
+[[ -f "$input_file" ]] || { echo "missing input"; exit 1; }
+
+# Relevance-first trim with dedupe:
+# - Prefer lines matching query terms (plus ±1 context lines)
+# - Fall back to head(max_lines)
+# - Drop exact duplicate lines
+awk -v m="$max_lines" -v q="$query_terms" '
+BEGIN {
+  nterms = split(tolower(q), t, /[[:space:]]+/)
+}
+{
+  line[NR] = $0
+  lower = tolower($0)
+  score = 0
+  for (i = 1; i <= nterms; i++) {
+    if (length(t[i]) > 1 && index(lower, t[i]) > 0) score++
+  }
+  rel[NR] = score
+}
+END {
+  count = 0
+  if (q != "") {
+    for (i = 1; i <= NR; i++) {
+      if (rel[i] > 0) {
+        for (j = i - 1; j <= i + 1; j++) {
+          if (j >= 1 && j <= NR) keep[j] = 1
+        }
+      }
+    }
+  }
+
+  # Emit kept relevant lines first.
+  for (i = 1; i <= NR && count < m; i++) {
+    if (keep[i] && !seen[line[i]]++) {
+      print line[i]
+      count++
+    }
+  }
+
+  # Fill remainder with leading lines if needed.
+  for (i = 1; i <= NR && count < m; i++) {
+    if (!seen[line[i]]++) {
+      print line[i]
+      count++
+    }
+  }
+}
+' "$input_file"

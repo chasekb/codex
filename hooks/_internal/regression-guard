@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workflow="${1:-unknown}"
+current="${2:-0}"
+threshold_pct="${3:-10}"
+baseline_file="${4:-outputs/token-baselines.csv}"
+
+mkdir -p outputs
+
+get_baseline() {
+  local wf="$1"
+  local file="$2"
+
+  [[ -f "$file" ]] || {
+    echo 0
+    return 0
+  }
+
+  awk -F',' -v w="$wf" '
+    $1==w { b=$2 }
+    END { if (b=="") print 0; else print b }
+  ' "$file"
+}
+
+update_baseline() {
+  local wf="$1"
+  local value="$2"
+  local file="$3"
+
+  if [[ ! -f "$file" ]]; then
+    printf '%s,%s\n' "$wf" "$value" > "$file"
+    return 0
+  fi
+
+  if awk -F',' -v w="$wf" '$1==w { found=1 } END { exit !found }' "$file"; then
+    awk -F',' -v OFS=',' -v w="$wf" -v v="$value" '
+      $1==w { $2=v; updated=1 }
+      { print }
+      END { if (!updated) print w, v }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+  else
+    printf '%s,%s\n' "$wf" "$value" >> "$file"
+  fi
+}
+
+baseline="$(get_baseline "$workflow" "$baseline_file")"
+
+allowed=$(( baseline + (baseline * threshold_pct / 100) ))
+
+# Bootstrap: first observation becomes baseline.
+if (( baseline == 0 )); then
+  update_baseline "$workflow" "$current" "$baseline_file"
+  echo "regression:bootstrap workflow=$workflow baseline=$current file=$baseline_file"
+  exit 0
+fi
+
+if (( current > allowed )); then
+  echo "regression:token_increase workflow=$workflow baseline=$baseline current=$current allowed=$allowed"
+  exit 1
+fi
+
+update_baseline "$workflow" "$current" "$baseline_file"
+echo "regression:ok workflow=$workflow baseline=$baseline current=$current allowed=$allowed"

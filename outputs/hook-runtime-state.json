@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "session": {
+    "status": "running",
+    "started_at": "2026-04-07T20:09:53.154206Z",
+    "updated_at": "2026-04-08T14:18:45.859850Z",
+    "task_class": "general",
+    "workflow": "plan-only",
+    "skill_id": "context-compaction",
+    "confidence": 0.0,
+    "objective": "Pipeline smoke"
+  },
+  "counters": {
+    "pre_tool": 64,
+    "post_tool": 66,
+    "user_prompt": 5,
+    "notification": 18,
+    "tools": 6
+  },
+  "tokens": {
+    "input": 44,
+    "output": 19,
+    "total": 63
+  },
+  "metrics": {
+    "elapsed_ms": 175,
+    "retries": 0,
+    "fallbacks": 0,
+    "memory_loaded": 2,
+    "memory_chars": 441,
+    "memory_write_count": 12,
+    "memory_dedup_count": 7,
+    "memory_compact_kept": 14,
+    "skill_loaded_chars": 634,
+    "skill_fallback": true,
+    "contract_valid": false
+  },
+  "tools_used": [
+    "Bash",
+    "apply_patch",
+    "execute_command",
+    "read_file",
+    "search_files",
+    "summarize_task"
+  ],
+  "files_touched": [
+    ".",
+    "/var/folders/wx/6932psjd12q26mdykb339kdc0000gn/T/cline/large-output-1775594044270-8oh0jjm.log",
+    "Hooks/PreToolUse",
+    "Hooks/TaskStart",
+    "Hooks/_internal",
+    "Hooks/_internal/hook-pipeline",
+    "Hooks/_internal/load-skill",
+    "Hooks/_internal/preflight",
+    "Hooks/_internal/select-skill",
+    "Hooks/_internal/select-workflow",
+    "Hooks/_internal/validate-skill",
+    "MCP/memory/facts.jsonl",
+    "MCP/memory/session.json",
+    "Skills/registry.yaml",
+    "Skills/skills/context-compaction.yaml",
+    "Skills/skills/eval-driven-improvement.yaml",
+    "Skills/skills/plan-verify-execute.yaml",
+    "Skills/skills/tool-minimization.yaml",
+    "Workflows/index.yaml",
+    "Workflows/pipelines/debug-rca.yaml",
+    "Workflows/pipelines/implement-small.yaml",
+    "Workflows/pipelines/plan-only.yaml",
+    "Workflows/pipelines/verify.yaml",
+    "Workflows/shared/guards.yaml",
+    "Workflows/shared/output-contracts.yaml",
+    "Workflows/shared/step-library.md",
+    "outputs/hook-file-logger.log",
+    "outputs/hook-runtime-state.json",
+    "outputs/token-metrics.csv"
+  ],
+  "updated_at": "2026-04-08T14:18:45.859850Z"
+}

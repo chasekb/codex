@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+required=(
+  "MCP/defaults.yaml"
+  "MCP/routing.yaml"
+  "MCP/budgets/token-budgets.yaml"
+  "MCP/budgets/tuning-policy.yaml"
+  "MCP/memory/session.json"
+  "MCP/memory/facts.jsonl"
+  "MCP/memory/decisions.jsonl"
+  "MCP/memory/index.yaml"
+  "$HOME/.agents/skills/registry.yaml"
+  "workflows/index.yaml"
+  "workflows/shared/output-contracts.yaml"
+  "hooks/_internal/select-skill"
+  "hooks/_internal/load-skill"
+  "hooks/_internal/validate-skill"
+  "hooks/_internal/load-memory"
+  "hooks/_internal/write-memory"
+  "hooks/_internal/compact-memory"
+  "hooks/_internal/tune-from-metrics"
+  "hooks/_internal/apply-tuning-canary"
+  "hooks/_internal/promote-tuning"
+  "hooks/_internal/rollback-tuning"
+  "hooks/_internal/file-logger"
+)
+
+for f in "${required[@]}"; do
+  [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }
+done
+
+echo "preflight:ok"

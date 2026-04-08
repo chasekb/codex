@@ -1,0 +1,34 @@
+version: 1
+render:
+  mode: compact
+  allowed: [bullets, checklist, table]
+  forbid: [narrative_paragraphs]
+contracts:
+  plan:
+    required:
+      - objective
+      - impact_surface
+      - phased_steps
+      - validation
+    optional: []
+  implement:
+    required:
+      - files_changed
+      - patch_summary
+      - checks_run
+      - status
+    optional: []
+  debug_rca:
+    required:
+      - symptom
+      - repro
+      - root_cause
+      - remediation
+      - regression_result
+    optional: []
+  verify:
+    required:
+      - checks
+      - outcomes
+      - conclusion
+    optional: []

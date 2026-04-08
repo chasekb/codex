@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+task_class="${1:-}"
+confidence="${2:-1.0}"
+
+low_confidence_threshold="0.70"
+
+is_low_confidence() {
+  awk -v c="$confidence" -v t="$low_confidence_threshold" 'BEGIN { exit !(c < t) }'
+}
+
+if is_low_confidence; then
+  echo "plan-only"
+  exit 0
+fi
+
+case "$task_class" in
+  plan|docs|research) echo "plan-only" ;;
+  implement) echo "implement-small" ;;
+  debug) echo "debug-rca" ;;
+  verify|ui) echo "verify" ;;
+  *) echo "unknown"; exit 2 ;;
+esac

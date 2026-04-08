@@ -1,0 +1,12 @@
+version: 1
+mode: observe
+min_samples_per_workflow: 5
+max_budget_shift_pct: 10
+target_token_reduction_pct: 8
+max_latency_increase_pct: 5
+max_contract_invalid_rate: 0.02
+min_pass_rate: 0.95
+max_retry_rate: 0.20
+max_fallback_rate: 0.20
+canary_sample_size: 8
+max_intent_changes_per_cycle: 2

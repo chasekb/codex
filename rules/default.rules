@@ -1,0 +1,26 @@
+# Global safety defaults for Codex command approvals.
+# Most restrictive matching decision wins: forbidden > prompt > allow.
+
+# Never permit destructive recursive delete.
+prefix_rule(
+  pattern = ["rm", "-rf"],
+  decision = "forbidden",
+  justification = "Use safer scoped deletion and explicit review instead of rm -rf.",
+  match = ["rm -rf /tmp/test"],
+)
+
+# Require prompt for branch/remote mutations.
+prefix_rule(
+  pattern = ["git", "push"],
+  decision = "prompt",
+  justification = "Pushing branches should require explicit confirmation.",
+  match = ["git push origin main"],
+)
+
+# Require prompt before publishing npm packages.
+prefix_rule(
+  pattern = ["npm", "publish"],
+  decision = "prompt",
+  justification = "Package publishing is high impact.",
+  match = ["npm publish"],
+)

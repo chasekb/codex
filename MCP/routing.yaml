@@ -1,0 +1,49 @@
+version: 1
+intents:
+  plan:
+    primary: local_files
+    fallback: none
+    workflow: plan-only
+    min_confidence: 0.55
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+  docs_lookup:
+    primary: context7
+    fallback: brave
+    workflow: plan-only
+    min_confidence: 0.65
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+  bug_debug:
+    primary: local_files
+    fallback: playwright
+    workflow: debug-rca
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+  ui_validation:
+    primary: playwright
+    fallback: local_files
+    workflow: verify
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+  external_research:
+    primary: brave
+    fallback: context7
+    workflow: plan-only
+    min_confidence: 0.60
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+  implementation:
+    primary: local_files
+    fallback: none
+    workflow: implement-small
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
+rules:
+  - pick_one_primary_tool_first
+  - fallback_only_if_primary_fails_or_insufficient
+  - never_parallelize_dependent_steps
+  - low_confidence_routes_to_plan_only
