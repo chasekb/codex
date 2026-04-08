@@ -1,0 +1,11 @@
+id: request-standard
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: plan
+  - use: patch
+  - use: verify
+  - use: report
+  - use: memory_commit
+budget_profile: implement
+output_contract: request_standard
