@@ -1,3 +1,0 @@
-timestamp,action,status,target,backup
-2026-04-07T16:02:34Z,promote,pass,/Users/bernardchase/Documents/Cline/MCP/budgets/token-budgets.yaml,/Users/bernardchase/Documents/Cline/MCP/budgets/token-budgets.yaml.bak
-2026-04-07T16:02:34Z,rollback,pass,/Users/bernardchase/Documents/Cline/MCP/budgets/token-budgets.yaml,/Users/bernardchase/Documents/Cline/MCP/budgets/token-budgets.yaml.bak,smoke_test
