@@ -17,8 +17,10 @@ fi
 
 case "$task_class" in
   plan|docs|research) echo "plan-only" ;;
+  request|change|general) echo "request-standard" ;;
   implement) echo "implement-small" ;;
   debug) echo "debug-rca" ;;
+  retro|retrospective) echo "retro" ;;
   verify|ui) echo "verify" ;;
   *) echo "unknown"; exit 2 ;;
 esac
