@@ -101,6 +101,7 @@ def default_state():
             "skill_id": "none",
             "confidence": 0.0,
             "objective": "",
+            "pending_searches": [],
         },
         "counters": {
             "pre_tool": 0,
@@ -119,6 +120,11 @@ def default_state():
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
+            "search_tool_count": 0,
+            "search_query_count": 0,
+            "search_source_count": 0,
+            "search_reuse_hit": 0,
+            "search_memory_write_count": 0,
             "skill_loaded_chars": 0,
             "skill_fallback": False,
             "contract_valid": True,
@@ -262,16 +268,29 @@ def write_memory(state, record_type, scope, tags_csv, content, source="hook-pipe
         [record_type, scope, tags_csv, text(content)[:220], source, str(confidence), str(ttl_days), "MCP/memory"],
     )
     apply_memory_metrics(state, out)
+    return out
 
 
 def parse_memory_load_metrics(output):
     loaded = 0
     chars = 0
+    results = []
     for line in output.splitlines():
+        if line.startswith("{") and not results:
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    loaded = to_int(parsed.get("memory_loaded", loaded))
+                    chars = to_int(parsed.get("chars", chars))
+                    maybe_results = parsed.get("results", [])
+                    if isinstance(maybe_results, list):
+                        results = maybe_results
+            except Exception:
+                pass
         if line.startswith("memory:metrics"):
             loaded = parse_kv_metric(line, "loaded")
             chars = parse_kv_metric(line, "chars")
-    return loaded, chars
+    return loaded, chars, results
 
 
 def parse_compact_kept(output):
@@ -287,6 +306,222 @@ def parse_skill_loaded_chars(output):
         if line.startswith("skill:metrics"):
             return parse_kv_metric(line, "loaded_chars")
     return 0
+
+
+SEARCH_TOOL_NAMES = {
+    "web_search",
+    "news_search",
+    "image_search",
+    "video_search",
+    "resolve-library-id",
+    "get-library-docs",
+}
+
+
+def normalize_tool_name(tool_name):
+    return text(tool_name).lower().replace(".", "_").replace("-", "_")
+
+
+def is_search_tool(tool_name):
+    normalized = normalize_tool_name(tool_name)
+    return normalized in {name.replace("-", "_") for name in SEARCH_TOOL_NAMES} or "search" in normalized
+
+
+def tokenize_words(value):
+    if not isinstance(value, str):
+        value = text(value)
+    return [part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2]
+
+
+def extract_search_query(tool_name, tool_input, payload):
+    tool_dict = as_dict(tool_input)
+    payload_dict = payload if isinstance(payload, dict) else {}
+    normalized = normalize_tool_name(tool_name)
+
+    keys = [
+        "query",
+        "q",
+        "prompt",
+        "topic",
+        "name",
+        "library",
+        "library_id",
+        "libraryid",
+        "library_name",
+        "libraryname",
+        "url",
+    ]
+    if "get_library_docs" in normalized or "resolve_library_id" in normalized:
+        keys = [
+            "query",
+            "q",
+            "prompt",
+            "topic",
+            "name",
+            "library",
+            "library_id",
+            "libraryid",
+            "library_name",
+            "libraryname",
+        ]
+
+    candidates = [tool_dict, payload_dict]
+    for candidate in candidates:
+        for key in keys:
+            value = candidate.get(key)
+            if isinstance(value, str) and text(value):
+                return text(value)
+        if len(candidate) == 1:
+            only = next(iter(candidate.values()))
+            if isinstance(only, str) and text(only):
+                return text(only)
+
+    return ""
+
+
+def summarize_search_sources(response):
+    if isinstance(response, (dict, list)):
+        data = response
+    elif isinstance(response, str):
+        try:
+            parsed = json.loads(response)
+            data = parsed if isinstance(parsed, (dict, list)) else {}
+        except Exception:
+            data = {}
+    else:
+        data = as_dict(response)
+    candidates = []
+
+    def add_item(item):
+        if len(candidates) >= 5:
+            return
+        if isinstance(item, dict):
+            parts = []
+            for key in ("title", "name", "id"):
+                value = item.get(key)
+                if isinstance(value, str) and text(value):
+                    parts.append(text(value))
+                    break
+            for key in ("url", "href", "link"):
+                value = item.get(key)
+                if isinstance(value, str) and text(value):
+                    parts.append(text(value))
+                    break
+            for key in ("snippet", "summary", "description", "content", "text"):
+                value = item.get(key)
+                if isinstance(value, str) and text(value):
+                    parts.append(text(value)[:180])
+                    break
+            if not parts:
+                scalar = first(*[item.get(k) for k in item.keys()])
+                if isinstance(scalar, str) and text(scalar):
+                    parts.append(text(scalar)[:180])
+            summary = " | ".join(parts)
+            if summary and summary not in candidates:
+                candidates.append(summary)
+        elif isinstance(item, str) and text(item):
+            summary = text(item)[:180]
+            if summary not in candidates:
+                candidates.append(summary)
+
+    if isinstance(data, dict):
+        for key in ("results", "items", "sources", "documents", "hits", "pages"):
+            value = data.get(key)
+            if isinstance(value, list):
+                for item in value:
+                    add_item(item)
+            elif isinstance(value, dict):
+                add_item(value)
+
+        for key in ("result", "source", "document", "answer"):
+            value = data.get(key)
+            if isinstance(value, list):
+                for item in value:
+                    add_item(item)
+            elif isinstance(value, dict):
+                add_item(value)
+
+        if not candidates:
+            for key in ("title", "name", "url", "link", "summary", "content", "text"):
+                value = data.get(key)
+                if isinstance(value, str) and text(value):
+                    add_item(value)
+
+    elif isinstance(data, list):
+        for item in data:
+            add_item(item)
+
+    return candidates
+
+
+def search_reuse_hits(memory_results, objective):
+    objective_terms = set(tokenize_words(objective))
+    if not objective_terms:
+        return 0
+
+    hits = 0
+    for record in memory_results:
+        if not isinstance(record, dict):
+            continue
+        tags = {str(tag).lower() for tag in record.get("tags", []) if isinstance(tag, str)}
+        content = str(record.get("content_1line", ""))
+        content_terms = set(tokenize_words(content))
+        if "search" not in tags and not content.lower().startswith("search"):
+            continue
+        if objective_terms & content_terms:
+            hits += 1
+    return hits
+
+
+def pending_searches(state):
+    session = state.get("session") if isinstance(state.get("session"), dict) else {}
+    pending = session.get("pending_searches", [])
+    return pending if isinstance(pending, list) else []
+
+
+def set_pending_searches(state, items):
+    session = state.get("session") if isinstance(state.get("session"), dict) else {}
+    session["pending_searches"] = items if isinstance(items, list) else []
+    state["session"] = session
+
+
+def store_pending_search(state, tool_name, query):
+    if not text(query):
+        return
+    pending = pending_searches(state)
+    pending.append({
+        "tool_name": text(tool_name),
+        "query": text(query)[:220],
+    })
+    set_pending_searches(state, pending[-8:])
+
+
+def claim_pending_search(state, tool_name):
+    pending = pending_searches(state)
+    if not pending:
+        return {}
+    normalized = normalize_tool_name(tool_name)
+    for index, item in enumerate(pending):
+        item_name = normalize_tool_name(item.get("tool_name", ""))
+        if not item_name or item_name == normalized or item_name in normalized or normalized in item_name:
+            pending.pop(index)
+            set_pending_searches(state, pending)
+            return item
+    item = pending.pop(0)
+    set_pending_searches(state, pending)
+    return item
+
+
+def compact_search_provenance(tool_name, query, sources, reuse_hit):
+    query = text(query)[:120] or "n/a"
+    source_list = [text(source)[:120] for source in sources if text(source)]
+    accepted = source_list[:1] if source_list else []
+    source_summary = "; ".join(source_list[:3]) if source_list else "none"
+    accepted_summary = "; ".join(accepted) if accepted else "none"
+    return (
+        f"search tool={text(tool_name)} query={query} "
+        f"sources={source_summary} accepted={accepted_summary} reuse_hit={int(bool(reuse_hit))}"
+    )
 
 
 def usage_from_payload(payload, post, response):
@@ -462,7 +697,7 @@ def main():
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
 
         _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])
-        mem_loaded, mem_chars = parse_memory_load_metrics(load_mem_out)
+        mem_loaded, mem_chars, mem_results = parse_memory_load_metrics(load_mem_out)
 
         state["session"].update(
             {
@@ -478,6 +713,7 @@ def main():
         )
         state["metrics"]["memory_loaded"] = mem_loaded
         state["metrics"]["memory_chars"] = mem_chars
+        state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
 
@@ -512,12 +748,28 @@ def main():
         add_tool(state, str(tool_name))
         add_files(state, extract_paths(tool_input))
         state["counters"]["pre_tool"] += 1
+        if is_search_tool(tool_name):
+            state["metrics"]["search_tool_count"] += 1
+            query = extract_search_query(tool_name, tool_input, payload)
+            if query:
+                state["metrics"]["search_query_count"] += 1
+                store_pending_search(state, tool_name, query)
         run_internal("file-logger", stdin_text=raw)
         update_session_memory(state)
 
     elif hook_name == "PostToolUse":
         post = payload.get("postToolUse") if isinstance(payload.get("postToolUse"), dict) else {}
-        response = as_dict(first(payload.get("tool_response"), payload.get("toolResponse"), post.get("result"), {}))
+        response_raw = first(payload.get("tool_response"), payload.get("toolResponse"), post.get("result"), {})
+        if isinstance(response_raw, (dict, list)):
+            response = response_raw
+        elif isinstance(response_raw, str):
+            try:
+                parsed = json.loads(response_raw)
+                response = parsed if isinstance(parsed, (dict, list)) else {}
+            except Exception:
+                response = {}
+        else:
+            response = {}
         tool_name = str(
             first(
                 post.get("toolName"),
@@ -529,6 +781,15 @@ def main():
                 response.get("tool_name") if isinstance(response, dict) else None,
                 "unknown",
             )
+        )
+        tool_input = first(
+            post.get("parameters"),
+            post.get("toolInput"),
+            post.get("tool_input"),
+            payload.get("parameters"),
+            payload.get("toolInput"),
+            payload.get("tool_input"),
+            {},
         )
         add_tool(state, tool_name)
         state["counters"]["post_tool"] += 1
@@ -568,6 +829,27 @@ def main():
         state["metrics"]["elapsed_ms"] += elapsed_ms
         state["metrics"]["retries"] += retries
         state["metrics"]["fallbacks"] += fallbacks
+
+        if is_search_tool(tool_name):
+            pending = claim_pending_search(state, tool_name)
+            query = first(pending.get("query") if isinstance(pending, dict) else None, extract_search_query(tool_name, tool_input, payload), "")
+            sources = summarize_search_sources(response)
+            state["metrics"]["search_source_count"] += len(sources)
+            if query or sources:
+                before_writes = state["metrics"].get("memory_write_count", 0)
+                provenance = compact_search_provenance(tool_name, query, sources, state["metrics"].get("search_reuse_hit", 0))
+                write_memory(
+                    state,
+                    "fact",
+                    "research",
+                    f"search,{normalize_tool_name(tool_name)},provenance",
+                    provenance,
+                    source=tool_name,
+                    confidence="0.8",
+                    ttl_days="30",
+                )
+                if state["metrics"].get("memory_write_count", 0) > before_writes:
+                    state["metrics"]["search_memory_write_count"] += 1
 
         if input_tokens == 0 and output_tokens == 0 and total_tokens == 0 and isinstance(payload, dict):
             log_token_debug(tool_name, payload, post, usage, input_tokens, output_tokens, total_tokens)
@@ -652,6 +934,11 @@ def main():
                 str(state["metrics"].get("memory_write_count", 0)),
                 str(state["metrics"].get("memory_dedup_count", 0)),
                 str(state["metrics"].get("memory_compact_kept", 0)),
+                str(state["metrics"].get("search_tool_count", 0)),
+                str(state["metrics"].get("search_query_count", 0)),
+                str(state["metrics"].get("search_source_count", 0)),
+                str(state["metrics"].get("search_reuse_hit", 0)),
+                str(state["metrics"].get("search_memory_write_count", 0)),
                 str(state["session"].get("skill_id", "none")),
                 str(state["metrics"].get("skill_loaded_chars", 0)),
                 str(state["metrics"].get("skill_fallback", False)).lower(),

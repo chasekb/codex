@@ -87,6 +87,7 @@ Current workflow targets:
 - `implement-small`
 - `debug-rca`
 - `verify`
+- `research`
 - `retro`
 
 ### Workflow registry (`workflows/index.yaml`)
@@ -96,6 +97,7 @@ Pipeline files:
 - `workflows/pipelines/implement-small.yaml`
 - `workflows/pipelines/debug-rca.yaml`
 - `workflows/pipelines/verify.yaml`
+- `workflows/pipelines/research.yaml`
 - `workflows/pipelines/retro.yaml`
 
 Shared contracts/guards:

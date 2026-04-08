@@ -81,7 +81,8 @@ rc=$?
 set -e
 [[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
 
-hooks/_internal/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+hooks/_internal/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | rg -q 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap

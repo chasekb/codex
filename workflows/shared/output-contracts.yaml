@@ -42,6 +42,15 @@ contracts:
       - outcomes
       - conclusion
     optional: []
+  research:
+    required:
+      - objective
+      - queries
+      - sources_consulted
+      - accepted_sources
+      - conclusion
+      - reuse_hit
+    optional: []
   retro:
     required:
       - doctrine_update_summary

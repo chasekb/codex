@@ -16,7 +16,8 @@ if is_low_confidence; then
 fi
 
 case "$task_class" in
-  plan|docs|research) echo "plan-only" ;;
+  plan) echo "plan-only" ;;
+  docs|research) echo "research" ;;
   request|change|general) echo "request-standard" ;;
   implement) echo "implement-small" ;;
   debug) echo "debug-rca" ;;

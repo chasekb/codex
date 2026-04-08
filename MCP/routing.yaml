@@ -17,7 +17,7 @@ intents:
   docs_lookup:
     primary: context7
     fallback: brave
-    workflow: plan-only
+    workflow: research
     min_confidence: 0.65
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
@@ -38,7 +38,7 @@ intents:
   external_research:
     primary: brave
     fallback: context7
-    workflow: plan-only
+    workflow: research
     min_confidence: 0.60
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]

@@ -15,6 +15,9 @@ workflows:
   - id: verify
     trigger: verification_only_request
     pipeline: pipelines/verify.yaml
+  - id: research
+    trigger: research_request
+    pipeline: pipelines/research.yaml
   - id: retro
     trigger: retrospective_request
     pipeline: pipelines/retro.yaml
