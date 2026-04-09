@@ -16,13 +16,17 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install runtime test dependency
+        shell: bash
+        run: python3 -m pip install pyyaml
+
       - name: Run runtime self-test
         shell: bash
-        run: hooks/_internal/self-test
+        run: hooks/_internal/runtime/self-test
 
       - name: Run command-policy regression
         shell: bash
-        run: hooks/_internal/rule-regression
+        run: hooks/_internal/runtime/rule-regression
 
       - name: Shell syntax check
         shell: bash
@@ -41,10 +45,10 @@ jobs:
                 bash -n "$file"
                 ;;
             esac
-          done < <(find hooks/_internal -maxdepth 1 -type f ! -name 'hook-pipeline' -print0)
+          done < <(find hooks/_internal -type f ! -name 'hook-pipeline' -print0)
 
       - name: Python syntax check
         shell: bash
         env:
           PYTHONPYCACHEPREFIX: ${{ runner.temp }}/python-pycaches
-        run: python3 -m py_compile hooks/_internal/hook-pipeline hooks/_internal/validate-output-contract hooks/_internal/rule-regression
+        run: python3 -m py_compile hooks/_internal/runtime/hook-pipeline hooks/_internal/output/validate-output-contract hooks/_internal/runtime/rule-regression

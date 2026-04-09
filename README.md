@@ -9,8 +9,13 @@ This repository is a global Codex runtime with:
 
 ## Directory Map
 - `hooks/`: Hook entrypoints executed by Codex hook events
-- `hooks/_internal/`: Internal automation scripts used by `hook-pipeline`
-- `skills/`: Repo-local skill registry and skill definitions preferred by the runtime
+- `hooks/_internal/{bootstrap,logging,routing,memory,metrics,output,runtime}/`: Internal automation scripts used by `hook-pipeline`
+- `skills/core/`: Core routing and runtime skills
+- `skills/github/`: GitHub-focused skills
+- `skills/ops/`: Maintenance and container workflow skills
+- `skills/research/`: Research-oriented skills
+- `skills/.system/`: Bundled system skills and templates
+- `skills/registry.yaml`: Repo-local skill registry preferred by the runtime
 - `workflows/`: Workflow registry, pipelines, contracts, guards, and shared step primitives
 - `MCP/`: Routing, prompt atoms, memory storage, budgets, and registry config
 - `rules/`: Policy rules (concise, routing discipline, token budgeting, etc.)
@@ -27,12 +32,12 @@ Configured in `hooks.json`:
 
 Each hook wrapper:
 1. Reads JSON payload from stdin
-2. Logs event metadata (`hooks/_internal/event-logger`)
-3. Runs `hooks/_internal/hook-pipeline` for state/memory/metrics updates
+2. Logs event metadata (`hooks/_internal/logging/event-logger`)
+3. Runs `hooks/_internal/runtime/hook-pipeline` for state/memory/metrics updates
 4. Always returns `{}` to keep host hook contracts stable
 
 ## Core Runtime Engine
-`hooks/_internal/hook-pipeline` is the orchestration engine.
+`hooks/_internal/runtime/hook-pipeline` is the orchestration engine.
 
 It maintains `outputs/hook-runtime-state.json` with:
 - Session status, class, workflow, selected skill, objective
@@ -62,7 +67,7 @@ Main behavior by event:
   - Run regression guard + tuning proposal + canary apply (+ optional promote by tuning mode)
 
 ## Internal Script Functions
-`hooks/_internal/*` highlights:
+`hooks/_internal/*` highlights, now grouped by function:
 - `preflight`: validates required runtime files and runs outputs writeability check
 - `ensure-outputs-writable`: guarantees `outputs/` exists and is writable
 - `event-logger`: JSONL hook event log (`outputs/hook-events.log`)
@@ -165,19 +170,19 @@ Typical files in `outputs/`:
 Run internal regression suite:
 
 ```bash
-hooks/_internal/self-test
+hooks/_internal/runtime/self-test
 ```
 
 Run command-policy regression only:
 
 ```bash
-hooks/_internal/rule-regression
+hooks/_internal/runtime/rule-regression
 ```
 
 Run preflight only:
 
 ```bash
-hooks/_internal/preflight
+hooks/_internal/bootstrap/preflight
 ```
 
 Repo-local skill registry:

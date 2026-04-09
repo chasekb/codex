@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+find_repo_root() {
+  local dir="$1"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/hooks.json" && -d "$dir/skills" && -d "$dir/rules" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname -- "$dir")"
+  done
+  return 1
+}
+
+ROOT="$(find_repo_root "$(cd -- "$(dirname -- "$0")" && pwd)")"
+cd "$ROOT"
+
+tmpdir="$(mktemp -d /tmp/hooks-internal-self-test.XXXXXX)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+pass() { printf 'PASS %s\n' "$1"; }
+fail() { printf 'FAIL %s\n' "$1"; exit 1; }
+
+hooks/_internal/bootstrap/preflight >/dev/null && pass preflight || fail preflight
+
+[[ "$(hooks/_internal/routing/select-workflow debug 0.9)" == "debug-rca" ]] && pass select_workflow_debug || fail select_workflow_debug
+[[ "$(hooks/_internal/routing/select-workflow implement 0.2)" == "plan-only" ]] && pass select_workflow_low_conf || fail select_workflow_low_conf
+
+skill_out="$(hooks/_internal/routing/select-skill implement 0.9 "build fix")"
+echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_skill_implement || fail select_skill_implement
+
+hooks/_internal/routing/load-skill plan-verify-execute metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
+hooks/_internal/routing/validate-skill "$ROOT/skills/core/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
+hooks/_internal/routing/load-skill github-actions-remote-build metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote
+hooks/_internal/routing/load-skill podman-compose-test-runner metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_podman_compose || fail load_skill_podman_compose
+hooks/_internal/routing/load-skill ci-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_ci_triage || fail load_skill_ci_triage
+hooks/_internal/routing/load-skill release-publish metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_release_publish || fail load_skill_release_publish
+hooks/_internal/routing/load-skill dependency-maintenance metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_dependency_maintenance || fail load_skill_dependency_maintenance
+hooks/_internal/routing/validate-skill "$ROOT/skills/github/github-actions-remote-build/SKILL.md" >/dev/null && pass validate_skill_github_remote || fail validate_skill_github_remote
+hooks/_internal/routing/validate-skill "$ROOT/skills/ops/podman-compose-test-runner/SKILL.md" >/dev/null && pass validate_skill_podman_compose || fail validate_skill_podman_compose
+hooks/_internal/routing/validate-skill "$ROOT/skills/github/ci-triage/SKILL.md" >/dev/null && pass validate_skill_ci_triage || fail validate_skill_ci_triage
+hooks/_internal/routing/validate-skill "$ROOT/skills/ops/release-publish/SKILL.md" >/dev/null && pass validate_skill_release_publish || fail validate_skill_release_publish
+hooks/_internal/routing/validate-skill "$ROOT/skills/ops/dependency-maintenance/SKILL.md" >/dev/null && pass validate_skill_dependency_maintenance || fail validate_skill_dependency_maintenance
+hooks/_internal/runtime/rule-regression >/dev/null && pass rule_regression || fail rule_regression
+
+github_remote_out="$(hooks/_internal/routing/select-skill request 0.9 "github actions build workflow")"
+echo "$github_remote_out" | tail -n1 | grep -qx 'github-actions-remote-build' && pass select_skill_github_remote || fail select_skill_github_remote
+
+podman_compose_out="$(hooks/_internal/routing/select-skill implement 0.9 "podman-compose compose test")"
+echo "$podman_compose_out" | tail -n1 | grep -qx 'podman-compose-test-runner' && pass select_skill_podman_compose || fail select_skill_podman_compose
+
+ci_triage_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "failed github actions workflow")"
+echo "$ci_triage_skill_out" | tail -n1 | grep -qx 'ci-triage' && pass select_skill_ci_triage || fail select_skill_ci_triage
+
+release_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "release publish changelog")"
+echo "$release_skill_out" | tail -n1 | grep -qx 'release-publish' && pass select_skill_release_publish || fail select_skill_release_publish
+
+deps_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "dependency update audit")"
+echo "$deps_skill_out" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_maintenance || fail select_skill_dependency_maintenance
+
+repo="$tmpdir/repo"
+mkdir -p "$repo/.github/workflows"
+touch "$repo/.github/workflows/build.yml"
+touch "$repo/compose.test.yaml"
+touch "$repo/package.json"
+
+wf_ci="$(hooks/_internal/routing/select-workflow general 0.9 "failed github actions workflow" "$repo")"
+echo "$wf_ci" | tail -n1 | grep -qx 'ci-triage' && pass select_workflow_ci_triage || fail select_workflow_ci_triage
+
+wf_release="$(hooks/_internal/routing/select-workflow general 0.9 "release publish changelog" "$repo")"
+echo "$wf_release" | tail -n1 | grep -qx 'release-publish' && pass select_workflow_release_publish || fail select_workflow_release_publish
+
+wf_deps="$(hooks/_internal/routing/select-workflow general 0.9 "dependency update audit" "$repo")"
+echo "$wf_deps" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_workflow_dependency_maintenance || fail select_workflow_dependency_maintenance
+
+skill_ci="$(hooks/_internal/routing/select-skill general 0.9 "github actions build workflow" "$repo")"
+echo "$skill_ci" | tail -n1 | grep -qx 'github-actions-remote-build' && pass select_skill_github_remote_artifact || fail select_skill_github_remote_artifact
+
+skill_compose="$(hooks/_internal/routing/select-skill general 0.9 "podman compose test" "$repo")"
+echo "$skill_compose" | tail -n1 | grep -qx 'podman-compose-test-runner' && pass select_skill_podman_compose_artifact || fail select_skill_podman_compose_artifact
+
+skill_ci_triage_artifact="$(hooks/_internal/routing/select-skill general 0.9 "failed workflow" "$repo")"
+echo "$skill_ci_triage_artifact" | tail -n1 | grep -qx 'ci-triage' && pass select_skill_ci_triage_artifact || fail select_skill_ci_triage_artifact
+
+skill_release_artifact="$(hooks/_internal/routing/select-skill general 0.9 "release publish" "$repo")"
+echo "$skill_release_artifact" | tail -n1 | grep -qx 'release-publish' && pass select_skill_release_artifact || fail select_skill_release_artifact
+
+skill_deps_artifact="$(hooks/_internal/routing/select-skill general 0.9 "dependency maintenance" "$repo")"
+echo "$skill_deps_artifact" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_artifact || fail select_skill_dependency_artifact
+
+mem="$tmpdir/memory"
+mkdir -p "$mem"
+cat > "$mem/session.json" <<'JSON'
+{"version":1,"max_bytes":2048,"task":{"objective":"test objective","constraints":[],"active_files":[]},"updated_at":""}
+JSON
+: > "$mem/facts.jsonl"
+: > "$mem/decisions.jsonl"
+
+wm="$(hooks/_internal/memory/write-memory fact session testtag "remember this fact" self-test 0.9 30 "$mem")"
+echo "$wm" | grep -Fq 'memory:metrics writes=1 dedups=0' && pass write_memory || fail write_memory
+
+lm="$(hooks/_internal/memory/load-memory general "remember fact" 700 6 "$mem")"
+echo "$lm" | grep -Fq 'memory:metrics loaded=' && pass load_memory || fail load_memory
+
+cm="$(hooks/_internal/memory/compact-memory "$mem")"
+echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
+
+ctx="$tmpdir/context.txt"
+printf 'alpha\nbeta target\ngamma\ndelta target\n' > "$ctx"
+trunc="$(hooks/_internal/output/truncate-context "$ctx" 3 target)"
+[[ -n "$trunc" ]] && pass truncate_context || fail truncate_context
+
+contracts="$tmpdir/contracts.yaml"
+cat > "$contracts" <<'YAML'
+contracts:
+  debug_rca:
+    required:
+      - findings
+      - root_cause
+  ci_triage:
+    required:
+      - failure_summary
+      - likely_cause
+      - evidence
+      - next_action
+      - confidence
+  release_publish:
+    required:
+      - objective
+      - files_changed
+      - validation
+      - publish_result
+      - rollback_note
+  dependency_maintenance:
+    required:
+      - current_state
+      - candidate_updates
+      - risk_assessment
+      - validation_plan
+      - status
+YAML
+out="$tmpdir/out.txt"
+printf 'findings: yes\nroot_cause: yes\n' > "$out"
+hooks/_internal/output/validate-output-contract debug-rca "$out" "$contracts" >/dev/null && pass validate_output_contract || fail validate_output_contract
+
+out_ci="$tmpdir/out-ci.txt"
+printf 'failure_summary: yes\nlikely_cause: yes\nevidence: yes\nnext_action: yes\nconfidence: yes\n' > "$out_ci"
+hooks/_internal/output/validate-output-contract ci-triage "$out_ci" "$contracts" >/dev/null && pass validate_output_contract_ci_triage || fail validate_output_contract_ci_triage
+
+out_release="$tmpdir/out-release.txt"
+printf 'objective: yes\nfiles_changed: yes\nvalidation: yes\npublish_result: yes\nrollback_note: yes\n' > "$out_release"
+hooks/_internal/output/validate-output-contract release-publish "$out_release" "$contracts" >/dev/null && pass validate_output_contract_release_publish || fail validate_output_contract_release_publish
+
+out_deps="$tmpdir/out-deps.txt"
+printf 'current_state: yes\ncandidate_updates: yes\nrisk_assessment: yes\nvalidation_plan: yes\nstatus: yes\n' > "$out_deps"
+hooks/_internal/output/validate-output-contract dependency-maintenance "$out_deps" "$contracts" >/dev/null && pass validate_output_contract_dependency_maintenance || fail validate_output_contract_dependency_maintenance
+
+out_bad="$tmpdir/out-bad.txt"
+printf 'findings: yes\nThe root cause is described here, but not as a contract key.\n' > "$out_bad"
+set +e
+hooks/_internal/output/validate-output-contract debug-rca "$out_bad" "$contracts" >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass validate_output_contract_rejects_prose || fail validate_output_contract_rejects_prose
+
+hooks/_internal/output/enforce-budget 10 20 30 >/dev/null && pass enforce_budget_ok || fail enforce_budget_ok
+set +e
+hooks/_internal/output/enforce-budget 40 20 30 >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
+
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count' && pass postrun_metrics_header || fail postrun_metrics_header
+
+base="$tmpdir/baseline.csv"
+hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
+hooks/_internal/metrics/regression-guard debug-rca 105 10 "$base" >/dev/null && pass regression_ok || fail regression_ok
+set +e
+hooks/_internal/metrics/regression-guard debug-rca 200 10 "$base" >/dev/null 2>&1
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass regression_fail || fail regression_fail
+
+metrics="$tmpdir/token-metrics.csv"
+cat > "$metrics" <<'CSV'
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+CSV
+policy="$tmpdir/tuning-policy.yaml"
+cat > "$policy" <<'YAML'
+mode: observe
+min_samples_per_workflow: 5
+max_budget_shift_pct: 10
+max_contract_invalid_rate: 0.02
+min_pass_rate: 0.95
+max_retry_rate: 0.20
+max_fallback_rate: 0.20
+YAML
+budgets="$tmpdir/token-budgets.yaml"
+cat > "$budgets" <<'YAML'
+budgets:
+  debug_rca:
+    input_soft: 1000
+    output_soft: 1000
+    memory_read_soft: 500
+    skill_read_soft: 700
+YAML
+proposals="$tmpdir/proposals.json"
+hooks/_internal/metrics/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
+
+canary="$tmpdir/canary-token-budgets.yaml"
+report="$tmpdir/canary-report.json"
+hooks/_internal/metrics/apply-tuning-canary "$proposals" "$policy" "$budgets" "$canary" "$report" >/dev/null && pass apply_tuning_canary || fail apply_tuning_canary
+
+target="$tmpdir/target-budgets.yaml"
+cp "$budgets" "$target"
+hooks/_internal/metrics/promote-tuning "$report" "$canary" "$target" "$tmpdir/history.csv" >/dev/null && pass promote_tuning || fail promote_tuning
+hooks/_internal/metrics/rollback-tuning "$target" "$target.bak" manual "$tmpdir/history.csv" >/dev/null && pass rollback_tuning || fail rollback_tuning
+
+echo 'ALL_INTERNAL_TESTS_PASS'

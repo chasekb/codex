@@ -19,8 +19,8 @@ description: Aggressively reduce context payload while preserving decision-criti
 - `dropped_blocks`
 
 ## Tool dependencies
-- `hooks/_internal/truncate-context`
-- `hooks/_internal/load-memory`
+- `hooks/_internal/output/truncate-context`
+- `hooks/_internal/memory/load-memory`
 
 ## Stop conditions
 - compacted context under hard cap

@@ -13,4 +13,4 @@
 ## Examples
 - `rules/00-index.md: update precedence after rule renumbering`
 - `workflows/pipelines/retro.yaml: add retrospective workflow pipeline`
-- `hooks/_internal/select-workflow: route request/retro task classes`
+- `hooks/_internal/routing/select-workflow: route request/retro task classes`

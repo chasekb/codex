@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
+find_repo_root() {
+  local dir="$1"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/hooks.json" && -d "$dir/skills" && -d "$dir/rules" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname -- "$dir")"
+  done
+  return 1
+}
+
+ROOT="$(find_repo_root "$(cd -- "$(dirname -- "$0")" && pwd)")"
 OUT_DIR="$ROOT/outputs"
 
 mkdir -p "$OUT_DIR"

@@ -5,54 +5,54 @@ selection:
   metadata_only_default: true
 skills:
   - id: global-runtime
-    file: global-runtime/SKILL.md
+    file: core/global-runtime/SKILL.md
     tags: [global, runtime, routing]
     priority: 1
   - id: tool-minimization
-    file: tool-minimization/SKILL.md
+    file: core/tool-minimization/SKILL.md
     tags: [routing, tools, token-efficiency]
     priority: 1
   - id: plan-verify-execute
-    file: plan-verify-execute/SKILL.md
+    file: core/plan-verify-execute/SKILL.md
     tags: [planning, implementation, verification]
     priority: 1
   - id: eval-driven-improvement
-    file: eval-driven-improvement/SKILL.md
+    file: core/eval-driven-improvement/SKILL.md
     tags: [evals, quality, regression]
     priority: 2
   - id: context-compaction
-    file: context-compaction/SKILL.md
+    file: core/context-compaction/SKILL.md
     tags: [context, memory, token-efficiency]
     priority: 1
   - id: global-workflow
-    file: global-workflow/SKILL.md
+    file: core/global-workflow/SKILL.md
     tags: [workflow, planning, routing]
     priority: 2
   - id: global-output
-    file: global-output/SKILL.md
+    file: core/global-output/SKILL.md
     tags: [output, verbosity, formatting]
     priority: 2
   - id: github-actions-remote-build
-    file: github-actions-remote-build/SKILL.md
+    file: github/github-actions-remote-build/SKILL.md
     tags: [github, actions, ci, build, remote]
     priority: 2
   - id: podman-compose-test-runner
-    file: podman-compose-test-runner/SKILL.md
+    file: ops/podman-compose-test-runner/SKILL.md
     tags: [podman, compose, testing, containers]
     priority: 2
   - id: ci-triage
-    file: ci-triage/SKILL.md
+    file: github/ci-triage/SKILL.md
     tags: [github, actions, ci, triage, logs]
     priority: 2
   - id: release-publish
-    file: release-publish/SKILL.md
+    file: ops/release-publish/SKILL.md
     tags: [release, publish, versioning, packaging]
     priority: 2
   - id: dependency-maintenance
-    file: dependency-maintenance/SKILL.md
+    file: ops/dependency-maintenance/SKILL.md
     tags: [dependencies, maintenance, packages, audit]
     priority: 2
   - id: arxiv-watcher
-    file: arxiv-watcher/SKILL.md
+    file: research/arxiv-watcher/SKILL.md
     tags: [research, arxiv, papers, search, summarize]
     priority: 2
