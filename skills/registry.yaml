@@ -32,6 +32,10 @@ skills:
     file: core/global-output/SKILL.md
     tags: [output, verbosity, formatting]
     priority: 2
+  - id: skill-installer
+    file: .system/skill-installer/SKILL.md
+    tags: [system, install, skills]
+    priority: 1
   - id: github-actions-remote-build
     file: github/github-actions-remote-build/SKILL.md
     tags: [github, actions, ci, build, remote]
@@ -59,4 +63,8 @@ skills:
   - id: wikipedia-oc
     file: research/wikipedia-oc/SKILL.md
     tags: [research, wikipedia, search, summarize, api]
+    priority: 2
+  - id: web-scraper-as-a-service
+    file: seanwyngaard/web-scraper-as-a-service/SKILL.md
+    tags: [research, web, scraping, browser, automation]
     priority: 2

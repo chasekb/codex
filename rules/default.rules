@@ -59,6 +59,7 @@ prefix_rule(pattern=["tree"], decision="allow")
 # Second-tier utility commands.
 prefix_rule(pattern=["python", "--version"], decision="allow")
 prefix_rule(pattern=["python3", "--version"], decision="allow")
+prefix_rule(pattern=["python3", "/Users/bernardchase/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py"], decision="allow")
 prefix_rule(pattern=["node", "--version"], decision="allow")
 prefix_rule(pattern=["npm", "--version"], decision="allow")
 prefix_rule(pattern=["git", "--version"], decision="allow")
