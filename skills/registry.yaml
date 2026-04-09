@@ -68,3 +68,7 @@ skills:
     file: research/web-scraper-as-a-service/SKILL.md
     tags: [research, web, scraping, browser, automation]
     priority: 2
+  - id: exa-web-search-free
+    file: research/exa-web-search-free/SKILL.md
+    tags: [research, web, search, exa, mcp, current-info]
+    priority: 2
