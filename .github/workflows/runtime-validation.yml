@@ -16,6 +16,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install runtime test dependency
+        shell: bash
+        run: python3 -m pip install pyyaml
+
       - name: Run runtime self-test
         shell: bash
         run: hooks/_internal/runtime/self-test
