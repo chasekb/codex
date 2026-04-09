@@ -86,13 +86,13 @@ JSON
 : > "$mem/decisions.jsonl"
 
 wm="$(hooks/_internal/write-memory fact session testtag "remember this fact" self-test 0.9 30 "$mem")"
-echo "$wm" | rg -q 'memory:metrics writes=1 dedups=0' && pass write_memory || fail write_memory
+echo "$wm" | grep -Fq 'memory:metrics writes=1 dedups=0' && pass write_memory || fail write_memory
 
 lm="$(hooks/_internal/load-memory general "remember fact" 700 6 "$mem")"
-echo "$lm" | rg -q 'memory:metrics loaded=' && pass load_memory || fail load_memory
+echo "$lm" | grep -Fq 'memory:metrics loaded=' && pass load_memory || fail load_memory
 
 cm="$(hooks/_internal/compact-memory "$mem")"
-echo "$cm" | rg -q 'memory:compact_ok' && pass compact_memory || fail compact_memory
+echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
 
 ctx="$tmpdir/context.txt"
 printf 'alpha\nbeta target\ngamma\ndelta target\n' > "$ctx"
@@ -160,7 +160,7 @@ set -e
 [[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
 
 hooks/_internal/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | rg -q 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count' && pass postrun_metrics_header || fail postrun_metrics_header
+head -n1 outputs/token-metrics.csv | grep -Fq 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
