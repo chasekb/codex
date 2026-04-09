@@ -72,3 +72,7 @@ skills:
     file: research/exa-web-search-free/SKILL.md
     tags: [research, web, search, exa, mcp, current-info]
     priority: 2
+  - id: senior-data-scientist
+    file: research/senior-data-scientist/SKILL.md
+    tags: [research, statistics, ml, experimentation, causal-inference, feature-engineering]
+    priority: 2
