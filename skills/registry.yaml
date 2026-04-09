@@ -56,3 +56,7 @@ skills:
     file: research/arxiv-watcher/SKILL.md
     tags: [research, arxiv, papers, search, summarize]
     priority: 2
+  - id: wikipedia-oc
+    file: research/wikipedia-oc/SKILL.md
+    tags: [research, wikipedia, search, summarize, api]
+    priority: 2
