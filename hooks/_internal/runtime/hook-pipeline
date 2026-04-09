@@ -7,7 +7,22 @@ import sys
 from datetime import datetime, timezone
 
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+def find_repo_root(start: str) -> str:
+    cur = os.path.abspath(start)
+    while True:
+        if (
+            os.path.isfile(os.path.join(cur, "hooks.json"))
+            and os.path.isdir(os.path.join(cur, "skills"))
+            and os.path.isdir(os.path.join(cur, "rules"))
+        ):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            raise RuntimeError("repository root not found")
+        cur = parent
+
+
+ROOT = find_repo_root(os.path.dirname(__file__))
 STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")

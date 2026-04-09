@@ -2,7 +2,20 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
-root="$(cd -- "$script_dir/../.." && pwd)"
+
+find_repo_root() {
+  local dir="$1"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/hooks.json" && -d "$dir/skills" && -d "$dir/rules" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname -- "$dir")"
+  done
+  return 1
+}
+
+root="$(find_repo_root "$script_dir")"
 
 required_rel=(
   "MCP/defaults.yaml"
@@ -18,19 +31,19 @@ required_rel=(
   "workflows/pipelines/retro.yaml"
   "workflows/shared/output-handling.yaml"
   "workflows/shared/output-contracts.yaml"
-  "hooks/_internal/select-skill"
-  "hooks/_internal/load-skill"
-  "hooks/_internal/validate-skill"
-  "hooks/_internal/load-memory"
-  "hooks/_internal/write-memory"
-  "hooks/_internal/compact-memory"
-  "hooks/_internal/tune-from-metrics"
-  "hooks/_internal/apply-tuning-canary"
-  "hooks/_internal/promote-tuning"
-  "hooks/_internal/rollback-tuning"
-  "hooks/_internal/file-logger"
-  "hooks/_internal/event-logger"
-  "hooks/_internal/ensure-outputs-writable"
+  "hooks/_internal/routing/select-skill"
+  "hooks/_internal/routing/load-skill"
+  "hooks/_internal/routing/validate-skill"
+  "hooks/_internal/memory/load-memory"
+  "hooks/_internal/memory/write-memory"
+  "hooks/_internal/memory/compact-memory"
+  "hooks/_internal/metrics/tune-from-metrics"
+  "hooks/_internal/metrics/apply-tuning-canary"
+  "hooks/_internal/metrics/promote-tuning"
+  "hooks/_internal/metrics/rollback-tuning"
+  "hooks/_internal/logging/file-logger"
+  "hooks/_internal/logging/event-logger"
+  "hooks/_internal/bootstrap/ensure-outputs-writable"
 )
 
 bootstrap_file() {

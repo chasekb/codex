@@ -20,8 +20,8 @@ description: Improve behaviors by measurable eval loops and regression checks.
 - `rollback_or_promote`
 
 ## Tool dependencies
-- `hooks/_internal/postrun-metrics`
-- `hooks/_internal/regression-guard`
+- `hooks/_internal/metrics/postrun-metrics`
+- `hooks/_internal/metrics/regression-guard`
 
 ## Stop conditions
 - candidate outperforms baseline under thresholds

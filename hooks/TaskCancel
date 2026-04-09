@@ -7,9 +7,9 @@ error_log="$script_dir/../outputs/hook-errors.log"
 compat_error_log="$script_dir/../outputs/hook-file-error.log"
 mkdir -p "$(dirname "$error_log")"
 touch "$error_log" "$compat_error_log"
-"$script_dir/_internal/event-logger" "TaskCancel" <<<"$payload" 2>>"$error_log" || true
+"$script_dir/_internal/logging/event-logger" "TaskCancel" <<<"$payload" 2>>"$error_log" || true
 
-if python3 "$script_dir/_internal/hook-pipeline" "TaskCancel" <<<"$payload" >/dev/null 2>>"$error_log"; then
+if python3 "$script_dir/_internal/runtime/hook-pipeline" "TaskCancel" <<<"$payload" >/dev/null 2>>"$error_log"; then
   :
 else
   rc=$?

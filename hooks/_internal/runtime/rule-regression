@@ -6,7 +6,18 @@ import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def find_repo_root(start: Path) -> Path:
+    for candidate in [start, *start.parents]:
+        if (
+            (candidate / "hooks.json").is_file()
+            and (candidate / "skills").is_dir()
+            and (candidate / "rules").is_dir()
+        ):
+            return candidate
+    raise RuntimeError("repository root not found")
+
+
+ROOT = find_repo_root(Path(__file__).absolute().parent)
 RULES_FILE = ROOT / "rules" / "default.rules"
 
 

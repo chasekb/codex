@@ -2,8 +2,20 @@
 set -euo pipefail
 
 hook_name="${1:-unknown}"
+find_repo_root() {
+  local dir="$1"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/hooks.json" && -d "$dir/skills" && -d "$dir/rules" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname -- "$dir")"
+  done
+  return 1
+}
+
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
-root="$(cd -- "$script_dir/../.." && pwd)"
+root="$(find_repo_root "$script_dir")"
 log_file="$root/outputs/hook-events.log"
 mkdir -p "$(dirname "$log_file")"
 
