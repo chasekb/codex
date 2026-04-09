@@ -65,6 +65,6 @@ skills:
     tags: [research, wikipedia, search, summarize, api]
     priority: 2
   - id: web-scraper-as-a-service
-    file: seanwyngaard/web-scraper-as-a-service/SKILL.md
+    file: research/web-scraper-as-a-service/SKILL.md
     tags: [research, web, scraping, browser, automation]
     priority: 2
