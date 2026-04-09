@@ -3,710 +3,6 @@
   "tools": [
     {
       "server_name": "codex_apps",
-      "tool_name": "_download_file_from_url",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_download_file_from_url",
-        "title": "download_file_from_url",
-        "description": "Download a file from a URL and return base64-encoded content.",
-        "inputSchema": {
-          "properties": {
-            "url": {
-              "description": "Direct file URL to download.",
-              "title": "Url",
-              "type": "string"
-            }
-          },
-          "required": [
-            "url"
-          ],
-          "title": "download_file_from_url_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "download_file_from_url_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "FileDownload",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "contentType": {
-                  "title": "Contenttype",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                },
-                "bodyData": {
-                  "title": "Bodydata",
-                  "default": {},
-                  "type": "string"
-                }
-              },
-              "required": [
-                "bodyData"
-              ]
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_download_file_from_url",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/download_file_from_url",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_get_issue",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_get_issue",
-        "title": "get_issue",
-        "description": "Fetch a specific issue by its ID.",
-        "inputSchema": {
-          "properties": {
-            "issue_id": {
-              "description": "Linear issue ID or identifier to fetch.",
-              "title": "Issue Id",
-              "type": "string"
-            }
-          },
-          "required": [
-            "issue_id"
-          ],
-          "title": "get_issue_input",
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_get_issue",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_get_issue_comments",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_get_issue_comments",
-        "title": "get_issue_comments",
-        "description": "Return the comments attached to the specified issue.",
-        "inputSchema": {
-          "properties": {
-            "issue_id": {
-              "description": "Linear issue ID to inspect.",
-              "title": "Issue Id",
-              "type": "string"
-            }
-          },
-          "required": [
-            "issue_id"
-          ],
-          "title": "get_issue_comments_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "get_issue_comments_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "IssueCommentsResponse",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "comments": {
-                  "title": "Comments",
-                  "default": {},
-                  "type": "array",
-                  "items": {
-                    "title": "IssueComment",
-                    "default": {},
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "title": "Id",
-                        "default": {},
-                        "type": "string"
-                      },
-                      "body": {
-                        "title": "Body",
-                        "default": {},
-                        "type": "string"
-                      },
-                      "createdAt": {
-                        "title": "Createdat",
-                        "type": "anyOf",
-                        "anyOf": [
-                          {
-                            "default": {},
-                            "type": "string"
-                          },
-                          {
-                            "default": {},
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "user": {
-                        "type": "anyOf",
-                        "anyOf": [
-                          {
-                            "title": "TeamMember",
-                            "default": {},
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "title": "Id",
-                                "default": {},
-                                "type": "string"
-                              },
-                              "name": {
-                                "title": "Name",
-                                "type": "anyOf",
-                                "anyOf": [
-                                  {
-                                    "default": {},
-                                    "type": "string"
-                                  },
-                                  {
-                                    "default": {},
-                                    "type": "null"
-                                  }
-                                ]
-                              },
-                              "email": {
-                                "title": "Email",
-                                "type": "anyOf",
-                                "anyOf": [
-                                  {
-                                    "default": {},
-                                    "type": "string"
-                                  },
-                                  {
-                                    "default": {},
-                                    "type": "null"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "id"
-                            ]
-                          },
-                          {
-                            "default": {},
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "body"
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "comments"
-              ]
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_get_issue_comments",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue_comments",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_get_issue_labels",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_get_issue_labels",
-        "title": "get_issue_labels",
-        "description": "Return the labels attached to the specified issue.",
-        "inputSchema": {
-          "properties": {
-            "issue_id": {
-              "description": "Linear issue ID to inspect.",
-              "title": "Issue Id",
-              "type": "string"
-            }
-          },
-          "required": [
-            "issue_id"
-          ],
-          "title": "get_issue_labels_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "get_issue_labels_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "IssueLabelsResponse",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "issues": {
-                  "title": "Issues",
-                  "default": {},
-                  "type": "array",
-                  "items": {
-                    "title": "IssueLabel",
-                    "default": {},
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "title": "Id",
-                        "default": {},
-                        "type": "string"
-                      },
-                      "name": {
-                        "title": "Name",
-                        "default": {},
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "name"
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "issues"
-              ]
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_get_issue_labels",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue_labels",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_get_profile",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_get_profile",
-        "title": "get_profile",
-        "description": "Return organization profile for the installed app.",
-        "inputSchema": {
-          "properties": {},
-          "title": "get_profile_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "get_profile_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "Profile",
-              "description": "Many connectors (especially OAuth-based) act on behalf of a user.\nThis class represents the user's profile, which is typically retrieved from\nthe connector's API during the OAuth flow.\n\nImplementation details for different connectors vary, so we can't guarantee\nthat all fields will be present.",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "id": {
-                  "title": "Id",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                },
-                "name": {
-                  "title": "Name",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                },
-                "email": {
-                  "title": "Email",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                },
-                "nickname": {
-                  "title": "Nickname",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                },
-                "picture": {
-                  "title": "Picture",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_get_profile",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_profile",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_get_state_id_by_name",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_get_state_id_by_name",
-        "title": "get_state_id_by_name",
-        "description": "Return the workflow state id for the given team and state name.",
-        "inputSchema": {
-          "properties": {
-            "team_id": {
-              "description": "Linear team ID to inspect.",
-              "title": "Team Id",
-              "type": "string"
-            },
-            "state_name": {
-              "description": "Workflow state name to resolve.",
-              "title": "State Name",
-              "type": "string"
-            }
-          },
-          "required": [
-            "team_id",
-            "state_name"
-          ],
-          "title": "get_state_id_by_name_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "get_state_id_by_name_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "StringResponse",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "value": {
-                  "title": "Value",
-                  "type": "anyOf",
-                  "anyOf": [
-                    {
-                      "default": {},
-                      "type": "string"
-                    },
-                    {
-                      "default": {},
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_get_state_id_by_name",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_state_id_by_name",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
-      "tool_name": "_issue_repository_suggestions",
-      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
-      "tool": {
-        "name": "linear codex agent_issue_repository_suggestions",
-        "title": "issue_repository_suggestions",
-        "description": "Rank candidate repositories for an issue using Linear suggestions.",
-        "inputSchema": {
-          "properties": {
-            "issue_id": {
-              "description": "Linear issue ID to analyze.",
-              "title": "Issue Id",
-              "type": "string"
-            },
-            "candidate_repositories": {
-              "description": "Candidate repositories to rank for the issue.",
-              "items": {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              "title": "Candidate Repositories",
-              "type": "array"
-            },
-            "agent_session_id": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Optional Linear agent session ID for contextual suggestions.",
-              "title": "Agent Session Id"
-            }
-          },
-          "required": [
-            "issue_id",
-            "candidate_repositories"
-          ],
-          "title": "issue_repository_suggestions_input",
-          "type": "object"
-        },
-        "outputSchema": {
-          "title": "issue_repository_suggestions_output",
-          "default": {},
-          "type": "object",
-          "properties": {
-            "result": {
-              "title": "IssueRepositorySuggestionsResponse",
-              "default": {},
-              "type": "object",
-              "properties": {
-                "suggestions": {
-                  "title": "Suggestions",
-                  "default": {},
-                  "type": "array",
-                  "items": {
-                    "title": "RepositorySuggestion",
-                    "default": {},
-                    "type": "object",
-                    "properties": {
-                      "repositoryFullName": {
-                        "title": "Repositoryfullname",
-                        "default": {},
-                        "type": "string"
-                      },
-                      "hostname": {
-                        "title": "Hostname",
-                        "default": {},
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "title": "Confidence",
-                        "type": "anyOf",
-                        "anyOf": [
-                          {
-                            "default": {},
-                            "type": "number"
-                          },
-                          {
-                            "default": {},
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repositoryFullName",
-                      "hostname"
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "suggestions"
-              ]
-            }
-          },
-          "required": [
-            "result"
-          ]
-        },
-        "annotations": {
-          "readOnlyHint": true,
-          "destructiveHint": false,
-          "openWorldHint": false
-        },
-        "_meta": {
-          "resource_name": "Linear Codex Agent_issue_repository_suggestions",
-          "_codex_apps": {
-            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/issue_repository_suggestions",
-            "contains_mcp_source": false
-          },
-          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-          "connector_name": "Linear Codex Agent",
-          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
-          "link_id": "link_69b062d410508191836a13a20fb3cc17"
-        }
-      },
-      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
-      "connector_name": "Linear Codex Agent",
-      "plugin_display_names": [],
-      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
-    },
-    {
-      "server_name": "codex_apps",
       "tool_name": "_add_comment_to_issue",
       "tool_namespace": "mcp__codex_apps__github",
       "tool": {
@@ -6883,6 +6179,710 @@
       "connector_name": "GitHub",
       "plugin_display_names": [],
       "connector_description": "Access repositories, issues, and pull requests. Required for some features such as Codex"
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_download_file_from_url",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_download_file_from_url",
+        "title": "download_file_from_url",
+        "description": "Download a file from a URL and return base64-encoded content.",
+        "inputSchema": {
+          "properties": {
+            "url": {
+              "description": "Direct file URL to download.",
+              "title": "Url",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "download_file_from_url_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "download_file_from_url_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "FileDownload",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "contentType": {
+                  "title": "Contenttype",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                },
+                "bodyData": {
+                  "title": "Bodydata",
+                  "default": {},
+                  "type": "string"
+                }
+              },
+              "required": [
+                "bodyData"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_download_file_from_url",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/download_file_from_url",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_get_issue",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_get_issue",
+        "title": "get_issue",
+        "description": "Fetch a specific issue by its ID.",
+        "inputSchema": {
+          "properties": {
+            "issue_id": {
+              "description": "Linear issue ID or identifier to fetch.",
+              "title": "Issue Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "issue_id"
+          ],
+          "title": "get_issue_input",
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_get_issue",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_get_issue_comments",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_get_issue_comments",
+        "title": "get_issue_comments",
+        "description": "Return the comments attached to the specified issue.",
+        "inputSchema": {
+          "properties": {
+            "issue_id": {
+              "description": "Linear issue ID to inspect.",
+              "title": "Issue Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "issue_id"
+          ],
+          "title": "get_issue_comments_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "get_issue_comments_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "IssueCommentsResponse",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "comments": {
+                  "title": "Comments",
+                  "default": {},
+                  "type": "array",
+                  "items": {
+                    "title": "IssueComment",
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "title": "Id",
+                        "default": {},
+                        "type": "string"
+                      },
+                      "body": {
+                        "title": "Body",
+                        "default": {},
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "title": "Createdat",
+                        "type": "anyOf",
+                        "anyOf": [
+                          {
+                            "default": {},
+                            "type": "string"
+                          },
+                          {
+                            "default": {},
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "user": {
+                        "type": "anyOf",
+                        "anyOf": [
+                          {
+                            "title": "TeamMember",
+                            "default": {},
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "title": "Id",
+                                "default": {},
+                                "type": "string"
+                              },
+                              "name": {
+                                "title": "Name",
+                                "type": "anyOf",
+                                "anyOf": [
+                                  {
+                                    "default": {},
+                                    "type": "string"
+                                  },
+                                  {
+                                    "default": {},
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "email": {
+                                "title": "Email",
+                                "type": "anyOf",
+                                "anyOf": [
+                                  {
+                                    "default": {},
+                                    "type": "string"
+                                  },
+                                  {
+                                    "default": {},
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ]
+                          },
+                          {
+                            "default": {},
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "body"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "comments"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_get_issue_comments",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue_comments",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_get_issue_labels",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_get_issue_labels",
+        "title": "get_issue_labels",
+        "description": "Return the labels attached to the specified issue.",
+        "inputSchema": {
+          "properties": {
+            "issue_id": {
+              "description": "Linear issue ID to inspect.",
+              "title": "Issue Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "issue_id"
+          ],
+          "title": "get_issue_labels_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "get_issue_labels_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "IssueLabelsResponse",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "issues": {
+                  "title": "Issues",
+                  "default": {},
+                  "type": "array",
+                  "items": {
+                    "title": "IssueLabel",
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "title": "Id",
+                        "default": {},
+                        "type": "string"
+                      },
+                      "name": {
+                        "title": "Name",
+                        "default": {},
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "issues"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_get_issue_labels",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_issue_labels",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_get_profile",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_get_profile",
+        "title": "get_profile",
+        "description": "Return organization profile for the installed app.",
+        "inputSchema": {
+          "properties": {},
+          "title": "get_profile_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "get_profile_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "Profile",
+              "description": "Many connectors (especially OAuth-based) act on behalf of a user.\nThis class represents the user's profile, which is typically retrieved from\nthe connector's API during the OAuth flow.\n\nImplementation details for different connectors vary, so we can't guarantee\nthat all fields will be present.",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "id": {
+                  "title": "Id",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                },
+                "name": {
+                  "title": "Name",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                },
+                "email": {
+                  "title": "Email",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                },
+                "nickname": {
+                  "title": "Nickname",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                },
+                "picture": {
+                  "title": "Picture",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_get_profile",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_profile",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_get_state_id_by_name",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_get_state_id_by_name",
+        "title": "get_state_id_by_name",
+        "description": "Return the workflow state id for the given team and state name.",
+        "inputSchema": {
+          "properties": {
+            "team_id": {
+              "description": "Linear team ID to inspect.",
+              "title": "Team Id",
+              "type": "string"
+            },
+            "state_name": {
+              "description": "Workflow state name to resolve.",
+              "title": "State Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "team_id",
+            "state_name"
+          ],
+          "title": "get_state_id_by_name_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "get_state_id_by_name_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "StringResponse",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "value": {
+                  "title": "Value",
+                  "type": "anyOf",
+                  "anyOf": [
+                    {
+                      "default": {},
+                      "type": "string"
+                    },
+                    {
+                      "default": {},
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_get_state_id_by_name",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/get_state_id_by_name",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
+    },
+    {
+      "server_name": "codex_apps",
+      "tool_name": "_issue_repository_suggestions",
+      "tool_namespace": "mcp__codex_apps__linear_codex_agent",
+      "tool": {
+        "name": "linear codex agent_issue_repository_suggestions",
+        "title": "issue_repository_suggestions",
+        "description": "Rank candidate repositories for an issue using Linear suggestions.",
+        "inputSchema": {
+          "properties": {
+            "issue_id": {
+              "description": "Linear issue ID to analyze.",
+              "title": "Issue Id",
+              "type": "string"
+            },
+            "candidate_repositories": {
+              "description": "Candidate repositories to rank for the issue.",
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Candidate Repositories",
+              "type": "array"
+            },
+            "agent_session_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Optional Linear agent session ID for contextual suggestions.",
+              "title": "Agent Session Id"
+            }
+          },
+          "required": [
+            "issue_id",
+            "candidate_repositories"
+          ],
+          "title": "issue_repository_suggestions_input",
+          "type": "object"
+        },
+        "outputSchema": {
+          "title": "issue_repository_suggestions_output",
+          "default": {},
+          "type": "object",
+          "properties": {
+            "result": {
+              "title": "IssueRepositorySuggestionsResponse",
+              "default": {},
+              "type": "object",
+              "properties": {
+                "suggestions": {
+                  "title": "Suggestions",
+                  "default": {},
+                  "type": "array",
+                  "items": {
+                    "title": "RepositorySuggestion",
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "repositoryFullName": {
+                        "title": "Repositoryfullname",
+                        "default": {},
+                        "type": "string"
+                      },
+                      "hostname": {
+                        "title": "Hostname",
+                        "default": {},
+                        "type": "string"
+                      },
+                      "confidence": {
+                        "title": "Confidence",
+                        "type": "anyOf",
+                        "anyOf": [
+                          {
+                            "default": {},
+                            "type": "number"
+                          },
+                          {
+                            "default": {},
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "repositoryFullName",
+                      "hostname"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "suggestions"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "resource_name": "Linear Codex Agent_issue_repository_suggestions",
+          "_codex_apps": {
+            "resource_uri": "/connector_fdb98b59c8d44f678b086d20e82bd316/link_69b062d410508191836a13a20fb3cc17/issue_repository_suggestions",
+            "contains_mcp_source": false
+          },
+          "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+          "connector_name": "Linear Codex Agent",
+          "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use.",
+          "link_id": "link_69b062d410508191836a13a20fb3cc17"
+        }
+      },
+      "connector_id": "connector_fdb98b59c8d44f678b086d20e82bd316",
+      "connector_name": "Linear Codex Agent",
+      "plugin_display_names": [],
+      "connector_description": "Linear connector using app-actor OAuth flow for Codex bot use."
     }
   ]
 }

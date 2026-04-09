@@ -11,4 +11,6 @@ session_index.jsonl
 auth.json
 config.toml
 
+cache/
 MCP/memory/
+plugins/cache/

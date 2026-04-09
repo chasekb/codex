@@ -52,3 +52,7 @@ skills:
     file: dependency-maintenance/SKILL.md
     tags: [dependencies, maintenance, packages, audit]
     priority: 2
+  - id: arxiv-watcher
+    file: arxiv-watcher/SKILL.md
+    tags: [research, arxiv, papers, search, summarize]
+    priority: 2
