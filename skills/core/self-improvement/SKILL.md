@@ -30,6 +30,7 @@ Log learnings and errors to markdown files for continuous improvement. Coding ag
 | Knowledge was outdated | Log to `.learnings/LEARNINGS.md` with category `knowledge_gap` |
 | Found better approach | Log to `.learnings/LEARNINGS.md` with category `best_practice` |
 | Simplify/Harden recurring patterns | Log/update `.learnings/LEARNINGS.md` with `Source: simplify-and-harden` and a stable `Pattern-Key` |
+| Session is about learning capture or promotion | Select `self-improvement` and route synthesis through `retro` |
 | Similar to existing entry | Link with `**See Also**`, consider priority bump |
 | Broadly applicable learning | Promote to `CLAUDE.md`, `AGENTS.md`, and/or `.github/copilot-instructions.md` |
 | Workflow improvements | Promote to `AGENTS.md` (openclaw workspace) |
@@ -45,6 +46,17 @@ mkdir -p .learnings
 ```
 
 Copy templates from `assets/` or create files with headers.
+
+## Codex Runtime Routing
+
+Use this skill when the work is about capturing, reviewing, or promoting learnings in the Codex runtime:
+
+- Select `self-improvement` when the prompt or task mentions corrections, missing capabilities, errors, knowledge gaps, recurring patterns, learning capture, or skill extraction.
+- Prefer `retro` for synthesis and review of learnings, then `request-standard` or `implement-small` when turning a learning into a code or config change.
+- The Codex runtime can also persist detected learning signals to `.learnings/` automatically.
+- Keep `eval-driven-improvement` for metric, baseline, and regression work.
+- Keep `global-workflow` for workflow-planning and routing analysis rather than learning capture itself.
+- If the work is only about compacting context, use `context-compaction` instead.
 
 ## Logging Format
 

@@ -43,6 +43,11 @@ if is_low_confidence; then
   exit 0
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(self[-[:space:]]?improvement|log[[:space:]]+(this|that)?[[:space:]]*to[[:space:]]+learnings?|review[[:space:]]+learnings?|learning[[:space:]]+capture|extract[[:space:]]+skill|promote[[:space:]]+(this[[:space:]]+)?learning|pattern[[:space:]]+key|recurring[[:space:]]+pattern|knowledge[[:space:]]+gap|best[[:space:]]+practice|lesson[[:space:]]+learned)([[:space:]]|$)'; then
+  echo "retro"
+  exit 0
+fi
+
 if [[ "$has_ci_workflows" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(ci triage|failed[[:space:]]+(github actions[[:space:]]+)?workflow|failed ci|workflow failure|build log|job log|triage ci|investigate ci)([[:space:]]|$)'; then
   echo "ci-triage"
   exit 0

@@ -1,4 +1,5 @@
 outputs/
+.learnings/
 .tmp/
 tmp/
 shell_snapshots/

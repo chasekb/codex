@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import uuid
 from datetime import datetime, timezone
 
 
@@ -28,10 +29,18 @@ SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")
 SKILLS_REGISTRY = os.environ.get("CODEX_SKILLS_REGISTRY") or os.path.join(ROOT, "skills", "registry.yaml")
 HOOK_EVENTS_PATH = os.path.join(ROOT, "outputs", "hook-events.log")
+LEARNINGS_DIR = os.path.join(ROOT, ".learnings")
+LEARNINGS_PATH = os.path.join(LEARNINGS_DIR, "LEARNINGS.md")
+ERRORS_PATH = os.path.join(LEARNINGS_DIR, "ERRORS.md")
+FEATURE_REQUESTS_PATH = os.path.join(LEARNINGS_DIR, "FEATURE_REQUESTS.md")
 
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def today_id():
+    return datetime.now(timezone.utc).strftime("%Y%m%d")
 
 
 def to_int(v, default=0):
@@ -56,6 +65,10 @@ def text(v) -> str:
     if isinstance(v, str):
         return " ".join(v.split()).strip()
     return ""
+
+
+def short_token():
+    return uuid.uuid4().hex[:3].upper()
 
 
 def first(*values):
@@ -103,6 +116,18 @@ def save_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+
+def ensure_learning_store():
+    os.makedirs(LEARNINGS_DIR, exist_ok=True)
+    for path, header in (
+        (LEARNINGS_PATH, "# Learnings\n\n"),
+        (ERRORS_PATH, "# Errors\n\n"),
+        (FEATURE_REQUESTS_PATH, "# Feature Requests\n\n"),
+    ):
+        if not os.path.exists(path):
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(header)
 
 
 def default_state():
@@ -329,6 +354,71 @@ def write_memory(state, record_type, scope, tags_csv, content, source="hook-pipe
     return out
 
 
+def learning_entry_path(record_type):
+    if record_type == "error":
+        return ERRORS_PATH
+    if record_type == "feature_request":
+        return FEATURE_REQUESTS_PATH
+    return LEARNINGS_PATH
+
+
+def learning_entry_id(record_type):
+    prefix = {"error": "ERR", "feature_request": "FEAT"}.get(record_type, "LRN")
+    return f"{prefix}-{today_id()}-{short_token()}"
+
+
+def append_learning_entry(
+    record_type,
+    category,
+    area,
+    summary,
+    details,
+    suggested_action,
+    source,
+    related_files="",
+    tags=None,
+    priority="medium",
+    status="pending",
+    metadata_extra=None,
+):
+    ensure_learning_store()
+    tags = tags or []
+    metadata_extra = metadata_extra or []
+    entry_id = learning_entry_id(record_type)
+    path = learning_entry_path(record_type)
+    lines = [
+        f"## [{entry_id}] {category}",
+        "",
+        f"**Logged**: {now_iso()}",
+        f"**Priority**: {priority}",
+        f"**Status**: {status}",
+        f"**Area**: {area}",
+        "",
+        "### Summary",
+        summary,
+        "",
+        "### Details",
+        details,
+        "",
+        "### Suggested Action",
+        suggested_action,
+        "",
+        "### Metadata",
+        f"- Source: {source}",
+    ]
+    if related_files:
+        lines.append(f"- Related Files: {related_files}")
+    if tags:
+        lines.append(f"- Tags: {', '.join(tags)}")
+    for item in metadata_extra:
+        if item:
+            lines.append(f"- {item}")
+    lines.extend(["", "---", ""])
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    return path, entry_id
+
+
 def parse_memory_load_metrics(output):
     loaded = 0
     chars = 0
@@ -467,6 +557,51 @@ def tokenize_words(value):
     if not isinstance(value, str):
         value = text(value)
     return [part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2]
+
+
+def detect_self_improvement_signal(prompt):
+    prompt_lc = text(prompt).lower()
+    if not prompt_lc:
+        return ""
+    patterns = [
+        ("self-improvement", r"self[- ]?improvement|learning capture|review learnings?|log learnings?|log this to learnings?|extract skill|promote (?:this )?learning|pattern key|recurring pattern|knowledge gap|best practice|lesson learned"),
+        ("correction", r"no,? that'?s wrong|actually,? it should be|you'?re wrong|that'?s outdated|correction"),
+        ("feature_request", r"missing feature|feature request|can(?:not|'t) do|wish you could|is there a way to"),
+    ]
+    for label, pattern in patterns:
+        if re.search(pattern, prompt_lc):
+            return label
+    return ""
+
+
+def log_prompt_learning(prompt, signal):
+    prompt_text = text(prompt)
+    if not prompt_text or not signal:
+        return None
+    prompt_excerpt = prompt_text[:220]
+    if signal == "feature_request":
+        return append_learning_entry(
+            "feature_request",
+            "requested_capability",
+            "config",
+            f"Feature request surfaced in prompt: {prompt_excerpt[:80]}",
+            f"Prompt requested a missing capability or new behavior.\n\nSource prompt:\n{prompt_excerpt}",
+            "Review the request, decide whether the capability belongs in runtime routing, a workflow, or a reusable skill, then implement the smallest useful change.",
+            "user_prompt",
+            tags=["self-improvement", "prompt", signal],
+            metadata_extra=["Frequency: recurring" if "again" in prompt_text.lower() else "Frequency: first_time"],
+        )
+    category = "correction" if signal == "correction" else "insight"
+    return append_learning_entry(
+        "learning",
+        category,
+        "config",
+        f"Self-improvement signal detected in prompt: {prompt_excerpt[:80]}",
+        f"Prompt requested learning capture or correction.\n\nSource prompt:\n{prompt_excerpt}",
+        "Review the prompt, capture any concrete learning in `.learnings/`, and promote it if the pattern is reusable.",
+        "user_prompt",
+        tags=["self-improvement", "prompt", signal],
+    )
 
 
 def extract_search_query(tool_name, tool_input, payload):
@@ -1028,6 +1163,27 @@ def main():
         if prompt:
             state["session"]["objective"] = state["session"].get("objective") or prompt[:220]
             write_memory(state, "fact", "session", "prompt,user", prompt[:220], confidence="0.85", ttl_days="14")
+            self_improvement_signal = detect_self_improvement_signal(prompt)
+            if self_improvement_signal:
+                log_prompt_learning(prompt, self_improvement_signal)
+                append_event_log(
+                    "self_improvement_signal",
+                    hook_name,
+                    workflow=str(state["session"].get("workflow", "unknown")),
+                    skill=str(state["session"].get("skill_id", "none")),
+                    stage="prompt",
+                    status=self_improvement_signal,
+                    details=prompt[:120],
+                )
+                write_memory(
+                    state,
+                    "fact",
+                    "session",
+                    "self-improvement,prompt,signal",
+                    f"Signal={self_improvement_signal} prompt={prompt[:220]}",
+                    confidence="0.9",
+                    ttl_days="14",
+                )
             update_session_memory(state)
 
     elif hook_name == "Notification":
