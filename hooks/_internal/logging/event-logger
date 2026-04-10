@@ -92,5 +92,19 @@ entry = {
 }
 
 with open(log_file, "a", encoding="utf-8") as f:
-    f.write(json.dumps(entry, separators=(",", ":")) + "\n")
+    fields = [
+        entry["timestamp"],
+        f"hook={entry['hook']}",
+        f"status=invoked",
+    ]
+    if entry["tool"] and entry["tool"] != "unknown":
+        fields.append(f"tool={entry['tool']}")
+    if isinstance(data, dict):
+        for key in ("event", "stage", "workflow", "skill", "status"):
+            value = data.get(key)
+            if isinstance(value, str) and value.strip():
+                fields.append(f"{key}={value.strip()}")
+    if entry["paths"]:
+        fields.append(f"paths={','.join(entry['paths'])}")
+    f.write(" ".join(fields) + "\n")
 PY

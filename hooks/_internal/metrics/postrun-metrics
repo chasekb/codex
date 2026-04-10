@@ -22,13 +22,16 @@ search_query_count="${18:-0}"
 search_source_count="${19:-0}"
 search_reuse_hit="${20:-0}"
 search_memory_write_count="${21:-0}"
-skill_id="${22:-none}"
-skill_loaded_chars="${23:-0}"
-skill_fallback="${24:-false}"
+hook_name="${22:-unknown}"
+pipeline_stage="${23:-postrun}"
+workflow_selected="${24:-unknown}"
+skill_id="${25:-none}"
+skill_loaded_chars="${26:-0}"
+skill_fallback="${27:-false}"
 
 mkdir -p outputs
 metrics_file="outputs/token-metrics.csv"
-desired_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,skill_id,skill_loaded_chars,skill_fallback'
+desired_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,hook_name,pipeline_stage,workflow_selected,skill_id,skill_loaded_chars,skill_fallback'
 legacy_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback'
 
 if [[ ! -f "$metrics_file" ]]; then
@@ -64,11 +67,11 @@ fi
 total_tokens=$(( input_tokens + output_tokens ))
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
   "$timestamp" "$task_class" "$workflow" "$confidence" "$input_tokens" "$output_tokens" "$total_tokens" \
   "$retries" "$fallbacks" "$tools" "$elapsed_ms" "$status" "$contract_valid" \
   "$memory_loaded" "$memory_chars" "$memory_write_count" "$memory_dedup_count" "$memory_compact_kept" \
   "$search_tool_count" "$search_query_count" "$search_source_count" "$search_reuse_hit" "$search_memory_write_count" \
-  "$skill_id" "$skill_loaded_chars" "$skill_fallback" >> "$metrics_file"
+  "$hook_name" "$pipeline_stage" "$workflow_selected" "$skill_id" "$skill_loaded_chars" "$skill_fallback" >> "$metrics_file"
 
 echo "metrics:ok file=$metrics_file"

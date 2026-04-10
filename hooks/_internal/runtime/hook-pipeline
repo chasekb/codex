@@ -27,6 +27,7 @@ STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")
 SKILLS_REGISTRY = os.environ.get("CODEX_SKILLS_REGISTRY") or os.path.join(ROOT, "skills", "registry.yaml")
+HOOK_EVENTS_PATH = os.path.join(ROOT, "outputs", "hook-events.log")
 
 
 def now_iso() -> str:
@@ -196,7 +197,7 @@ def load_state():
 
 def run_internal(script_name, args=None, stdin_text=None):
     args = args or []
-    script = os.path.join(ROOT, "hooks", "_internal", script_name)
+    script = resolve_internal_script(script_name)
     proc = subprocess.run(
         ["/bin/bash", script, *args],
         input=stdin_text,
@@ -207,6 +208,34 @@ def run_internal(script_name, args=None, stdin_text=None):
     )
     out = (proc.stdout or "") + (proc.stderr or "")
     return proc.returncode, out
+
+
+def resolve_internal_script(script_name):
+    if os.path.isabs(script_name) and os.path.isfile(script_name):
+        return script_name
+
+    if os.path.sep in script_name:
+        candidate = os.path.join(ROOT, script_name)
+        if os.path.isfile(candidate):
+            return candidate
+
+    internal_root = os.path.join(ROOT, "hooks", "_internal")
+    candidate_dirs = (
+        "",
+        "routing",
+        "memory",
+        "metrics",
+        "output",
+        "logging",
+        "bootstrap",
+        "runtime",
+    )
+    for subdir in candidate_dirs:
+        candidate = os.path.join(internal_root, subdir, script_name) if subdir else os.path.join(internal_root, script_name)
+        if os.path.isfile(candidate):
+            return candidate
+
+    raise FileNotFoundError(f"internal script not found: {script_name}")
 
 
 def parse_kv_metric(line, key):
@@ -331,6 +360,32 @@ def parse_skill_loaded_chars(output):
         if line.startswith("skill:metrics"):
             return parse_kv_metric(line, "loaded_chars")
     return 0
+
+
+def format_event_line(event_name, hook_name, workflow="", skill="", stage="", status="", tool=""):
+    ts = now_iso()
+    fields = [
+        f"{ts}",
+        f"hook={hook_name}",
+        f"event={event_name}",
+    ]
+    if stage:
+        fields.append(f"stage={stage}")
+    if status:
+        fields.append(f"status={status}")
+    if workflow:
+        fields.append(f"workflow={workflow}")
+    if skill:
+        fields.append(f"skill={skill}")
+    if tool:
+        fields.append(f"tool={tool}")
+    return " ".join(fields)
+
+
+def append_event_log(event_name, hook_name, workflow="", skill="", stage="", status="", tool=""):
+    os.makedirs(os.path.dirname(HOOK_EVENTS_PATH), exist_ok=True)
+    with open(HOOK_EVENTS_PATH, "a", encoding="utf-8") as f:
+        f.write(format_event_line(event_name, hook_name, workflow, skill, stage, status, tool) + "\n")
 
 
 SEARCH_TOOL_NAMES = {
@@ -728,6 +783,7 @@ def main():
             {
                 "status": "running",
                 "started_at": state["session"].get("started_at") or now_iso(),
+                "hook_name": hook_name,
                 "task_class": str(task_class),
                 "workflow": workflow,
                 "output_contract": output_contract,
@@ -742,12 +798,35 @@ def main():
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
 
+        append_event_log(
+            "workflow_selected",
+            hook_name,
+            workflow=workflow,
+            skill=skill_id,
+            stage="selection",
+            status="selected",
+        )
+        append_event_log(
+            "skill_selected",
+            hook_name,
+            workflow=workflow,
+            skill=skill_id,
+            stage="selection",
+            status="loaded" if skill_loaded_chars else "missing",
+        )
         write_memory(
             state,
             "decision",
             "workflow",
             "routing,workflow",
-            f"Selected workflow={workflow} skill={skill_id} class={task_class} confidence={confidence:.2f}",
+            f"Selected workflow={workflow} class={task_class} confidence={confidence:.2f}",
+        )
+        write_memory(
+            state,
+            "decision",
+            "workflow",
+            "routing,skill",
+            f"Selected skill={skill_id} workflow={workflow} class={task_class} confidence={confidence:.2f}",
         )
         update_session_memory(state)
 
@@ -940,6 +1019,15 @@ def main():
         if summary:
             write_memory(state, "decision", "session", "completion,status", summary[:220], confidence="0.9", ttl_days="45")
 
+        append_event_log(
+            "postrun_summary",
+            hook_name,
+            workflow=workflow,
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="postrun",
+            status=status,
+        )
+
         run_internal(
             "postrun-metrics",
             [
@@ -964,6 +1052,9 @@ def main():
                 str(state["metrics"].get("search_source_count", 0)),
                 str(state["metrics"].get("search_reuse_hit", 0)),
                 str(state["metrics"].get("search_memory_write_count", 0)),
+                str(state["session"].get("hook_name", hook_name)),
+                "postrun",
+                str(state["session"].get("workflow", workflow)),
                 str(state["session"].get("skill_id", "none")),
                 str(state["metrics"].get("skill_loaded_chars", 0)),
                 str(state["metrics"].get("skill_fallback", False)).lower(),
