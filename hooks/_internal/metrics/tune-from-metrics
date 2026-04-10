@@ -7,6 +7,7 @@ budgets_file="${3:-MCP/budgets/token-budgets.yaml}"
 out_file="${4:-outputs/tuning-proposals.json}"
 report_file="${5:-outputs/budget-report.md}"
 report_json_file="${6:-outputs/budget-report.json}"
+history_file="${7:-outputs/budget-history.jsonl}"
 
 [[ -f "$metrics_file" ]] || { echo "tuning:error missing_metrics"; exit 1; }
 [[ -f "$policy_file" ]] || { echo "tuning:error missing_policy"; exit 1; }
@@ -14,14 +15,14 @@ report_json_file="${6:-outputs/budget-report.json}"
 
 mkdir -p outputs
 
-python3 - <<'PY' "$metrics_file" "$policy_file" "$budgets_file" "$out_file" "$report_file" "$report_json_file"
+python3 - <<'PY' "$metrics_file" "$policy_file" "$budgets_file" "$out_file" "$report_file" "$report_json_file" "$history_file"
 import csv
 import json
 import re
 import sys
 from datetime import datetime, timezone
 
-metrics_file, policy_file, budgets_file, out_file, report_file, report_json_file = sys.argv[1:]
+metrics_file, policy_file, budgets_file, out_file, report_file, report_json_file, history_file = sys.argv[1:]
 
 def read_policy(path):
     p = {}
@@ -269,6 +270,9 @@ report_data = {
 with open(report_json_file, "w", encoding="utf-8") as f:
     json.dump(report_data, f, separators=(",", ":"))
 
+with open(history_file, "a", encoding="utf-8") as f:
+    f.write(json.dumps(report_data, separators=(",", ":")) + "\n")
+
 report_lines = [
     "# Budget Report",
     "",
@@ -296,4 +300,5 @@ with open(report_file, "w", encoding="utf-8") as f:
 print(f"tuning:proposals file={out_file} count={len(proposals)}")
 print(f"tuning:report file={report_file}")
 print(f"tuning:report_json file={report_json_file}")
+print(f"tuning:history file={history_file}")
 PY

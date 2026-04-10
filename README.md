@@ -134,6 +134,13 @@ Runtime tuning artifacts in `outputs/`:
 - `token-metrics.csv`
 - `token-baselines.csv`
 - `tuning-proposals.json`
+- `budget-history.jsonl`
+- `budget-report.md`
+- `budget-report.json`
+- `budget-compare.md`
+- `budget-compare.json`
+- `tuning-open-request.md`
+- `tuning-open-request.json`
 - `canary-token-budgets.yaml`
 - `canary-report.json`
 - `tuning-history.csv`

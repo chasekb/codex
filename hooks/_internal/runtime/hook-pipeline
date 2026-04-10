@@ -1415,6 +1415,16 @@ def main():
                 "outputs/canary-report.json",
             ],
         )
+        run_internal(
+            "open-tuning-proposals",
+            [
+                "outputs/budget-history.jsonl",
+                "outputs/budget-compare.json",
+                "outputs/budget-compare.md",
+                "outputs/tuning-open-request.json",
+                "outputs/tuning-open-request.md",
+            ],
+        )
         tuning_mode = read_tuning_mode(os.path.join(ROOT, "MCP", "budgets", "tuning-policy.yaml"))
         if tuning_mode in {"auto", "auto_promote", "promote"}:
             run_internal(

@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+history_file="${1:-outputs/budget-history.jsonl}"
+compare_json="${2:-outputs/budget-compare.json}"
+compare_md="${3:-outputs/budget-compare.md}"
+request_json="${4:-outputs/tuning-open-request.json}"
+request_md="${5:-outputs/tuning-open-request.md}"
+
+[[ -f "$history_file" ]] || { echo "open_tuning:error missing_history"; exit 1; }
+
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+root="$(cd -- "$script_dir/../.." && pwd)"
+compare_script="$script_dir/compare-budget-runs"
+
+mkdir -p outputs
+
+python3 - <<'PY' "$root" "$history_file" "$compare_script" "$compare_json" "$compare_md" "$request_json" "$request_md"
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+root, history_file, compare_script, compare_json, compare_md, request_json, request_md = sys.argv[1:]
+
+def load_jsonl(path):
+    rows = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                rows.append(obj)
+    return rows
+
+def parse_repo(remote_url):
+    remote_url = remote_url.strip()
+    m = re.search(r"github\.com[:/](?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git)?$", remote_url)
+    if not m:
+        return ""
+    return f"{m.group('owner')}/{m.group('repo')}"
+
+def run(cmd, check=False):
+    proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True, check=check)
+    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+history = load_jsonl(history_file)
+if len(history) < 2:
+    request = {
+        "status": "noop",
+        "reason": "insufficient_history",
+        "history_count": len(history),
+        "opened": False,
+    }
+    with open(request_json, "w", encoding="utf-8") as f:
+        json.dump(request, f, separators=(",", ":"))
+    with open(request_md, "w", encoding="utf-8") as f:
+        f.write("# Tuning Open Request\n\n- status: noop\n- reason: insufficient_history\n")
+    print(f"open_tuning:noop reason=insufficient_history file={request_json}")
+    raise SystemExit(0)
+
+baseline = history[-2]
+head = history[-1]
+tmpdir = Path(request_json).parent
+tmpdir.mkdir(parents=True, exist_ok=True)
+baseline_path = tmpdir / ".budget-open-baseline.json"
+head_path = tmpdir / ".budget-open-head.json"
+baseline_path.write_text(json.dumps(baseline, separators=(",", ":")) + "\n", encoding="utf-8")
+head_path.write_text(json.dumps(head, separators=(",", ":")) + "\n", encoding="utf-8")
+
+rc, out = run([compare_script, str(baseline_path), str(head_path), compare_json, compare_md])
+if rc != 0:
+    raise SystemExit(out or "compare-budget-runs failed")
+
+with open(compare_json, "r", encoding="utf-8") as f:
+    compare = json.load(f)
+
+signature_src = json.dumps(compare, sort_keys=True, separators=(",", ":")) + json.dumps(head.get("proposals", []), sort_keys=True, separators=(",", ":"))
+signature = hashlib.sha256(signature_src.encode("utf-8")).hexdigest()[:12]
+repo = ""
+remote_rc, remote_out = run(["git", "-C", root, "remote", "get-url", "origin"])
+if remote_rc == 0:
+    repo = parse_repo(remote_out)
+
+auto_open = os.environ.get("TUNING_AUTO_OPEN", "1").lower() not in {"0", "false", "no"}
+needs_attention = bool(compare.get("summary", {}).get("needs_attention", False))
+proposal_count = int(compare.get("summary", {}).get("head_proposal_count", 0) or 0)
+title = f"Codex budget tuning [{signature}]"
+
+body_lines = [
+    "# Budget Tuning Proposals",
+    "",
+    f"Budget-Signature: {signature}",
+    f"Generated: {compare.get('generated_at', '')}",
+    f"Baseline report: {compare.get('baseline_report', '')}",
+    f"Head report: {compare.get('head_report', '')}",
+    f"Needs attention: {str(needs_attention).lower()}",
+    f"Proposal count: {proposal_count}",
+    "",
+    "## Summary",
+]
+summary = compare.get("summary", {})
+for key in (
+    "baseline_proposal_count",
+    "head_proposal_count",
+    "proposal_delta",
+    "workflow_count",
+    "utilization_up_count",
+    "utilization_down_count",
+    "needs_attention",
+):
+    if key in summary:
+        body_lines.append(f"- {key}: {summary[key]}")
+
+body_lines.extend([
+    "",
+    "## Top Deltas",
+])
+for row in (compare.get("workflow_deltas", []) or [])[:8]:
+    body_lines.append(
+        f"- `{row.get('workflow', 'unknown')}` util={row.get('delta', {}).get('utilization', 0)} "
+        f"margin={row.get('delta', {}).get('margin_tokens', 0)} proposal_delta={row.get('delta', {}).get('proposal_emitted', 0)}"
+    )
+
+body_lines.extend([
+    "",
+    "## Artifacts",
+    f"- compare_json: `{compare_json}`",
+    f"- compare_md: `{compare_md}`",
+    f"- request_json: `{request_json}`",
+    f"- request_md: `{request_md}`",
+])
+
+body = "\n".join(body_lines) + "\n"
+with open(request_md, "w", encoding="utf-8") as f:
+    f.write(body)
+
+request = {
+    "status": "noop" if not needs_attention else "pending",
+    "signature": signature,
+    "title": title,
+    "repo": repo,
+    "needs_attention": needs_attention,
+    "proposal_count": proposal_count,
+    "compare_json": compare_json,
+    "compare_md": compare_md,
+    "request_md": request_md,
+    "opened": False,
+    "mode": "dry_run",
+    "issue_url": "",
+}
+
+opened = False
+issue_url = ""
+if auto_open and needs_attention and repo:
+    gh_rc, gh_out = run(["gh", "auth", "status", "-h", "github.com"])
+    if gh_rc == 0:
+        search_rc, search_out = run([
+            "gh",
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "open",
+            "--search",
+            f"Budget-Signature: {signature}",
+            "--json",
+            "number,url,title",
+        ])
+        existing_issue = None
+        if search_rc == 0:
+            try:
+                issues = json.loads(search_out)
+                if isinstance(issues, list) and issues:
+                    existing_issue = issues[0]
+            except Exception:
+                existing_issue = None
+        if existing_issue and "number" in existing_issue:
+            comment_rc, comment_out = run([
+                "gh",
+                "issue",
+                "comment",
+                str(existing_issue["number"]),
+                "--repo",
+                repo,
+                "--body",
+                body,
+            ])
+            if comment_rc == 0:
+                opened = True
+                issue_url = str(existing_issue.get("url", ""))
+        else:
+            create_rc, create_out = run([
+                "gh",
+                "issue",
+                "create",
+                "--repo",
+                repo,
+                "--title",
+                title,
+                "--body",
+                body,
+                "--label",
+                "codex-budget",
+                "--label",
+                "codex-autotune",
+            ])
+            if create_rc == 0:
+                opened = True
+                issue_url = create_out.strip().splitlines()[-1] if create_out.strip() else ""
+
+request["opened"] = opened
+request["mode"] = "opened" if opened else "dry_run"
+request["issue_url"] = issue_url
+request["status"] = "opened" if opened else ("pending" if needs_attention else "noop")
+
+with open(request_json, "w", encoding="utf-8") as f:
+    json.dump(request, f, separators=(",", ":"))
+
+print(f"open_tuning:status={request['status']} signature={signature} opened={str(opened).lower()} file={request_json}")
+PY

@@ -34,6 +34,9 @@ required_files=(
   "budget-report.json"
   "budget-compare.md"
   "budget-compare.json"
+  "budget-history.jsonl"
+  "tuning-open-request.md"
+  "tuning-open-request.json"
   "canary-report.json"
   "canary-token-budgets.yaml"
 )

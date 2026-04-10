@@ -25,6 +25,9 @@ compaction:
     - budget-report.json
     - budget-compare.md
     - budget-compare.json
+    - budget-history.jsonl
+    - tuning-open-request.md
+    - tuning-open-request.json
     - canary-report.json
     - canary-token-budgets.yaml
   line_limits:
@@ -33,6 +36,7 @@ compaction:
     hook-events.log: 2000
     hook-file-logger.log: 1000
     hook-token-debug.log: 1000
+    budget-history.jsonl: 250
   row_limits:
     token-metrics.csv: 2000
     tuning-history.csv: 250

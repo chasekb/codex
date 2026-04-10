@@ -292,6 +292,18 @@ grep -Fq '"proposal_delta":1' "$compare_json" && pass compare_budget_runs_json |
 grep -Fq '# Budget Run Comparison' "$compare_md" && pass compare_budget_runs_md || fail compare_budget_runs_md
 grep -Fq 'needs attention: true' "$compare_md" && pass compare_budget_runs_attention || fail compare_budget_runs_attention
 
+open_history="$tmpdir/budget-history.jsonl"
+cat > "$open_history" <<'JSONL'
+{"generated_at":"2026-01-01T00:00:00Z","mode":"observe","proposal_count":0,"policy":{"min_samples":5,"max_shift_pct":10,"prompt_budget_high_utilization":0.85,"prompt_budget_low_utilization":0.45,"prompt_budget_adjustment_rate":0.5},"workflow_summary":[{"workflow":"debug-rca","budget_profile":"debug_rca","samples":5,"pass_rate":1,"contract_invalid_rate":0,"retry_rate":0,"fallback_rate":0,"avg_total_tokens":1200,"avg_memory_chars":80,"avg_skill_loaded_chars":150,"avg_pre_prompt_budget_soft":3800,"avg_pre_prompt_budget_hard":11800,"avg_pre_prompt_objective_chars":12,"avg_pre_prompt_context_chars":242,"avg_pre_prompt_est_tokens":61,"avg_pre_prompt_utilization":0.0161,"avg_pre_prompt_margin_tokens":3739,"pre_prompt_adjustment_rate":0,"prompt_pressure_high":false,"prompt_pressure_low":true,"healthy":true,"proposal_emitted":false}],"proposals":[]}
+{"generated_at":"2026-01-02T00:00:00Z","mode":"observe","proposal_count":1,"policy":{"min_samples":5,"max_shift_pct":10,"prompt_budget_high_utilization":0.85,"prompt_budget_low_utilization":0.45,"prompt_budget_adjustment_rate":0.5},"workflow_summary":[{"workflow":"debug-rca","budget_profile":"debug_rca","samples":6,"pass_rate":1,"contract_invalid_rate":0,"retry_rate":0,"fallback_rate":0,"avg_total_tokens":1300,"avg_memory_chars":100,"avg_skill_loaded_chars":180,"avg_pre_prompt_budget_soft":3800,"avg_pre_prompt_budget_hard":11800,"avg_pre_prompt_objective_chars":12,"avg_pre_prompt_context_chars":260,"avg_pre_prompt_est_tokens":65,"avg_pre_prompt_utilization":0.075,"avg_pre_prompt_margin_tokens":3735,"pre_prompt_adjustment_rate":0.5,"prompt_pressure_high":true,"prompt_pressure_low":false,"healthy":true,"proposal_emitted":true}],"proposals":[{"workflow":"debug-rca","budget_profile":"debug_rca","changes":{"input_soft":4200},"evidence":{"samples":6,"pass_rate":1,"contract_invalid_rate":0,"retry_rate":0,"fallback_rate":0,"avg_total_tokens":1300,"avg_memory_chars":100,"avg_skill_loaded_chars":180,"avg_pre_prompt_budget_soft":3800,"avg_pre_prompt_budget_hard":11800,"avg_pre_prompt_objective_chars":12,"avg_pre_prompt_context_chars":260,"avg_pre_prompt_est_tokens":65,"avg_pre_prompt_utilization":0.075,"avg_pre_prompt_margin_tokens":3735,"pre_prompt_adjustment_rate":0.5}}]}
+JSONL
+open_json="$tmpdir/tuning-open-request.json"
+open_md="$tmpdir/tuning-open-request.md"
+TUNING_AUTO_OPEN=0 hooks/_internal/metrics/open-tuning-proposals "$open_history" "$tmpdir/compare-from-open.json" "$tmpdir/compare-from-open.md" "$open_json" "$open_md" >/dev/null && pass open_tuning_proposals || fail open_tuning_proposals
+grep -Fq '"needs_attention":true' "$open_json" && pass open_tuning_proposals_attention || fail open_tuning_proposals_attention
+grep -Fq '"opened":false' "$open_json" && pass open_tuning_proposals_dry_run || fail open_tuning_proposals_dry_run
+grep -Fq '# Budget Tuning Proposals' "$open_md" && pass open_tuning_proposals_md || fail open_tuning_proposals_md
+
 canary="$tmpdir/canary-token-budgets.yaml"
 report="$tmpdir/canary-report.json"
 hooks/_internal/metrics/apply-tuning-canary "$proposals" "$policy" "$budgets" "$canary" "$report" >/dev/null && pass apply_tuning_canary || fail apply_tuning_canary
