@@ -10,3 +10,6 @@ max_retry_rate: 0.20
 max_fallback_rate: 0.20
 canary_sample_size: 8
 max_intent_changes_per_cycle: 2
+prompt_budget_high_utilization: 0.85
+prompt_budget_low_utilization: 0.45
+prompt_budget_adjustment_rate: 0.50

@@ -21,6 +21,8 @@ compaction:
     - token-baselines.csv
     - tuning-history.csv
     - tuning-proposals.json
+    - budget-report.md
+    - budget-report.json
     - canary-report.json
     - canary-token-budgets.yaml
   line_limits:

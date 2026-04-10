@@ -26,6 +26,7 @@ def find_repo_root(start: str) -> str:
 ROOT = find_repo_root(os.path.dirname(__file__))
 STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
+DEFAULTS_PATH = os.path.join(ROOT, "MCP", "defaults.yaml")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")
 SKILLS_REGISTRY = os.environ.get("CODEX_SKILLS_REGISTRY") or os.path.join(ROOT, "skills", "registry.yaml")
 HOOK_EVENTS_PATH = os.path.join(ROOT, "outputs", "hook-events.log")
@@ -166,6 +167,14 @@ def default_state():
             "output_compact_removed": 0,
             "output_compact_compacted": 0,
             "output_compact_kept": 0,
+            "pre_prompt_budget_soft": 0,
+            "pre_prompt_budget_hard": 0,
+            "pre_prompt_objective_chars": 0,
+            "pre_prompt_context_chars": 0,
+            "pre_prompt_est_tokens": 0,
+            "pre_prompt_utilization": 0.0,
+            "pre_prompt_margin_tokens": 0,
+            "pre_prompt_adjustment_warranted": False,
             "search_tool_count": 0,
             "search_query_count": 0,
             "search_source_count": 0,
@@ -222,6 +231,25 @@ def load_state():
     default = default_state()
     state = load_json(STATE_PATH, default)
     return deep_fill_defaults(state, default)
+
+
+def load_token_defaults():
+    defaults = {
+        "max_input_tokens": 4000,
+        "max_output_tokens": 600,
+        "reserve_output_tokens": 200,
+        "hard_abort_tokens": 12000,
+    }
+    if not os.path.isfile(DEFAULTS_PATH):
+        return defaults
+
+    with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            m = re.match(r"^(max_input_tokens|max_output_tokens|reserve_output_tokens|hard_abort_tokens):\s*([0-9]+)\s*$", line)
+            if m:
+                defaults[m.group(1)] = int(m.group(2))
+    return defaults
 
 
 def run_internal(script_name, args=None, stdin_text=None):
@@ -447,6 +475,38 @@ def parse_compact_kept(output):
         if line.startswith("memory:metrics"):
             kept = parse_kv_metric(line, "compact_kept")
     return kept
+
+
+def estimate_prompt_tokens(chars):
+    chars = max(0, to_int(chars))
+    return max(0, (chars + 3) // 4)
+
+
+def build_pre_prompt_metrics(objective, memory_chars, skill_chars):
+    token_defaults = load_token_defaults()
+    objective_chars = len(text(objective))
+    context_chars = objective_chars + max(0, to_int(memory_chars)) + max(0, to_int(skill_chars))
+    est_tokens = estimate_prompt_tokens(context_chars)
+    soft_budget = max(1, token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"])
+    hard_budget = max(soft_budget, token_defaults["hard_abort_tokens"] - token_defaults["reserve_output_tokens"])
+    utilization = round(est_tokens / soft_budget, 4) if soft_budget else 0.0
+    margin_tokens = soft_budget - est_tokens
+    warranted = bool(
+        est_tokens >= soft_budget
+        or utilization >= 0.85
+        or to_int(memory_chars) >= 500
+        or to_int(skill_chars) >= 700
+    )
+    return {
+        "pre_prompt_budget_soft": soft_budget,
+        "pre_prompt_budget_hard": hard_budget,
+        "pre_prompt_objective_chars": objective_chars,
+        "pre_prompt_context_chars": context_chars,
+        "pre_prompt_est_tokens": est_tokens,
+        "pre_prompt_utilization": utilization,
+        "pre_prompt_margin_tokens": margin_tokens,
+        "pre_prompt_adjustment_warranted": warranted,
+    }
 
 
 def parse_output_compact_result(output):
@@ -969,6 +1029,7 @@ def main():
 
         _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])
         mem_loaded, mem_chars, mem_results = parse_memory_load_metrics(load_mem_out)
+        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, skill_loaded_chars)
 
         state["session"].update(
             {
@@ -988,6 +1049,7 @@ def main():
         state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
+        state["metrics"].update(pre_prompt_metrics)
 
         append_event_log(
             "workflow_selected",
@@ -1313,6 +1375,14 @@ def main():
                 str(state["metrics"].get("output_compact_removed", 0)),
                 str(state["metrics"].get("output_compact_compacted", 0)),
                 str(state["metrics"].get("output_compact_kept", 0)),
+                str(state["metrics"].get("pre_prompt_budget_soft", 0)),
+                str(state["metrics"].get("pre_prompt_budget_hard", 0)),
+                str(state["metrics"].get("pre_prompt_objective_chars", 0)),
+                str(state["metrics"].get("pre_prompt_context_chars", 0)),
+                str(state["metrics"].get("pre_prompt_est_tokens", 0)),
+                str(state["metrics"].get("pre_prompt_utilization", 0.0)),
+                str(state["metrics"].get("pre_prompt_margin_tokens", 0)),
+                str(state["metrics"].get("pre_prompt_adjustment_warranted", False)).lower(),
             ],
         )
         run_internal(
@@ -1331,6 +1401,8 @@ def main():
                 "MCP/budgets/tuning-policy.yaml",
                 "MCP/budgets/token-budgets.yaml",
                 "outputs/tuning-proposals.json",
+                "outputs/budget-report.md",
+                "outputs/budget-report.json",
             ],
         )
         run_internal(

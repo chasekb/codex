@@ -5,6 +5,8 @@ metrics_file="${1:-outputs/token-metrics.csv}"
 policy_file="${2:-MCP/budgets/tuning-policy.yaml}"
 budgets_file="${3:-MCP/budgets/token-budgets.yaml}"
 out_file="${4:-outputs/tuning-proposals.json}"
+report_file="${5:-outputs/budget-report.md}"
+report_json_file="${6:-outputs/budget-report.json}"
 
 [[ -f "$metrics_file" ]] || { echo "tuning:error missing_metrics"; exit 1; }
 [[ -f "$policy_file" ]] || { echo "tuning:error missing_policy"; exit 1; }
@@ -12,14 +14,14 @@ out_file="${4:-outputs/tuning-proposals.json}"
 
 mkdir -p outputs
 
-python3 - <<'PY' "$metrics_file" "$policy_file" "$budgets_file" "$out_file"
+python3 - <<'PY' "$metrics_file" "$policy_file" "$budgets_file" "$out_file" "$report_file" "$report_json_file"
 import csv
 import json
 import re
 import sys
 from datetime import datetime, timezone
 
-metrics_file, policy_file, budgets_file, out_file = sys.argv[1:]
+metrics_file, policy_file, budgets_file, out_file, report_file, report_json_file = sys.argv[1:]
 
 def read_policy(path):
     p = {}
@@ -38,6 +40,9 @@ def read_policy(path):
         "min_pass_rate": float(p.get("min_pass_rate", "0.95")),
         "max_retry_rate": float(p.get("max_retry_rate", "0.20")),
         "max_fallback_rate": float(p.get("max_fallback_rate", "0.20")),
+        "prompt_budget_high_utilization": float(p.get("prompt_budget_high_utilization", "0.85")),
+        "prompt_budget_low_utilization": float(p.get("prompt_budget_low_utilization", "0.45")),
+        "prompt_budget_adjustment_rate": float(p.get("prompt_budget_adjustment_rate", "0.50")),
     }
 
 def workflow_to_budget_profile(wf):
@@ -91,6 +96,14 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "total_tokens_sum": 0.0,
             "memory_chars_sum": 0.0,
             "skill_chars_sum": 0.0,
+            "pre_prompt_budget_soft_sum": 0.0,
+            "pre_prompt_budget_hard_sum": 0.0,
+            "pre_prompt_objective_chars_sum": 0.0,
+            "pre_prompt_context_chars_sum": 0.0,
+            "pre_prompt_est_tokens_sum": 0.0,
+            "pre_prompt_utilization_sum": 0.0,
+            "pre_prompt_margin_tokens_sum": 0.0,
+            "pre_prompt_adjustment_count": 0,
         })
         s["n"] += 1
         if str(r.get("status", "")).lower() == "pass":
@@ -102,8 +115,18 @@ with open(metrics_file, "r", encoding="utf-8") as f:
         s["total_tokens_sum"] += float(r.get("total_tokens", 0) or 0)
         s["memory_chars_sum"] += float(r.get("memory_chars", 0) or 0)
         s["skill_chars_sum"] += float(r.get("skill_loaded_chars", 0) or 0)
+        s["pre_prompt_budget_soft_sum"] += float(r.get("pre_prompt_budget_soft", 0) or 0)
+        s["pre_prompt_budget_hard_sum"] += float(r.get("pre_prompt_budget_hard", 0) or 0)
+        s["pre_prompt_objective_chars_sum"] += float(r.get("pre_prompt_objective_chars", 0) or 0)
+        s["pre_prompt_context_chars_sum"] += float(r.get("pre_prompt_context_chars", 0) or 0)
+        s["pre_prompt_est_tokens_sum"] += float(r.get("pre_prompt_est_tokens", 0) or 0)
+        s["pre_prompt_utilization_sum"] += float(r.get("pre_prompt_utilization", 0) or 0)
+        s["pre_prompt_margin_tokens_sum"] += float(r.get("pre_prompt_margin_tokens", 0) or 0)
+        if str(r.get("pre_prompt_adjustment_warranted", "")).lower() == "true":
+            s["pre_prompt_adjustment_count"] += 1
 
 proposals = []
+workflow_rows = []
 for wf, s in stats.items():
     n = s["n"]
     if n < policy["min_samples"]:
@@ -116,6 +139,14 @@ for wf, s in stats.items():
     avg_tokens = s["total_tokens_sum"] / n
     avg_memory_chars = s["memory_chars_sum"] / n
     avg_skill_chars = s["skill_chars_sum"] / n
+    avg_pre_prompt_budget_soft = s["pre_prompt_budget_soft_sum"] / n
+    avg_pre_prompt_budget_hard = s["pre_prompt_budget_hard_sum"] / n
+    avg_pre_prompt_objective_chars = s["pre_prompt_objective_chars_sum"] / n
+    avg_pre_prompt_context_chars = s["pre_prompt_context_chars_sum"] / n
+    avg_pre_prompt_est_tokens = s["pre_prompt_est_tokens_sum"] / n
+    avg_pre_prompt_utilization = s["pre_prompt_utilization_sum"] / n
+    avg_pre_prompt_margin_tokens = s["pre_prompt_margin_tokens_sum"] / n
+    pre_prompt_adjustment_rate = s["pre_prompt_adjustment_count"] / n
 
     profile = workflow_to_budget_profile(wf)
     if profile not in budgets:
@@ -132,7 +163,23 @@ for wf, s in stats.items():
     )
 
     shift = min(policy["max_shift"], 5.0) / 100.0
-    if healthy and avg_tokens > 1000:
+    prompt_pressure_high = (
+        avg_pre_prompt_utilization >= policy["prompt_budget_high_utilization"]
+        or pre_prompt_adjustment_rate >= policy["prompt_budget_adjustment_rate"]
+    )
+    prompt_pressure_low = (
+        avg_pre_prompt_utilization <= policy["prompt_budget_low_utilization"]
+        and pre_prompt_adjustment_rate == 0
+    )
+
+    if healthy and prompt_pressure_high:
+        if "input_soft" in profile_cfg:
+            proposed_changes["input_soft"] = max(1, int(round(profile_cfg["input_soft"] * (1 + shift))))
+        if "memory_read_soft" in profile_cfg and avg_memory_chars > (profile_cfg["memory_read_soft"] * 0.85):
+            proposed_changes["memory_read_soft"] = max(1, int(round(profile_cfg["memory_read_soft"] * (1 + shift))))
+        if "skill_read_soft" in profile_cfg and avg_skill_chars > (profile_cfg["skill_read_soft"] * 0.85):
+            proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 + shift))))
+    elif healthy and (avg_tokens > 1000 or prompt_pressure_low):
         for k in ("input_soft", "output_soft"):
             if k in profile_cfg:
                 proposed_changes[k] = max(1, int(round(profile_cfg[k] * (1 - shift))))
@@ -157,8 +204,41 @@ for wf, s in stats.items():
                 "avg_total_tokens": round(avg_tokens, 2),
                 "avg_memory_chars": round(avg_memory_chars, 2),
                 "avg_skill_loaded_chars": round(avg_skill_chars, 2),
+                "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
+                "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
+                "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
+                "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+                "avg_pre_prompt_est_tokens": round(avg_pre_prompt_est_tokens, 2),
+                "avg_pre_prompt_utilization": round(avg_pre_prompt_utilization, 4),
+                "avg_pre_prompt_margin_tokens": round(avg_pre_prompt_margin_tokens, 2),
+                "pre_prompt_adjustment_rate": round(pre_prompt_adjustment_rate, 4),
             }
         })
+
+    workflow_rows.append({
+        "workflow": wf,
+        "budget_profile": profile,
+        "samples": n,
+        "pass_rate": round(pass_rate, 4),
+        "contract_invalid_rate": round(contract_invalid, 4),
+        "retry_rate": round(retry_rate, 4),
+        "fallback_rate": round(fallback_rate, 4),
+        "avg_total_tokens": round(avg_tokens, 2),
+        "avg_memory_chars": round(avg_memory_chars, 2),
+        "avg_skill_loaded_chars": round(avg_skill_chars, 2),
+        "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
+        "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
+        "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
+        "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+        "avg_pre_prompt_est_tokens": round(avg_pre_prompt_est_tokens, 2),
+        "avg_pre_prompt_utilization": round(avg_pre_prompt_utilization, 4),
+        "avg_pre_prompt_margin_tokens": round(avg_pre_prompt_margin_tokens, 2),
+        "pre_prompt_adjustment_rate": round(pre_prompt_adjustment_rate, 4),
+        "prompt_pressure_high": bool(prompt_pressure_high),
+        "prompt_pressure_low": bool(prompt_pressure_low),
+        "healthy": bool(healthy),
+        "proposal_emitted": bool(proposed_changes),
+    })
 
 result = {
     "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -170,5 +250,50 @@ result = {
 with open(out_file, "w", encoding="utf-8") as f:
     json.dump(result, f, separators=(",", ":"))
 
+workflow_summary = sorted(workflow_rows, key=lambda r: (r["proposal_emitted"], r["avg_pre_prompt_utilization"]), reverse=True)
+report_data = {
+    "generated_at": result["generated_at"],
+    "mode": result["mode"],
+    "proposal_count": result["proposal_count"],
+    "policy": {
+        "min_samples": policy["min_samples"],
+        "max_shift_pct": policy["max_shift"],
+        "prompt_budget_high_utilization": policy["prompt_budget_high_utilization"],
+        "prompt_budget_low_utilization": policy["prompt_budget_low_utilization"],
+        "prompt_budget_adjustment_rate": policy["prompt_budget_adjustment_rate"],
+    },
+    "workflow_summary": workflow_summary,
+    "proposals": proposals,
+}
+
+with open(report_json_file, "w", encoding="utf-8") as f:
+    json.dump(report_data, f, separators=(",", ":"))
+
+report_lines = [
+    "# Budget Report",
+    "",
+    f"Generated: {result['generated_at']}",
+    f"Mode: {result['mode']}",
+    f"Proposal count: {result['proposal_count']}",
+    "",
+    "## Policy",
+    f"- min samples: {policy['min_samples']}",
+    f"- max shift pct: {policy['max_shift']}",
+    f"- high utilization: {policy['prompt_budget_high_utilization']}",
+    f"- low utilization: {policy['prompt_budget_low_utilization']}",
+    f"- adjustment rate: {policy['prompt_budget_adjustment_rate']}",
+    "",
+    "## Workflow Summary",
+]
+for row in workflow_summary:
+    report_lines.extend([
+        f"- `{row['workflow']}` ({row['budget_profile']}): samples={row['samples']} pass_rate={row['pass_rate']} util={row['avg_pre_prompt_utilization']} margin={row['avg_pre_prompt_margin_tokens']} pressure_high={str(row['prompt_pressure_high']).lower()} pressure_low={str(row['prompt_pressure_low']).lower()} proposal={str(row['proposal_emitted']).lower()}",
+    ])
+
+with open(report_file, "w", encoding="utf-8") as f:
+    f.write("\n".join(report_lines) + "\n")
+
 print(f"tuning:proposals file={out_file} count={len(proposals)}")
+print(f"tuning:report file={report_file}")
+print(f"tuning:report_json file={report_json_file}")
 PY

@@ -217,8 +217,8 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 1 2 3 4 >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | grep -Fq 'output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
@@ -231,12 +231,12 @@ set -e
 
 metrics="$tmpdir/token-metrics.csv"
 cat > "$metrics" <<'CSV'
-timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
 CSV
 policy="$tmpdir/tuning-policy.yaml"
 cat > "$policy" <<'YAML'
@@ -247,6 +247,9 @@ max_contract_invalid_rate: 0.02
 min_pass_rate: 0.95
 max_retry_rate: 0.20
 max_fallback_rate: 0.20
+prompt_budget_high_utilization: 0.85
+prompt_budget_low_utilization: 0.45
+prompt_budget_adjustment_rate: 0.50
 YAML
 budgets="$tmpdir/token-budgets.yaml"
 cat > "$budgets" <<'YAML'
@@ -258,7 +261,21 @@ budgets:
     skill_read_soft: 700
 YAML
 proposals="$tmpdir/proposals.json"
-hooks/_internal/metrics/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
+budget_report="$tmpdir/budget-report.md"
+budget_report_json="$tmpdir/budget-report.json"
+hooks/_internal/metrics/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" "$budget_report" "$budget_report_json" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
+grep -Fq 'avg_pre_prompt_utilization' "$proposals" && pass tune_from_metrics_preprompt || fail tune_from_metrics_preprompt
+grep -Fq '# Budget Report' "$budget_report" && pass budget_report_artifact || fail budget_report_artifact
+grep -Fq 'Proposal count:' "$budget_report" && pass budget_report_summary || fail budget_report_summary
+python3 - <<'PY' "$budget_report_json"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    data = json.load(f)
+assert "workflow_summary" in data
+assert "proposals" in data
+print("budget_report_json:ok")
+PY
+pass budget_report_json_artifact
 
 canary="$tmpdir/canary-token-budgets.yaml"
 report="$tmpdir/canary-report.json"
