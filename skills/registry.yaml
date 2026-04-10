@@ -32,6 +32,10 @@ skills:
     file: core/global-output/SKILL.md
     tags: [output, verbosity, formatting]
     priority: 2
+  - id: self-improvement
+    file: core/self-improvement/SKILL.md
+    tags: [learning, memory, feedback, errors, improvement]
+    priority: 2
   - id: skill-installer
     file: .system/skill-installer/SKILL.md
     tags: [system, install, skills]
