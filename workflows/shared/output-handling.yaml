@@ -7,3 +7,28 @@ output_defaults:
 exceptions:
   - when_spec_overrides_defaults
   - when_output_is_not_tabular
+compaction:
+  enabled: true
+  prune_unlisted: true
+  keep_files:
+    - hook-errors.log
+    - hook-file-error.log
+    - hook-events.log
+    - hook-file-logger.log
+    - hook-runtime-state.json
+    - hook-token-debug.log
+    - token-metrics.csv
+    - token-baselines.csv
+    - tuning-history.csv
+    - tuning-proposals.json
+    - canary-report.json
+    - canary-token-budgets.yaml
+  line_limits:
+    hook-errors.log: 500
+    hook-file-error.log: 500
+    hook-events.log: 2000
+    hook-file-logger.log: 1000
+    hook-token-debug.log: 1000
+  row_limits:
+    token-metrics.csv: 2000
+    tuning-history.csv: 250

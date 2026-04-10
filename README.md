@@ -87,6 +87,7 @@ Main behavior by event:
 - `tune-from-metrics`: generate budget proposals from historical metrics
 - `apply-tuning-canary`: apply bounded proposal changes to canary budgets
 - `promote-tuning`, `rollback-tuning`: canary promotion/rollback helpers
+- `compact-outputs`: prune unknown `outputs/` artifacts and truncate retention windows
 - `self-test`: end-to-end internal smoke/regression test suite
 
 ## Workflows and Routing
@@ -136,6 +137,9 @@ Runtime tuning artifacts in `outputs/`:
 - `canary-token-budgets.yaml`
 - `canary-report.json`
 - `tuning-history.csv`
+
+Output retention is automated by `hooks/_internal/output/compact-outputs`, which runs on `PreCompact` and task completion/cancel events. The policy in `workflows/shared/output-handling.yaml` keeps the current workflow files, removes orphaned top-level artifacts, and truncates the long-lived logs and CSV histories.
+Retention runs are logged to `outputs/hook-events.log`, and the per-run compaction counters are carried into `outputs/hook-runtime-state.json` and `outputs/token-metrics.csv`.
 
 ## Memory System
 Storage files (local runtime memory):

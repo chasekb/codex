@@ -44,6 +44,7 @@ required_rel=(
   "hooks/_internal/logging/file-logger"
   "hooks/_internal/logging/event-logger"
   "hooks/_internal/bootstrap/ensure-outputs-writable"
+  "hooks/_internal/output/compact-outputs"
 )
 
 bootstrap_file() {

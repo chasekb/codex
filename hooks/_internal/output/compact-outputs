@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import csv
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+import yaml
+
+
+def find_repo_root(start: Path) -> Path:
+    for candidate in [start, *start.parents]:
+        if (
+            (candidate / "hooks.json").is_file()
+            and (candidate / "skills").is_dir()
+            and (candidate / "rules").is_dir()
+        ):
+            return candidate
+    raise RuntimeError("repository root not found")
+
+
+ROOT = find_repo_root(Path(__file__).resolve().parent)
+DEFAULT_CONFIG = ROOT / "workflows" / "shared" / "output-handling.yaml"
+
+
+def load_config(config_path: Path) -> dict:
+    if not config_path.is_file():
+        raise FileNotFoundError(config_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("output handling config must parse to a mapping")
+    compaction = data.get("compaction", {})
+    if not isinstance(compaction, dict):
+        raise ValueError("compaction config must be a mapping")
+    return compaction
+
+
+def as_int(value, default: int = 0) -> int:
+    try:
+        return int(str(value).strip())
+    except Exception:
+        return default
+
+
+def compact_text_file(path: Path, max_lines: int) -> bool:
+    if max_lines <= 0 or not path.is_file():
+        return False
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if len(lines) <= max_lines:
+        return False
+
+    kept = lines[-max_lines:]
+    path.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
+    return True
+
+
+def compact_csv_file(path: Path, max_rows: int) -> bool:
+    if max_rows <= 0 or not path.is_file():
+        return False
+
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.reader(handle)
+        rows = list(reader)
+
+    if len(rows) <= max_rows + 1:
+        return False
+
+    header = rows[0]
+    kept_rows = rows[-max_rows:]
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(header)
+        writer.writerows(kept_rows)
+    return True
+
+
+def prune_unknown_files(outputs_dir: Path, keep: set[str]) -> list[str]:
+    removed: list[str] = []
+    for child in outputs_dir.iterdir():
+        if child.is_dir():
+            continue
+        if child.name not in keep:
+            child.unlink()
+            removed.append(child.name)
+    return removed
+
+
+def main() -> int:
+    outputs_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "outputs"
+    config_path = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_CONFIG
+
+    if not outputs_dir.is_dir():
+        print(f"outputs:compact missing_dir={outputs_dir}")
+        return 1
+
+    try:
+        compaction = load_config(config_path)
+    except Exception as exc:
+        print(f"outputs:compact error=config detail={exc}")
+        return 1
+
+    if not compaction.get("enabled", True):
+        print("outputs:compact skipped=disabled")
+        return 0
+
+    keep_files = {
+        str(item).strip()
+        for item in compaction.get("keep_files", [])
+        if str(item).strip()
+    }
+    line_limits = {
+        str(key).strip(): as_int(value)
+        for key, value in (compaction.get("line_limits", {}) or {}).items()
+        if str(key).strip()
+    }
+    row_limits = {
+        str(key).strip(): as_int(value)
+        for key, value in (compaction.get("row_limits", {}) or {}).items()
+        if str(key).strip()
+    }
+
+    keep_files.update(line_limits)
+    keep_files.update(row_limits)
+
+    removed = []
+    if compaction.get("prune_unlisted", True):
+        removed = prune_unknown_files(outputs_dir, keep_files)
+
+    compacted: list[str] = []
+    for name, limit in line_limits.items():
+        if compact_text_file(outputs_dir / name, limit):
+            compacted.append(name)
+
+    for name, limit in row_limits.items():
+        if compact_csv_file(outputs_dir / name, limit):
+            compacted.append(name)
+
+    result = {
+        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "outputs_dir": str(outputs_dir),
+        "config": str(config_path),
+        "prune_unlisted": bool(compaction.get("prune_unlisted", True)),
+        "removed_count": len(removed),
+        "compacted_count": len(compacted),
+        "kept_count": len(keep_files),
+        "removed_files": removed,
+        "compacted_files": compacted,
+    }
+    print(json.dumps(result, separators=(",", ":")))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

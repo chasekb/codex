@@ -137,6 +137,10 @@ def default_state():
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
+            "output_compact_runs": 0,
+            "output_compact_removed": 0,
+            "output_compact_compacted": 0,
+            "output_compact_kept": 0,
             "search_tool_count": 0,
             "search_query_count": 0,
             "search_source_count": 0,
@@ -355,6 +359,38 @@ def parse_compact_kept(output):
     return kept
 
 
+def parse_output_compact_result(output):
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            parsed = json.loads(line)
+            if isinstance(parsed, dict):
+                return {
+                    "removed_count": to_int(parsed.get("removed_count", 0)),
+                    "compacted_count": to_int(parsed.get("compacted_count", 0)),
+                    "kept_count": to_int(parsed.get("kept_count", 0)),
+                    "removed_files": parsed.get("removed_files", []),
+                    "compacted_files": parsed.get("compacted_files", []),
+                    "outputs_dir": text(parsed.get("outputs_dir", "")),
+                    "config": text(parsed.get("config", "")),
+                    "prune_unlisted": bool(parsed.get("prune_unlisted", True)),
+                }
+        except Exception:
+            pass
+    return {
+        "removed_count": 0,
+        "compacted_count": 0,
+        "kept_count": 0,
+        "removed_files": [],
+        "compacted_files": [],
+        "outputs_dir": "",
+        "config": "",
+        "prune_unlisted": True,
+    }
+
+
 def parse_skill_loaded_chars(output):
     for line in output.splitlines():
         if line.startswith("skill:metrics"):
@@ -362,7 +398,16 @@ def parse_skill_loaded_chars(output):
     return 0
 
 
-def format_event_line(event_name, hook_name, workflow="", skill="", stage="", status="", tool=""):
+def format_event_line(
+    event_name,
+    hook_name,
+    workflow="",
+    skill="",
+    stage="",
+    status="",
+    tool="",
+    details="",
+):
     ts = now_iso()
     fields = [
         f"{ts}",
@@ -379,13 +424,24 @@ def format_event_line(event_name, hook_name, workflow="", skill="", stage="", st
         fields.append(f"skill={skill}")
     if tool:
         fields.append(f"tool={tool}")
+    if details:
+        fields.append(f"details={details}")
     return " ".join(fields)
 
 
-def append_event_log(event_name, hook_name, workflow="", skill="", stage="", status="", tool=""):
+def append_event_log(
+    event_name,
+    hook_name,
+    workflow="",
+    skill="",
+    stage="",
+    status="",
+    tool="",
+    details="",
+):
     os.makedirs(os.path.dirname(HOOK_EVENTS_PATH), exist_ok=True)
     with open(HOOK_EVENTS_PATH, "a", encoding="utf-8") as f:
-        f.write(format_event_line(event_name, hook_name, workflow, skill, stage, status, tool) + "\n")
+        f.write(format_event_line(event_name, hook_name, workflow, skill, stage, status, tool, details) + "\n")
 
 
 SEARCH_TOOL_NAMES = {
@@ -984,6 +1040,25 @@ def main():
     elif hook_name == "PreCompact":
         _, compact_out = run_internal("compact-memory", ["MCP/memory"])
         state["metrics"]["memory_compact_kept"] = parse_compact_kept(compact_out)
+        _, output_compact_out = run_internal("compact-outputs", ["outputs", "workflows/shared/output-handling.yaml"])
+        output_compact = parse_output_compact_result(output_compact_out)
+        state["metrics"]["output_compact_runs"] += 1
+        state["metrics"]["output_compact_removed"] += output_compact["removed_count"]
+        state["metrics"]["output_compact_compacted"] += output_compact["compacted_count"]
+        state["metrics"]["output_compact_kept"] = output_compact["kept_count"]
+        append_event_log(
+            "outputs_compacted",
+            hook_name,
+            workflow=str(state["session"].get("workflow", "unknown")),
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="retention",
+            status="pruned" if output_compact["removed_count"] else "noop",
+            details=(
+                f"removed={output_compact['removed_count']} "
+                f"compacted={output_compact['compacted_count']} "
+                f"kept={output_compact['kept_count']}"
+            ),
+        )
 
     elif hook_name in ("TaskComplete", "TaskCancel"):
         status = "pass" if hook_name == "TaskComplete" else "cancelled"
@@ -1028,6 +1103,26 @@ def main():
             status=status,
         )
 
+        _, output_compact_out = run_internal("compact-outputs", ["outputs", "workflows/shared/output-handling.yaml"])
+        output_compact = parse_output_compact_result(output_compact_out)
+        state["metrics"]["output_compact_runs"] += 1
+        state["metrics"]["output_compact_removed"] += output_compact["removed_count"]
+        state["metrics"]["output_compact_compacted"] += output_compact["compacted_count"]
+        state["metrics"]["output_compact_kept"] = output_compact["kept_count"]
+        append_event_log(
+            "outputs_compacted",
+            hook_name,
+            workflow=workflow,
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="retention",
+            status="pruned" if output_compact["removed_count"] else "noop",
+            details=(
+                f"removed={output_compact['removed_count']} "
+                f"compacted={output_compact['compacted_count']} "
+                f"kept={output_compact['kept_count']}"
+            ),
+        )
+
         run_internal(
             "postrun-metrics",
             [
@@ -1058,6 +1153,10 @@ def main():
                 str(state["session"].get("skill_id", "none")),
                 str(state["metrics"].get("skill_loaded_chars", 0)),
                 str(state["metrics"].get("skill_fallback", False)).lower(),
+                str(state["metrics"].get("output_compact_runs", 0)),
+                str(state["metrics"].get("output_compact_removed", 0)),
+                str(state["metrics"].get("output_compact_compacted", 0)),
+                str(state["metrics"].get("output_compact_kept", 0)),
             ],
         )
         run_internal(
@@ -1097,8 +1196,8 @@ def main():
                     "outputs/canary-token-budgets.yaml",
                     "MCP/budgets/token-budgets.yaml",
                     "outputs/tuning-history.csv",
-                ],
-            )
+            ],
+        )
         update_session_memory(state)
 
     save_json(STATE_PATH, state)

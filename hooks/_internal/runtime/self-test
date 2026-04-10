@@ -178,8 +178,47 @@ rc=$?
 set -e
 [[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | grep -Fq 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,hook_name,pipeline_stage,workflow_selected,skill_id,skill_loaded_chars,skill_fallback' && pass postrun_metrics_header || fail postrun_metrics_header
+outputs_dir="$tmpdir/outputs"
+mkdir -p "$outputs_dir"
+cat > "$outputs_dir/hook-events.log" <<'LOG'
+event-1
+event-2
+event-3
+event-4
+LOG
+cat > "$outputs_dir/token-metrics.csv" <<'CSV'
+timestamp,task_class
+1,one
+2,two
+3,three
+4,four
+CSV
+printf 'orphan\n' > "$outputs_dir/contract-sample.txt"
+compact_config="$tmpdir/output-handling.yaml"
+cat > "$compact_config" <<'YAML'
+compaction:
+  enabled: true
+  prune_unlisted: true
+  keep_files:
+    - hook-events.log
+    - token-metrics.csv
+  line_limits:
+    hook-events.log: 3
+  row_limits:
+    token-metrics.csv: 2
+YAML
+hooks/_internal/output/compact-outputs "$outputs_dir" "$compact_config" >/dev/null && pass compact_outputs || fail compact_outputs
+[[ ! -f "$outputs_dir/contract-sample.txt" ]] && pass compact_outputs_prune || fail compact_outputs_prune
+[[ "$(wc -l < "$outputs_dir/hook-events.log")" -eq 3 ]] && pass compact_outputs_lines || fail compact_outputs_lines
+tail -n1 "$outputs_dir/token-metrics.csv" | grep -Fq '4,four' && pass compact_outputs_rows || fail compact_outputs_rows
+
+python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && pass hook_pipeline_precompact_compact || fail hook_pipeline_precompact_compact
+{}
+JSON
+grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
+
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 1 2 3 4 >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
