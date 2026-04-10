@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+baseline_report="${1:-outputs/budget-report.json}"
+head_report="${2:-outputs/budget-report.json}"
+out_json="${3:-outputs/budget-compare.json}"
+out_md="${4:-outputs/budget-compare.md}"
+
+[[ -f "$baseline_report" ]] || { echo "compare:error missing_baseline"; exit 1; }
+[[ -f "$head_report" ]] || { echo "compare:error missing_head"; exit 1; }
+
+mkdir -p outputs
+
+python3 - <<'PY' "$baseline_report" "$head_report" "$out_json" "$out_md"
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+baseline_path, head_path, out_json, out_md = sys.argv[1:]
+
+def load_report(path):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"invalid report: {path}")
+    return data
+
+def by_workflow(report):
+    mapping = {}
+    for row in report.get("workflow_summary", []) or []:
+        wf = str(row.get("workflow", "unknown"))
+        mapping[wf] = row
+    return mapping
+
+baseline = load_report(baseline_path)
+head = load_report(head_path)
+baseline_wf = by_workflow(baseline)
+head_wf = by_workflow(head)
+
+all_workflows = sorted(set(baseline_wf) | set(head_wf))
+workflow_deltas = []
+for wf in all_workflows:
+    b = baseline_wf.get(wf, {})
+    h = head_wf.get(wf, {})
+    b_util = float(b.get("avg_pre_prompt_utilization", 0) or 0)
+    h_util = float(h.get("avg_pre_prompt_utilization", 0) or 0)
+    b_margin = float(b.get("avg_pre_prompt_margin_tokens", 0) or 0)
+    h_margin = float(h.get("avg_pre_prompt_margin_tokens", 0) or 0)
+    b_samples = int(b.get("samples", 0) or 0)
+    h_samples = int(h.get("samples", 0) or 0)
+    b_proposal = bool(b.get("proposal_emitted", False))
+    h_proposal = bool(h.get("proposal_emitted", False))
+
+    workflow_deltas.append({
+        "workflow": wf,
+        "baseline": {
+            "samples": b_samples,
+            "utilization": b_util,
+            "margin_tokens": b_margin,
+            "proposal_emitted": b_proposal,
+            "pass_rate": float(b.get("pass_rate", 0) or 0),
+        },
+        "head": {
+            "samples": h_samples,
+            "utilization": h_util,
+            "margin_tokens": h_margin,
+            "proposal_emitted": h_proposal,
+            "pass_rate": float(h.get("pass_rate", 0) or 0),
+        },
+        "delta": {
+            "utilization": round(h_util - b_util, 4),
+            "margin_tokens": round(h_margin - b_margin, 2),
+            "samples": h_samples - b_samples,
+            "proposal_emitted": int(h_proposal) - int(b_proposal),
+            "pass_rate": round(float(h.get("pass_rate", 0) or 0) - float(b.get("pass_rate", 0) or 0), 4),
+        },
+    })
+
+workflow_deltas.sort(key=lambda r: abs(r["delta"]["utilization"]), reverse=True)
+
+baseline_count = int(baseline.get("proposal_count", 0) or 0)
+head_count = int(head.get("proposal_count", 0) or 0)
+proposal_delta = head_count - baseline_count
+
+util_up = sum(1 for row in workflow_deltas if row["delta"]["utilization"] > 0)
+util_down = sum(1 for row in workflow_deltas if row["delta"]["utilization"] < 0)
+new_proposals = [row["workflow"] for row in workflow_deltas if not row["baseline"]["proposal_emitted"] and row["head"]["proposal_emitted"]]
+resolved_proposals = [row["workflow"] for row in workflow_deltas if row["baseline"]["proposal_emitted"] and not row["head"]["proposal_emitted"]]
+
+needs_attention = any(
+    abs(row["delta"]["utilization"]) >= 0.05 or abs(row["delta"]["margin_tokens"]) >= 200
+    for row in workflow_deltas
+) or proposal_delta != 0
+
+comparison = {
+    "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "baseline_report": str(Path(baseline_path).resolve()),
+    "head_report": str(Path(head_path).resolve()),
+    "summary": {
+        "baseline_proposal_count": baseline_count,
+        "head_proposal_count": head_count,
+        "proposal_delta": proposal_delta,
+        "workflow_count": len(all_workflows),
+        "utilization_up_count": util_up,
+        "utilization_down_count": util_down,
+        "new_proposals": new_proposals,
+        "resolved_proposals": resolved_proposals,
+        "needs_attention": needs_attention,
+    },
+    "workflow_deltas": workflow_deltas,
+}
+
+with open(out_json, "w", encoding="utf-8") as f:
+    json.dump(comparison, f, separators=(",", ":"))
+
+md_lines = [
+    "# Budget Run Comparison",
+    "",
+    f"Generated: {comparison['generated_at']}",
+    f"Baseline: {comparison['baseline_report']}",
+    f"Head: {comparison['head_report']}",
+    "",
+    "## Summary",
+    f"- baseline proposal count: {baseline_count}",
+    f"- head proposal count: {head_count}",
+    f"- proposal delta: {proposal_delta}",
+    f"- workflows compared: {len(all_workflows)}",
+    f"- utilization up: {util_up}",
+    f"- utilization down: {util_down}",
+    f"- new proposals: {', '.join(new_proposals) if new_proposals else 'none'}",
+    f"- resolved proposals: {', '.join(resolved_proposals) if resolved_proposals else 'none'}",
+    f"- needs attention: {str(needs_attention).lower()}",
+    "",
+    "## Top Deltas",
+]
+for row in workflow_deltas[:8]:
+    md_lines.append(
+        f"- `{row['workflow']}` util={row['delta']['utilization']} margin={row['delta']['margin_tokens']} "
+        f"samples={row['delta']['samples']} proposal_delta={row['delta']['proposal_emitted']} "
+        f"pass_rate_delta={row['delta']['pass_rate']}"
+    )
+
+with open(out_md, "w", encoding="utf-8") as f:
+    f.write("\n".join(md_lines) + "\n")
+
+print(f"compare:ok json={out_json} md={out_md} workflows={len(all_workflows)}")
+PY
