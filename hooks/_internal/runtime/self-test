@@ -59,6 +59,13 @@ echo "$release_skill_out" | tail -n1 | grep -qx 'release-publish' && pass select
 deps_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "dependency update audit")"
 echo "$deps_skill_out" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_maintenance || fail select_skill_dependency_maintenance
 
+pipeline_payload='{"task":{"class":"implement","objective":"pipeline resolver smoke"},"classification":{"confidence":0.91}}'
+python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$pipeline_payload" >/dev/null && pass hook_pipeline_smoke || fail hook_pipeline_smoke
+grep -Fq '"workflow": "implement-small"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow || fail hook_pipeline_state_workflow
+grep -Fq '"skill_id": "plan-verify-execute"' outputs/hook-runtime-state.json && pass hook_pipeline_state_skill || fail hook_pipeline_state_skill
+grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
+grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
+
 repo="$tmpdir/repo"
 mkdir -p "$repo/.github/workflows"
 touch "$repo/.github/workflows/build.yml"
@@ -171,8 +178,8 @@ rc=$?
 set -e
 [[ $rc -eq 1 ]] && pass enforce_budget_hard || fail enforce_budget_hard
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | grep -Fq 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,hook_name,pipeline_stage,workflow_selected,skill_id,skill_loaded_chars,skill_fallback' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap

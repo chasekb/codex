@@ -36,6 +36,11 @@ Each hook wrapper:
 3. Runs `hooks/_internal/runtime/hook-pipeline` for state/memory/metrics updates
 4. Always returns `{}` to keep host hook contracts stable
 
+Hook usage records are split across:
+- `outputs/hook-events.log`: hook invocations plus workflow/skill selection and post-run summary lines
+- `MCP/memory/decisions.jsonl`: durable workflow and skill routing decisions
+- `outputs/token-metrics.csv`: normalized run metrics, including hook name, selected workflow, and selected skill
+
 ## Core Runtime Engine
 `hooks/_internal/runtime/hook-pipeline` is the orchestration engine.
 
@@ -70,7 +75,7 @@ Main behavior by event:
 `hooks/_internal/*` highlights, now grouped by function:
 - `preflight`: validates required runtime files and runs outputs writeability check
 - `ensure-outputs-writable`: guarantees `outputs/` exists and is writable
-- `event-logger`: JSONL hook event log (`outputs/hook-events.log`)
+- `event-logger`: plain-line hook event log (`outputs/hook-events.log`)
 - `file-logger`: file-tool path capture log (`outputs/hook-file-logger.log`)
 - `select-workflow`, `select-skill`: task routing/classification helpers
 - `load-skill`, `validate-skill`: skill metadata load and schema validation
