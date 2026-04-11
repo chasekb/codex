@@ -1425,6 +1425,15 @@ def main():
                 "outputs/tuning-open-request.md",
             ],
         )
+        run_internal(
+            "summarize-budget-history",
+            [
+                "outputs/budget-history.jsonl",
+                "outputs/tuning-history.csv",
+                "outputs/budget-summary.json",
+                "outputs/budget-summary.md",
+            ],
+        )
         tuning_mode = read_tuning_mode(os.path.join(ROOT, "MCP", "budgets", "tuning-policy.yaml"))
         if tuning_mode in {"auto", "auto_promote", "promote"}:
             run_internal(

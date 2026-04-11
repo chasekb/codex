@@ -28,6 +28,8 @@ compaction:
     - budget-history.jsonl
     - tuning-open-request.md
     - tuning-open-request.json
+    - budget-summary.md
+    - budget-summary.json
     - canary-report.json
     - canary-token-budgets.yaml
   line_limits:

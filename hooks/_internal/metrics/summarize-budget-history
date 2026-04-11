@@ -1,0 +1,286 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+history_file="${1:-outputs/budget-history.jsonl}"
+tuning_history_file="${2:-outputs/tuning-history.csv}"
+out_json="${3:-outputs/budget-summary.json}"
+out_md="${4:-outputs/budget-summary.md}"
+
+[[ -f "$history_file" ]] || { echo "summary:error missing_history"; exit 1; }
+
+mkdir -p outputs
+
+python3 - <<'PY' "$history_file" "$tuning_history_file" "$out_json" "$out_md"
+import csv
+import json
+import sys
+from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
+history_file, tuning_history_file, out_json, out_md = sys.argv[1:]
+
+def parse_ts(value):
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+def load_jsonl(path):
+    rows = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                rows.append(obj)
+    return rows
+
+def load_tuning_history(path):
+    rows = []
+    if not Path(path).is_file():
+        return rows
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row:
+                rows.append(row)
+    return rows
+
+def period_key(dt, period):
+    if period == "weekly":
+        iso = dt.isocalendar()
+        return f"{iso.year}-W{iso.week:02d}"
+    if period == "monthly":
+        return dt.strftime("%Y-%m")
+    return "all_time"
+
+history = load_jsonl(history_file)
+tuning_history = load_tuning_history(tuning_history_file)
+
+generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+if not history:
+    summary = {
+        "generated_at": generated_at,
+        "status": "noop",
+        "history_count": 0,
+        "tuning_history_count": len(tuning_history),
+        "overall": {},
+        "weekly": [],
+        "monthly": [],
+        "workflow_summary": [],
+        "tuning_history_summary": {},
+    }
+    with open(out_json, "w", encoding="utf-8") as f:
+        json.dump(summary, f, separators=(",", ":"))
+    with open(out_md, "w", encoding="utf-8") as f:
+        f.write("# Budget History Summary\n\n- status: noop\n- reason: empty_history\n")
+    print(f"summary:noop file={out_json}")
+    raise SystemExit(0)
+
+def flatten_workflows(report):
+    rows = report.get("workflow_summary", []) or []
+    for row in rows:
+        yield row
+
+history_sorted = sorted(history, key=lambda r: parse_ts(r.get("generated_at")) or datetime.min.replace(tzinfo=timezone.utc))
+workflow_stats = {}
+overall = {
+    "runs": len(history_sorted),
+    "proposal_runs": 0,
+    "proposal_count_sum": 0,
+    "attention_runs": 0,
+    "workflow_count_sum": 0,
+    "utilization_sum": 0.0,
+    "margin_sum": 0.0,
+}
+first_ts = parse_ts(history_sorted[0].get("generated_at"))
+last_ts = parse_ts(history_sorted[-1].get("generated_at"))
+
+period_stats = {
+    "weekly": defaultdict(lambda: {
+        "runs": 0,
+        "proposal_count_sum": 0,
+        "attention_runs": 0,
+        "workflow_count_sum": 0,
+        "utilization_sum": 0.0,
+        "margin_sum": 0.0,
+    }),
+    "monthly": defaultdict(lambda: {
+        "runs": 0,
+        "proposal_count_sum": 0,
+        "attention_runs": 0,
+        "workflow_count_sum": 0,
+        "utilization_sum": 0.0,
+        "margin_sum": 0.0,
+    }),
+}
+
+for report in history_sorted:
+    dt = parse_ts(report.get("generated_at")) or datetime.now(timezone.utc)
+    proposal_count = int(report.get("proposal_count", 0) or 0)
+    workflows = list(flatten_workflows(report))
+    report_attention = proposal_count > 0
+    overall["proposal_runs"] += int(proposal_count > 0)
+    overall["proposal_count_sum"] += proposal_count
+    overall["attention_runs"] += int(report_attention)
+    overall["workflow_count_sum"] += len(workflows)
+
+    util_values = [float(row.get("avg_pre_prompt_utilization", 0) or 0) for row in workflows]
+    margin_values = [float(row.get("avg_pre_prompt_margin_tokens", 0) or 0) for row in workflows]
+    util_avg = sum(util_values) / len(util_values) if util_values else 0.0
+    margin_avg = sum(margin_values) / len(margin_values) if margin_values else 0.0
+    overall["utilization_sum"] += util_avg
+    overall["margin_sum"] += margin_avg
+
+    for period in ("weekly", "monthly"):
+        key = period_key(dt, period)
+        bucket = period_stats[period][key]
+        bucket["runs"] += 1
+        bucket["proposal_count_sum"] += proposal_count
+        bucket["attention_runs"] += int(report_attention)
+        bucket["workflow_count_sum"] += len(workflows)
+        bucket["utilization_sum"] += util_avg
+        bucket["margin_sum"] += margin_avg
+
+    for row in workflows:
+        wf = str(row.get("workflow", "unknown"))
+        stats = workflow_stats.setdefault(wf, {
+            "runs": 0,
+            "proposal_emitted_runs": 0,
+            "samples_sum": 0,
+            "utilization_sum": 0.0,
+            "margin_sum": 0.0,
+            "pass_rate_sum": 0.0,
+        })
+        stats["runs"] += 1
+        stats["proposal_emitted_runs"] += int(bool(row.get("proposal_emitted", False)))
+        stats["samples_sum"] += int(row.get("samples", 0) or 0)
+        stats["utilization_sum"] += float(row.get("avg_pre_prompt_utilization", 0) or 0)
+        stats["margin_sum"] += float(row.get("avg_pre_prompt_margin_tokens", 0) or 0)
+        stats["pass_rate_sum"] += float(row.get("pass_rate", 0) or 0)
+
+def finalize_period(buckets):
+    out = []
+    for key, bucket in sorted(buckets.items()):
+        runs = bucket["runs"] or 1
+        out.append({
+            "period": key,
+            "runs": bucket["runs"],
+            "proposal_count_sum": bucket["proposal_count_sum"],
+            "attention_runs": bucket["attention_runs"],
+            "workflow_count_sum": bucket["workflow_count_sum"],
+            "avg_utilization": round(bucket["utilization_sum"] / runs, 4),
+            "avg_margin_tokens": round(bucket["margin_sum"] / runs, 2),
+        })
+    return out
+
+workflow_summary = []
+for wf, stats in sorted(workflow_stats.items(), key=lambda item: (item[1]["proposal_emitted_runs"], item[1]["utilization_sum"]), reverse=True):
+    runs = stats["runs"] or 1
+    workflow_summary.append({
+        "workflow": wf,
+        "runs": stats["runs"],
+        "proposal_emitted_runs": stats["proposal_emitted_runs"],
+        "proposal_rate": round(stats["proposal_emitted_runs"] / runs, 4),
+        "samples_sum": stats["samples_sum"],
+        "avg_utilization": round(stats["utilization_sum"] / runs, 4),
+        "avg_margin_tokens": round(stats["margin_sum"] / runs, 2),
+        "avg_pass_rate": round(stats["pass_rate_sum"] / runs, 4),
+    })
+
+tuning_summary = {
+    "rows": len(tuning_history),
+    "promote_count": 0,
+    "rollback_count": 0,
+    "last_action": "",
+    "last_timestamp": "",
+}
+for row in tuning_history:
+    action = str(row.get("action", "")).lower()
+    if action == "promote":
+        tuning_summary["promote_count"] += 1
+    if action == "rollback":
+        tuning_summary["rollback_count"] += 1
+    tuning_summary["last_action"] = action or tuning_summary["last_action"]
+    tuning_summary["last_timestamp"] = str(row.get("timestamp", "")) or tuning_summary["last_timestamp"]
+
+summary = {
+    "generated_at": generated_at,
+    "status": "ok",
+    "history_count": len(history_sorted),
+    "tuning_history_count": len(tuning_history),
+    "earliest_generated_at": first_ts.isoformat().replace("+00:00", "Z") if first_ts else "",
+    "latest_generated_at": last_ts.isoformat().replace("+00:00", "Z") if last_ts else "",
+    "overall": {
+        "runs": overall["runs"],
+        "proposal_runs": overall["proposal_runs"],
+        "proposal_count_sum": overall["proposal_count_sum"],
+        "attention_runs": overall["attention_runs"],
+        "workflow_count_sum": overall["workflow_count_sum"],
+        "avg_utilization": round(overall["utilization_sum"] / overall["runs"], 4) if overall["runs"] else 0.0,
+        "avg_margin_tokens": round(overall["margin_sum"] / overall["runs"], 2) if overall["runs"] else 0.0,
+    },
+    "weekly": finalize_period(period_stats["weekly"]),
+    "monthly": finalize_period(period_stats["monthly"]),
+    "workflow_summary": workflow_summary,
+    "tuning_history_summary": tuning_summary,
+}
+
+with open(out_json, "w", encoding="utf-8") as f:
+    json.dump(summary, f, separators=(",", ":"))
+
+md_lines = [
+    "# Budget History Summary",
+    "",
+    f"Generated: {generated_at}",
+    f"History entries: {summary['history_count']}",
+    f"Tuning history rows: {summary['tuning_history_count']}",
+    "",
+    "## Overall",
+    f"- proposal runs: {summary['overall']['proposal_runs']}",
+    f"- proposal count sum: {summary['overall']['proposal_count_sum']}",
+    f"- attention runs: {summary['overall']['attention_runs']}",
+    f"- avg utilization: {summary['overall']['avg_utilization']}",
+    f"- avg margin tokens: {summary['overall']['avg_margin_tokens']}",
+    "",
+    "## Tuning History",
+    f"- promotes: {tuning_summary['promote_count']}",
+    f"- rollbacks: {tuning_summary['rollback_count']}",
+    f"- last action: {tuning_summary['last_action'] or 'none'}",
+]
+
+if summary["weekly"]:
+    md_lines.extend(["", "## Weekly",])
+    for row in summary["weekly"][-8:]:
+        md_lines.append(
+            f"- `{row['period']}` runs={row['runs']} proposals={row['proposal_count_sum']} "
+            f"util={row['avg_utilization']} margin={row['avg_margin_tokens']}"
+        )
+
+if summary["monthly"]:
+    md_lines.extend(["", "## Monthly",])
+    for row in summary["monthly"][-8:]:
+        md_lines.append(
+            f"- `{row['period']}` runs={row['runs']} proposals={row['proposal_count_sum']} "
+            f"util={row['avg_utilization']} margin={row['avg_margin_tokens']}"
+        )
+
+if workflow_summary:
+    md_lines.extend(["", "## Workflows",])
+    for row in workflow_summary[:10]:
+        md_lines.append(
+            f"- `{row['workflow']}` runs={row['runs']} proposal_rate={row['proposal_rate']} "
+            f"util={row['avg_utilization']} margin={row['avg_margin_tokens']}"
+        )
+
+with open(out_md, "w", encoding="utf-8") as f:
+    f.write("\n".join(md_lines) + "\n")
+
+print(f"summary:ok json={out_json} md={out_md} entries={summary['history_count']}")
+PY

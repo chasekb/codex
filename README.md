@@ -141,6 +141,8 @@ Runtime tuning artifacts in `outputs/`:
 - `budget-compare.json`
 - `tuning-open-request.md`
 - `tuning-open-request.json`
+- `budget-summary.md`
+- `budget-summary.json`
 - `canary-token-budgets.yaml`
 - `canary-report.json`
 - `tuning-history.csv`
