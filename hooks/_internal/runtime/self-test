@@ -144,6 +144,53 @@ echo "$wm" | grep -Fq 'memory:metrics writes=1 dedups=0' && pass write_memory ||
 lm="$(hooks/_internal/memory/load-memory general "remember fact" 700 6 "$mem")"
 echo "$lm" | grep -Fq 'memory:metrics loaded=' && pass load_memory || fail load_memory
 
+failures="$tmpdir/failures"
+mkdir -p "$failures"
+cat > "$failures/hook-errors.log" <<'LOG'
+2026-04-11T00:00:00Z hook=TaskStart stage=preflight rc=1 details=missing_dependency
+2026-04-11T00:01:00Z hook=PreToolUse stage=pipeline rc=2 details=retry_loop
+LOG
+: > "$failures/hook-file-error.log"
+fh="$(hooks/_internal/memory/load-failure-history general "retry failure" 700 6 "$failures/hook-errors.log" "$failures/hook-file-error.log")"
+echo "$fh" | grep -Fq 'failure:metrics loaded=' && pass load_failure_history || fail load_failure_history
+
+learn="$tmpdir/learnings"
+mkdir -p "$learn"
+cat > "$learn/LEARNINGS.md" <<'MD'
+# Learnings
+
+## [LRN-20260411-001] best_practice
+
+**Logged**: 2026-04-11T00:00:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: config
+
+### Summary
+Use explicit context loaders before prompt assembly.
+
+### Details
+Loading targeted learnings improves prompt quality for repeated tasks.
+
+### Suggested Action
+Call the learning loader during task start.
+
+### Metadata
+- Source: conversation
+- Tags: context, prompt, learning
+- Pattern-Key: prompt.context.loader
+
+---
+MD
+cat > "$learn/ERRORS.md" <<'MD'
+# Errors
+MD
+cat > "$learn/FEATURE_REQUESTS.md" <<'MD'
+# Feature Requests
+MD
+ll="$(hooks/_internal/memory/load-learning-context general "prompt assembly" 700 6 "$learn")"
+echo "$ll" | grep -Fq 'learning:metrics loaded=' && pass load_learning_context || fail load_learning_context
+
 cm="$(hooks/_internal/memory/compact-memory "$mem")"
 echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
 
@@ -251,8 +298,8 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | grep -Fq 'pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 4 88 2 4 5 6 7 8 9 10 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false 1 1 1 external-debugger github 2 220 >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
@@ -265,12 +312,12 @@ set -e
 
 metrics="$tmpdir/token-metrics.csv"
 cat > "$metrics" <<'CSV'
-timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,0,2,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
 CSV
 policy="$tmpdir/tuning-policy.yaml"
 cat > "$policy" <<'YAML'
@@ -299,6 +346,7 @@ budget_report="$tmpdir/budget-report.md"
 budget_report_json="$tmpdir/budget-report.json"
 hooks/_internal/metrics/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" "$budget_report" "$budget_report_json" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
 grep -Fq 'avg_pre_prompt_utilization' "$proposals" && pass tune_from_metrics_preprompt || fail tune_from_metrics_preprompt
+grep -Fq 'avg_failure_history_chars' "$proposals" && pass tune_from_metrics_failure_history || fail tune_from_metrics_failure_history
 grep -Fq '# Budget Report' "$budget_report" && pass budget_report_artifact || fail budget_report_artifact
 grep -Fq 'Proposal count:' "$budget_report" && pass budget_report_summary || fail budget_report_summary
 python3 - <<'PY' "$budget_report_json"

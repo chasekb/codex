@@ -96,11 +96,20 @@ def github_candidates():
     return results
 
 
-def clawhub_candidates():
+def clawhub_candidates(task_class, confidence, keywords, current_skill, root):
     search_cmd = os.environ.get("CODEX_CLAWHUB_SEARCH_CMD", "").strip()
     if not search_cmd:
         return []
-    rc, out = run_command(search_cmd)
+    query = first_text(keywords, current_skill, task_class)
+    mapping = {
+        "task_class": task_class,
+        "confidence": confidence,
+        "keywords": keywords,
+        "current_skill": current_skill,
+        "query": query,
+        "root": str(root),
+    }
+    rc, out = run_command(render_template(search_cmd, mapping))
     if rc != 0:
         return []
     try:
@@ -254,7 +263,7 @@ def main():
     if not candidates:
         candidates.extend(github_candidates())
     if os.environ.get("CODEX_CLAWHUB_SEARCH_CMD", "").strip():
-        candidates.extend(clawhub_candidates())
+        candidates.extend(clawhub_candidates(task_class, confidence, keywords, current_skill, root))
 
     ranked = []
     for candidate in candidates:

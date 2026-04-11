@@ -163,6 +163,10 @@ def default_state():
             "fallbacks": 0,
             "memory_loaded": 0,
             "memory_chars": 0,
+            "learning_loaded": 0,
+            "learning_chars": 0,
+            "failure_history_loaded": 0,
+            "failure_history_chars": 0,
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
@@ -478,6 +482,50 @@ def parse_memory_load_metrics(output):
     return loaded, chars, results
 
 
+def parse_learning_load_metrics(output):
+    loaded = 0
+    chars = 0
+    results = []
+    for line in output.splitlines():
+        if line.startswith("{") and not results:
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    loaded = to_int(parsed.get("learning_loaded", loaded))
+                    chars = to_int(parsed.get("chars", chars))
+                    maybe_results = parsed.get("results", [])
+                    if isinstance(maybe_results, list):
+                        results = maybe_results
+            except Exception:
+                pass
+        if line.startswith("learning:metrics"):
+            loaded = parse_kv_metric(line, "loaded")
+            chars = parse_kv_metric(line, "chars")
+    return loaded, chars, results
+
+
+def parse_failure_history_metrics(output):
+    loaded = 0
+    chars = 0
+    results = []
+    for line in output.splitlines():
+        if line.startswith("{") and not results:
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    loaded = to_int(parsed.get("failure_history_loaded", loaded))
+                    chars = to_int(parsed.get("chars", chars))
+                    maybe_results = parsed.get("results", [])
+                    if isinstance(maybe_results, list):
+                        results = maybe_results
+            except Exception:
+                pass
+        if line.startswith("failure:metrics"):
+            loaded = parse_kv_metric(line, "loaded")
+            chars = parse_kv_metric(line, "chars")
+    return loaded, chars, results
+
+
 def parse_compact_kept(output):
     kept = 0
     for line in output.splitlines():
@@ -491,10 +539,16 @@ def estimate_prompt_tokens(chars):
     return max(0, (chars + 3) // 4)
 
 
-def build_pre_prompt_metrics(objective, memory_chars, skill_chars):
+def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, skill_chars):
     token_defaults = load_token_defaults()
     objective_chars = len(text(objective))
-    context_chars = objective_chars + max(0, to_int(memory_chars)) + max(0, to_int(skill_chars))
+    context_chars = (
+        objective_chars
+        + max(0, to_int(memory_chars))
+        + max(0, to_int(learning_chars))
+        + max(0, to_int(failure_chars))
+        + max(0, to_int(skill_chars))
+    )
     est_tokens = estimate_prompt_tokens(context_chars)
     soft_budget = max(1, token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"])
     hard_budget = max(soft_budget, token_defaults["hard_abort_tokens"] - token_defaults["reserve_output_tokens"])
@@ -504,6 +558,8 @@ def build_pre_prompt_metrics(objective, memory_chars, skill_chars):
         est_tokens >= soft_budget
         or utilization >= 0.85
         or to_int(memory_chars) >= 500
+        or to_int(learning_chars) >= 500
+        or to_int(failure_chars) >= 400
         or to_int(skill_chars) >= 700
     )
     return {
@@ -1087,7 +1143,14 @@ def main():
 
         _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])
         mem_loaded, mem_chars, mem_results = parse_memory_load_metrics(load_mem_out)
-        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, skill_loaded_chars)
+        _, load_learning_out = run_internal("load-learning-context", [str(task_class), keywords, "500", "6", ".learnings"])
+        learning_loaded, learning_chars, learning_results = parse_learning_load_metrics(load_learning_out)
+        _, load_failure_out = run_internal(
+            "load-failure-history",
+            [str(task_class), keywords, "500", "6", "outputs/hook-errors.log", "outputs/hook-file-error.log"],
+        )
+        failure_history_loaded, failure_history_chars, failure_results = parse_failure_history_metrics(load_failure_out)
+        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, skill_loaded_chars)
 
         state["session"].update(
             {
@@ -1106,6 +1169,10 @@ def main():
         )
         state["metrics"]["memory_loaded"] = mem_loaded
         state["metrics"]["memory_chars"] = mem_chars
+        state["metrics"]["learning_loaded"] = learning_loaded
+        state["metrics"]["learning_chars"] = learning_chars
+        state["metrics"]["failure_history_loaded"] = failure_history_loaded
+        state["metrics"]["failure_history_chars"] = failure_history_chars
         state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
@@ -1419,6 +1486,10 @@ def main():
                 str(state["metrics"].get("contract_valid", False)).lower(),
                 str(state["metrics"].get("memory_loaded", 0)),
                 str(state["metrics"].get("memory_chars", 0)),
+                str(state["metrics"].get("learning_loaded", 0)),
+                str(state["metrics"].get("learning_chars", 0)),
+                str(state["metrics"].get("failure_history_loaded", 0)),
+                str(state["metrics"].get("failure_history_chars", 0)),
                 str(state["metrics"].get("memory_write_count", 0)),
                 str(state["metrics"].get("memory_dedup_count", 0)),
                 str(state["metrics"].get("memory_compact_kept", 0)),

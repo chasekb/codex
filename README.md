@@ -59,6 +59,7 @@ Main behavior by event:
   - Load skill metadata from repo-local `skills/registry.yaml` first, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
   - dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Load memory context (`load-memory`)
+  - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
   - Write routing decision memory (`write-memory`)
 - `PreToolUse`:
   - Capture tool usage + touched files
@@ -73,6 +74,27 @@ Main behavior by event:
   - Append run row to `outputs/token-metrics.csv`
   - Run regression guard + tuning proposal + canary apply (+ optional promote by tuning mode)
 
+## Pre-Prompt Optimization Priorities
+The runtime now tries to improve the next prompt in this order:
+
+1. Learning-aware retrieval
+   - Loads relevant `.learnings/` entries before prompt assembly.
+2. Task-specific context compression
+   - Keeps the active prompt bundle within budget by trimming low-signal context first.
+3. External skill discovery and install
+   - Searches repo-local and external skill catalogs, then optionally installs a better fit.
+   - Clawhub command templates:
+     - `CODEX_CLAWHUB_SEARCH_CMD='clawhub skill search --query "{query}" --format json'`
+     - `CODEX_CLAWHUB_INSTALL_CMD='clawhub skill install "{name}" --ref "{ref}" --dest "{dest_root}"'`
+4. Failure and retry history injection
+   - Reuses recent hook/runtime failures and retries so the next turn avoids repeated mistakes.
+5. Skill/workflow playbook snippets
+   - Loads a compact excerpt from the selected skill or workflow instead of the full guide.
+6. Search reuse and provenance hints
+   - Reuses the last useful search queries, sources, and hit metadata when the task is research-heavy.
+7. Budget-pressure adaptation
+   - Expands or shrinks prompt-side context loading based on measured pre-prompt utilization.
+
 ## Internal Script Functions
 `hooks/_internal/*` highlights, now grouped by function:
 - `preflight`: validates required runtime files and runs outputs writeability check
@@ -83,6 +105,8 @@ Main behavior by event:
 - `load-skill`, `validate-skill`: skill metadata load and schema validation
   - skill registry defaults to repo-local `skills/registry.yaml`
 - `select-skill-catalog`, `sync-installed-skills-registry`, `discover-external-skills`: registry-aware skill matching and optional external skill acquisition
+  - `CODEX_EXTERNAL_SKILL_DISCOVERY=auto` enables the external acquisition path
+- `load-learning-context`, `load-failure-history`: ranks `.learnings/` and recent runtime errors for pre-prompt retrieval
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
 - `validate-output-contract`: required-key contract checks for workflow outputs
 - `postrun-metrics`: appends normalized run metrics row

@@ -7,6 +7,8 @@ budgets:
     output_hard: 350
     memory_read_soft: 350
     memory_read_hard: 500
+    learning_read_soft: 220
+    learning_read_hard: 320
     memory_write_soft: 140
     memory_write_hard: 220
     skill_read_soft: 320
@@ -18,6 +20,8 @@ budgets:
     output_hard: 600
     memory_read_soft: 400
     memory_read_hard: 600
+    learning_read_soft: 240
+    learning_read_hard: 360
     memory_write_soft: 160
     memory_write_hard: 240
     skill_read_soft: 360
@@ -29,6 +33,8 @@ budgets:
     output_hard: 700
     memory_read_soft: 500
     memory_read_hard: 700
+    learning_read_soft: 280
+    learning_read_hard: 420
     memory_write_soft: 180
     memory_write_hard: 260
     skill_read_soft: 420
@@ -40,6 +46,8 @@ budgets:
     output_hard: 300
     memory_read_soft: 280
     memory_read_hard: 420
+    learning_read_soft: 180
+    learning_read_hard: 260
     memory_write_soft: 120
     memory_write_hard: 180
     skill_read_soft: 260
@@ -60,5 +68,7 @@ tool_limits:
   apply_patch: 3000
   browser_action: 2500
   memory_load: 500
+  learning_load: 500
   memory_write: 220
   skill_load: 700
+  failure_load: 500

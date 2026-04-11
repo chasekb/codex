@@ -96,6 +96,8 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "fallback_sum": 0.0,
             "total_tokens_sum": 0.0,
             "memory_chars_sum": 0.0,
+            "learning_chars_sum": 0.0,
+            "failure_history_chars_sum": 0.0,
             "skill_chars_sum": 0.0,
             "pre_prompt_budget_soft_sum": 0.0,
             "pre_prompt_budget_hard_sum": 0.0,
@@ -115,6 +117,8 @@ with open(metrics_file, "r", encoding="utf-8") as f:
         s["fallback_sum"] += float(r.get("fallbacks", 0) or 0)
         s["total_tokens_sum"] += float(r.get("total_tokens", 0) or 0)
         s["memory_chars_sum"] += float(r.get("memory_chars", 0) or 0)
+        s["learning_chars_sum"] += float(r.get("learning_chars", 0) or 0)
+        s["failure_history_chars_sum"] += float(r.get("failure_history_chars", 0) or 0)
         s["skill_chars_sum"] += float(r.get("skill_loaded_chars", 0) or 0)
         s["pre_prompt_budget_soft_sum"] += float(r.get("pre_prompt_budget_soft", 0) or 0)
         s["pre_prompt_budget_hard_sum"] += float(r.get("pre_prompt_budget_hard", 0) or 0)
@@ -139,6 +143,8 @@ for wf, s in stats.items():
     fallback_rate = s["fallback_sum"] / n
     avg_tokens = s["total_tokens_sum"] / n
     avg_memory_chars = s["memory_chars_sum"] / n
+    avg_learning_chars = s["learning_chars_sum"] / n
+    avg_failure_history_chars = s["failure_history_chars_sum"] / n
     avg_skill_chars = s["skill_chars_sum"] / n
     avg_pre_prompt_budget_soft = s["pre_prompt_budget_soft_sum"] / n
     avg_pre_prompt_budget_hard = s["pre_prompt_budget_hard_sum"] / n
@@ -178,6 +184,8 @@ for wf, s in stats.items():
             proposed_changes["input_soft"] = max(1, int(round(profile_cfg["input_soft"] * (1 + shift))))
         if "memory_read_soft" in profile_cfg and avg_memory_chars > (profile_cfg["memory_read_soft"] * 0.85):
             proposed_changes["memory_read_soft"] = max(1, int(round(profile_cfg["memory_read_soft"] * (1 + shift))))
+        if "learning_read_soft" in profile_cfg and avg_learning_chars > (profile_cfg["learning_read_soft"] * 0.85):
+            proposed_changes["learning_read_soft"] = max(1, int(round(profile_cfg["learning_read_soft"] * (1 + shift))))
         if "skill_read_soft" in profile_cfg and avg_skill_chars > (profile_cfg["skill_read_soft"] * 0.85):
             proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 + shift))))
     elif healthy and (avg_tokens > 1000 or prompt_pressure_low):
@@ -187,6 +195,9 @@ for wf, s in stats.items():
 
     if healthy and avg_memory_chars < 120 and "memory_read_soft" in profile_cfg:
         proposed_changes["memory_read_soft"] = max(1, int(round(profile_cfg["memory_read_soft"] * (1 - shift))))
+
+    if healthy and avg_learning_chars < 120 and "learning_read_soft" in profile_cfg:
+        proposed_changes["learning_read_soft"] = max(1, int(round(profile_cfg["learning_read_soft"] * (1 - shift))))
 
     if healthy and avg_skill_chars < 220 and "skill_read_soft" in profile_cfg:
         proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 - shift))))
@@ -204,6 +215,8 @@ for wf, s in stats.items():
                 "fallback_rate": round(fallback_rate, 4),
                 "avg_total_tokens": round(avg_tokens, 2),
                 "avg_memory_chars": round(avg_memory_chars, 2),
+                "avg_learning_chars": round(avg_learning_chars, 2),
+                "avg_failure_history_chars": round(avg_failure_history_chars, 2),
                 "avg_skill_loaded_chars": round(avg_skill_chars, 2),
                 "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
                 "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
@@ -226,6 +239,8 @@ for wf, s in stats.items():
         "fallback_rate": round(fallback_rate, 4),
         "avg_total_tokens": round(avg_tokens, 2),
         "avg_memory_chars": round(avg_memory_chars, 2),
+        "avg_learning_chars": round(avg_learning_chars, 2),
+        "avg_failure_history_chars": round(avg_failure_history_chars, 2),
         "avg_skill_loaded_chars": round(avg_skill_chars, 2),
         "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
         "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
