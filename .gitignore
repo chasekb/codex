@@ -11,6 +11,7 @@ session_index.jsonl
 
 auth.json
 config.toml
+installation_id
 
 cache/
 MCP/memory/
