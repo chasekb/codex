@@ -1234,6 +1234,16 @@ def main():
         add_tool(state, str(tool_name))
         add_files(state, extract_paths(tool_input))
         state["counters"]["pre_tool"] += 1
+        state["session"]["current_tasking"] = f"about_to_use:{tool_name}"
+        append_event_log(
+            "tool_about_to_use",
+            hook_name,
+            workflow=str(state["session"].get("workflow", "unknown")),
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="pretool",
+            status="selected",
+            tool=str(tool_name),
+        )
         if is_search_tool(tool_name):
             state["metrics"]["search_tool_count"] += 1
             query = extract_search_query(tool_name, tool_input, payload)

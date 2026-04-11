@@ -63,6 +63,7 @@ Main behavior by event:
   - Write routing decision memory (`write-memory`)
 - `PreToolUse`:
   - Capture tool usage + touched files
+  - Emit explicit current tasking such as `tool_about_to_use`
   - Append file-operation log (`file-logger`)
 - `PostToolUse`:
   - Parse token usage from multiple payload schemas
@@ -86,13 +87,15 @@ The runtime now tries to improve the next prompt in this order:
    - Clawhub command templates:
      - `CODEX_CLAWHUB_SEARCH_CMD='clawhub skill search --query "{query}" --format json'`
      - `CODEX_CLAWHUB_INSTALL_CMD='clawhub skill install "{name}" --ref "{ref}" --dest "{dest_root}"'`
-4. Failure and retry history injection
+4. Hook tasking indicators
+   - Emits explicit current-action signals such as `tool_about_to_use` so hooks declare what they are about to do.
+5. Failure and retry history injection
    - Reuses recent hook/runtime failures and retries so the next turn avoids repeated mistakes.
-5. Skill/workflow playbook snippets
+6. Skill/workflow playbook snippets
    - Loads a compact excerpt from the selected skill or workflow instead of the full guide.
-6. Search reuse and provenance hints
+7. Search reuse and provenance hints
    - Reuses the last useful search queries, sources, and hit metadata when the task is research-heavy.
-7. Budget-pressure adaptation
+8. Budget-pressure adaptation
    - Expands or shrinks prompt-side context loading based on measured pre-prompt utilization.
 
 ## Internal Script Functions

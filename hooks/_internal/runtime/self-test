@@ -66,6 +66,12 @@ grep -Fq '"skill_id": "plan-verify-execute"' outputs/hook-runtime-state.json && 
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
 
+pretool_payload='{"preToolUse":{"toolName":"resolve-library-id","parameters":{"query":"codex runtime"}}}'
+hooks/PreToolUse <<<"$pretool_payload" >/dev/null && pass pretool_use_wrapper || fail pretool_use_wrapper
+python3 hooks/_internal/runtime/hook-pipeline PreToolUse <<<"$pretool_payload" >/dev/null && pass pretool_use_pipeline || fail pretool_use_pipeline
+grep -Fq 'event=tool_about_to_use' outputs/hook-events.log && pass hook_pipeline_event_tool_about_to_use || fail hook_pipeline_event_tool_about_to_use
+grep -Fq 'tool=resolve-library-id' outputs/hook-events.log && pass hook_pipeline_event_tool_name || fail hook_pipeline_event_tool_name
+
 repo="$tmpdir/repo"
 mkdir -p "$repo/.github/workflows"
 touch "$repo/.github/workflows/build.yml"
