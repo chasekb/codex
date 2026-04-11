@@ -99,6 +99,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "learning_chars_sum": 0.0,
             "failure_history_chars_sum": 0.0,
             "playbook_chars_sum": 0.0,
+            "search_hints_chars_sum": 0.0,
             "skill_chars_sum": 0.0,
             "pre_prompt_budget_soft_sum": 0.0,
             "pre_prompt_budget_hard_sum": 0.0,
@@ -121,6 +122,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
         s["learning_chars_sum"] += float(r.get("learning_chars", 0) or 0)
         s["failure_history_chars_sum"] += float(r.get("failure_history_chars", 0) or 0)
         s["playbook_chars_sum"] += float(r.get("playbook_chars", 0) or 0)
+        s["search_hints_chars_sum"] += float(r.get("search_hints_chars", 0) or 0)
         s["skill_chars_sum"] += float(r.get("skill_loaded_chars", 0) or 0)
         s["pre_prompt_budget_soft_sum"] += float(r.get("pre_prompt_budget_soft", 0) or 0)
         s["pre_prompt_budget_hard_sum"] += float(r.get("pre_prompt_budget_hard", 0) or 0)
@@ -148,6 +150,7 @@ for wf, s in stats.items():
     avg_learning_chars = s["learning_chars_sum"] / n
     avg_failure_history_chars = s["failure_history_chars_sum"] / n
     avg_playbook_chars = s["playbook_chars_sum"] / n
+    avg_search_hints_chars = s["search_hints_chars_sum"] / n
     avg_skill_chars = s["skill_chars_sum"] / n
     avg_pre_prompt_budget_soft = s["pre_prompt_budget_soft_sum"] / n
     avg_pre_prompt_budget_hard = s["pre_prompt_budget_hard_sum"] / n
@@ -223,6 +226,7 @@ for wf, s in stats.items():
                 "avg_learning_chars": round(avg_learning_chars, 2),
                 "avg_failure_history_chars": round(avg_failure_history_chars, 2),
                 "avg_playbook_chars": round(avg_playbook_chars, 2),
+                "avg_search_hints_chars": round(avg_search_hints_chars, 2),
                 "avg_skill_loaded_chars": round(avg_skill_chars, 2),
                 "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
                 "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
@@ -248,6 +252,7 @@ for wf, s in stats.items():
         "avg_learning_chars": round(avg_learning_chars, 2),
         "avg_failure_history_chars": round(avg_failure_history_chars, 2),
         "avg_playbook_chars": round(avg_playbook_chars, 2),
+        "avg_search_hints_chars": round(avg_search_hints_chars, 2),
         "avg_skill_loaded_chars": round(avg_skill_chars, 2),
         "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
         "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),

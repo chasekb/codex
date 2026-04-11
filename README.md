@@ -61,6 +61,7 @@ Main behavior by event:
   - Load memory context (`load-memory`)
   - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
   - Load compact skill/workflow playbook snippets (`load-playbook-snippet`)
+  - Load search hints and provenance (`load-search-hints`)
   - Write routing decision memory (`write-memory`)
 - `PreToolUse`:
   - Capture tool usage + touched files
@@ -95,7 +96,7 @@ The runtime now tries to improve the next prompt in this order:
 6. Failure and retry history injection
    - Reuses recent hook/runtime failures and retries so the next turn avoids repeated mistakes.
 7. Search reuse and provenance hints
-   - Reuses the last useful search queries, sources, and hit metadata when the task is research-heavy.
+   - Reuses the last useful search queries, sources, pending searches, and hit metadata when the task is research-heavy.
 8. Budget-pressure adaptation
    - Expands or shrinks prompt-side context loading based on measured pre-prompt utilization.
 
@@ -110,7 +111,7 @@ The runtime now tries to improve the next prompt in this order:
   - skill registry defaults to repo-local `skills/registry.yaml`
 - `select-skill-catalog`, `sync-installed-skills-registry`, `discover-external-skills`: registry-aware skill matching and optional external skill acquisition
   - `CODEX_EXTERNAL_SKILL_DISCOVERY=auto` enables the external acquisition path
-- `load-learning-context`, `load-failure-history`, `load-playbook-snippet`: ranks learnings, recent runtime errors, and skill/workflow playbooks for pre-prompt retrieval
+- `load-learning-context`, `load-failure-history`, `load-playbook-snippet`, `load-search-hints`: ranks learnings, recent runtime errors, skill/workflow playbooks, and search hints for pre-prompt retrieval
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
 - `validate-output-contract`: required-key contract checks for workflow outputs
 - `postrun-metrics`: appends normalized run metrics row

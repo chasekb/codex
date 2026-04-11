@@ -41,6 +41,7 @@ required_rel=(
   "hooks/_internal/memory/load-learning-context"
   "hooks/_internal/memory/load-failure-history"
   "hooks/_internal/routing/load-playbook-snippet"
+  "hooks/_internal/memory/load-search-hints"
   "hooks/_internal/memory/write-memory"
   "hooks/_internal/memory/compact-memory"
   "hooks/_internal/metrics/tune-from-metrics"

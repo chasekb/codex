@@ -73,3 +73,4 @@ tool_limits:
   skill_load: 700
   failure_load: 500
   playbook_load: 700
+  search_hint_load: 500
