@@ -72,3 +72,4 @@ tool_limits:
   memory_write: 220
   skill_load: 700
   failure_load: 500
+  playbook_load: 700

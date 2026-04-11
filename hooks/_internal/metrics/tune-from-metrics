@@ -98,6 +98,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "memory_chars_sum": 0.0,
             "learning_chars_sum": 0.0,
             "failure_history_chars_sum": 0.0,
+            "playbook_chars_sum": 0.0,
             "skill_chars_sum": 0.0,
             "pre_prompt_budget_soft_sum": 0.0,
             "pre_prompt_budget_hard_sum": 0.0,
@@ -119,6 +120,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
         s["memory_chars_sum"] += float(r.get("memory_chars", 0) or 0)
         s["learning_chars_sum"] += float(r.get("learning_chars", 0) or 0)
         s["failure_history_chars_sum"] += float(r.get("failure_history_chars", 0) or 0)
+        s["playbook_chars_sum"] += float(r.get("playbook_chars", 0) or 0)
         s["skill_chars_sum"] += float(r.get("skill_loaded_chars", 0) or 0)
         s["pre_prompt_budget_soft_sum"] += float(r.get("pre_prompt_budget_soft", 0) or 0)
         s["pre_prompt_budget_hard_sum"] += float(r.get("pre_prompt_budget_hard", 0) or 0)
@@ -145,6 +147,7 @@ for wf, s in stats.items():
     avg_memory_chars = s["memory_chars_sum"] / n
     avg_learning_chars = s["learning_chars_sum"] / n
     avg_failure_history_chars = s["failure_history_chars_sum"] / n
+    avg_playbook_chars = s["playbook_chars_sum"] / n
     avg_skill_chars = s["skill_chars_sum"] / n
     avg_pre_prompt_budget_soft = s["pre_prompt_budget_soft_sum"] / n
     avg_pre_prompt_budget_hard = s["pre_prompt_budget_hard_sum"] / n
@@ -188,6 +191,8 @@ for wf, s in stats.items():
             proposed_changes["learning_read_soft"] = max(1, int(round(profile_cfg["learning_read_soft"] * (1 + shift))))
         if "skill_read_soft" in profile_cfg and avg_skill_chars > (profile_cfg["skill_read_soft"] * 0.85):
             proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 + shift))))
+        if "skill_read_soft" in profile_cfg and avg_playbook_chars > 350:
+            proposed_changes["skill_read_soft"] = max(1, int(round(profile_cfg["skill_read_soft"] * (1 + shift))))
     elif healthy and (avg_tokens > 1000 or prompt_pressure_low):
         for k in ("input_soft", "output_soft"):
             if k in profile_cfg:
@@ -217,6 +222,7 @@ for wf, s in stats.items():
                 "avg_memory_chars": round(avg_memory_chars, 2),
                 "avg_learning_chars": round(avg_learning_chars, 2),
                 "avg_failure_history_chars": round(avg_failure_history_chars, 2),
+                "avg_playbook_chars": round(avg_playbook_chars, 2),
                 "avg_skill_loaded_chars": round(avg_skill_chars, 2),
                 "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
                 "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
@@ -241,6 +247,7 @@ for wf, s in stats.items():
         "avg_memory_chars": round(avg_memory_chars, 2),
         "avg_learning_chars": round(avg_learning_chars, 2),
         "avg_failure_history_chars": round(avg_failure_history_chars, 2),
+        "avg_playbook_chars": round(avg_playbook_chars, 2),
         "avg_skill_loaded_chars": round(avg_skill_chars, 2),
         "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
         "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),

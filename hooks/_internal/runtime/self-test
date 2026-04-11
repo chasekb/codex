@@ -63,6 +63,7 @@ pipeline_payload='{"task":{"class":"implement","objective":"pipeline resolver sm
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$pipeline_payload" >/dev/null && pass hook_pipeline_smoke || fail hook_pipeline_smoke
 grep -Fq '"workflow": "implement-small"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow || fail hook_pipeline_state_workflow
 grep -Fq '"skill_id": "plan-verify-execute"' outputs/hook-runtime-state.json && pass hook_pipeline_state_skill || fail hook_pipeline_state_skill
+grep -Fq '"playbook_loaded": 2' outputs/hook-runtime-state.json && pass hook_pipeline_state_playbook || fail hook_pipeline_state_playbook
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
 
@@ -159,6 +160,14 @@ LOG
 : > "$failures/hook-file-error.log"
 fh="$(hooks/_internal/memory/load-failure-history general "retry failure" 700 6 "$failures/hook-errors.log" "$failures/hook-file-error.log")"
 echo "$fh" | grep -Fq 'failure:metrics loaded=' && pass load_failure_history || fail load_failure_history
+
+skill_playbook="$(hooks/_internal/routing/load-playbook-snippet skill plan-verify-execute 700 "$ROOT" "$ROOT/skills/registry.yaml")"
+echo "$skill_playbook" | grep -Fq 'playbook:metrics loaded=' && pass load_playbook_skill || fail load_playbook_skill
+echo "$skill_playbook" | grep -Fq '## Instructions' && pass load_playbook_skill_excerpt || fail load_playbook_skill_excerpt
+
+workflow_playbook="$(hooks/_internal/routing/load-playbook-snippet workflow implement-small 700 "$ROOT")"
+echo "$workflow_playbook" | grep -Fq 'playbook:metrics loaded=' && pass load_playbook_workflow || fail load_playbook_workflow
+echo "$workflow_playbook" | grep -Fq 'steps: memory_load, inspect, patch, verify, report, memory_commit' && pass load_playbook_workflow_steps || fail load_playbook_workflow_steps
 
 learn="$tmpdir/learnings"
 mkdir -p "$learn"
@@ -304,8 +313,8 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 4 88 2 4 5 6 7 8 9 10 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false 1 1 1 external-debugger github 2 220 >/dev/null && pass postrun_metrics || fail postrun_metrics
-head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 4 88 2 4 2 172 5 6 7 8 9 10 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false 1 1 1 external-debugger github 2 220 >/dev/null && pass postrun_metrics || fail postrun_metrics
+head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
@@ -318,12 +327,12 @@ set -e
 
 metrics="$tmpdir/token-metrics.csv"
 cat > "$metrics" <<'CSV'
-timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,0,2,4,plan-verify-execute,150,false,3800,11800,12,242,61,0.0161,3739,false
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,0,2,4,plan-verify-execute,150,false,3800,11800,12,414,104,0.0274,3696,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,0,2,4,plan-verify-execute,150,false,3800,11800,12,414,104,0.0274,3696,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,0,2,4,plan-verify-execute,150,false,3800,11800,12,414,104,0.0274,3696,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,0,2,4,plan-verify-execute,150,false,3800,11800,12,414,104,0.0274,3696,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,0,2,4,plan-verify-execute,150,false,3800,11800,12,414,104,0.0274,3696,false
 CSV
 policy="$tmpdir/tuning-policy.yaml"
 cat > "$policy" <<'YAML'
@@ -353,6 +362,7 @@ budget_report_json="$tmpdir/budget-report.json"
 hooks/_internal/metrics/tune-from-metrics "$metrics" "$policy" "$budgets" "$proposals" "$budget_report" "$budget_report_json" >/dev/null && pass tune_from_metrics || fail tune_from_metrics
 grep -Fq 'avg_pre_prompt_utilization' "$proposals" && pass tune_from_metrics_preprompt || fail tune_from_metrics_preprompt
 grep -Fq 'avg_failure_history_chars' "$proposals" && pass tune_from_metrics_failure_history || fail tune_from_metrics_failure_history
+grep -Fq 'avg_playbook_chars' "$proposals" && pass tune_from_metrics_playbook || fail tune_from_metrics_playbook
 grep -Fq '# Budget Report' "$budget_report" && pass budget_report_artifact || fail budget_report_artifact
 grep -Fq 'Proposal count:' "$budget_report" && pass budget_report_summary || fail budget_report_summary
 python3 - <<'PY' "$budget_report_json"

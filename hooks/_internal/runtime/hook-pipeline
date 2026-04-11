@@ -167,6 +167,8 @@ def default_state():
             "learning_chars": 0,
             "failure_history_loaded": 0,
             "failure_history_chars": 0,
+            "playbook_loaded": 0,
+            "playbook_chars": 0,
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
@@ -269,7 +271,7 @@ def run_internal(script_name, args=None, stdin_text=None):
     args = args or []
     script = resolve_internal_script(script_name)
     proc = subprocess.run(
-        ["/bin/bash", script, *args],
+        [script, *args],
         input=stdin_text,
         capture_output=True,
         text=True,
@@ -526,6 +528,28 @@ def parse_failure_history_metrics(output):
     return loaded, chars, results
 
 
+def parse_playbook_metrics(output):
+    loaded = 0
+    chars = 0
+    results = []
+    for line in output.splitlines():
+        if line.startswith("{") and not results:
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    loaded = to_int(parsed.get("playbook_loaded", loaded))
+                    chars = to_int(parsed.get("chars", chars))
+                    maybe_results = parsed.get("results", [])
+                    if isinstance(maybe_results, list):
+                        results = maybe_results
+            except Exception:
+                pass
+        if line.startswith("playbook:metrics"):
+            loaded = parse_kv_metric(line, "loaded")
+            chars = parse_kv_metric(line, "chars")
+    return loaded, chars, results
+
+
 def parse_compact_kept(output):
     kept = 0
     for line in output.splitlines():
@@ -539,7 +563,7 @@ def estimate_prompt_tokens(chars):
     return max(0, (chars + 3) // 4)
 
 
-def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, skill_chars):
+def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, playbook_chars, skill_chars):
     token_defaults = load_token_defaults()
     objective_chars = len(text(objective))
     context_chars = (
@@ -547,6 +571,7 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         + max(0, to_int(memory_chars))
         + max(0, to_int(learning_chars))
         + max(0, to_int(failure_chars))
+        + max(0, to_int(playbook_chars))
         + max(0, to_int(skill_chars))
     )
     est_tokens = estimate_prompt_tokens(context_chars)
@@ -560,6 +585,7 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         or to_int(memory_chars) >= 500
         or to_int(learning_chars) >= 500
         or to_int(failure_chars) >= 400
+        or to_int(playbook_chars) >= 500
         or to_int(skill_chars) >= 700
     )
     return {
@@ -1150,7 +1176,14 @@ def main():
             [str(task_class), keywords, "500", "6", "outputs/hook-errors.log", "outputs/hook-file-error.log"],
         )
         failure_history_loaded, failure_history_chars, failure_results = parse_failure_history_metrics(load_failure_out)
-        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, skill_loaded_chars)
+        _, workflow_playbook_out = run_internal("load-playbook-snippet", ["workflow", workflow, "700", ROOT])
+        workflow_playbook_loaded, workflow_playbook_chars, workflow_playbook_results = parse_playbook_metrics(workflow_playbook_out)
+        _, skill_playbook_out = run_internal("load-playbook-snippet", ["skill", skill_id, "700", ROOT, resolve_skills_registry()])
+        skill_playbook_loaded, skill_playbook_chars, skill_playbook_results = parse_playbook_metrics(skill_playbook_out)
+        playbook_loaded = workflow_playbook_loaded + skill_playbook_loaded
+        playbook_chars = workflow_playbook_chars + skill_playbook_chars
+        playbook_results = workflow_playbook_results + skill_playbook_results
+        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, skill_loaded_chars)
 
         state["session"].update(
             {
@@ -1173,12 +1206,24 @@ def main():
         state["metrics"]["learning_chars"] = learning_chars
         state["metrics"]["failure_history_loaded"] = failure_history_loaded
         state["metrics"]["failure_history_chars"] = failure_history_chars
+        state["metrics"]["playbook_loaded"] = playbook_loaded
+        state["metrics"]["playbook_chars"] = playbook_chars
         state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
         state["metrics"].update(pre_prompt_metrics)
         state["metrics"]["external_skill_id"] = text(external_skill_report.get("selected", {}).get("name", ""))
         state["metrics"]["external_skill_source"] = text(external_skill_report.get("selected", {}).get("source", ""))
+        if playbook_results:
+            append_event_log(
+                "playbook_loaded",
+                hook_name,
+                workflow=workflow,
+                skill=skill_id,
+                stage="preprompt",
+                status="loaded",
+                details=f"items={len(playbook_results)} chars={playbook_chars}",
+            )
 
         append_event_log(
             "workflow_selected",
@@ -1500,6 +1545,8 @@ def main():
                 str(state["metrics"].get("learning_chars", 0)),
                 str(state["metrics"].get("failure_history_loaded", 0)),
                 str(state["metrics"].get("failure_history_chars", 0)),
+                str(state["metrics"].get("playbook_loaded", 0)),
+                str(state["metrics"].get("playbook_chars", 0)),
                 str(state["metrics"].get("memory_write_count", 0)),
                 str(state["metrics"].get("memory_dedup_count", 0)),
                 str(state["metrics"].get("memory_compact_kept", 0)),

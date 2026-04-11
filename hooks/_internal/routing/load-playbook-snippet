@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+
+def text(value):
+    if isinstance(value, str):
+        return " ".join(value.split()).strip()
+    return ""
+
+
+def tokenize(value):
+    if not isinstance(value, str):
+        return []
+    return [part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2]
+
+
+def clamp(text_value, max_lines=6, max_chars=360):
+    lines = []
+    for raw in text_value.splitlines():
+        line = raw.rstrip()
+        if not line:
+            continue
+        lines.append(line)
+        if len(lines) >= max_lines:
+            break
+    result = "\n".join(lines).strip()
+    if len(result) > max_chars:
+        result = result[: max(0, max_chars - 3)].rstrip() + "..."
+    return result
+
+
+def find_repo_root(start: str) -> str:
+    cur = os.path.abspath(start)
+    while True:
+        if (
+            os.path.isfile(os.path.join(cur, "hooks.json"))
+            and os.path.isdir(os.path.join(cur, "skills"))
+            and os.path.isdir(os.path.join(cur, "rules"))
+        ):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            raise RuntimeError("repository root not found")
+        cur = parent
+
+
+def registry_lookup(registry_file, skill_id):
+    if not registry_file or not os.path.isfile(registry_file):
+        return ""
+    skill_file = ""
+    found = False
+    with open(registry_file, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            if re.match(rf"^\s*-\s*id:\s*{re.escape(skill_id)}\s*$", line):
+                found = True
+                continue
+            if found and re.match(r"^\s*file:\s*", line):
+                skill_file = re.sub(r"^\s*file:\s*", "", line).strip()
+                break
+    if not skill_file:
+        return ""
+    if not os.path.isabs(skill_file):
+        skill_file = os.path.join(os.path.dirname(registry_file), skill_file)
+    return skill_file if os.path.isfile(skill_file) else ""
+
+
+def skill_excerpt(skill_file):
+    if not skill_file or not os.path.isfile(skill_file):
+        return ""
+    selected_headings = {
+        "When to use",
+        "Inputs",
+        "Outputs",
+        "Tool dependencies",
+        "Stop conditions",
+        "Instructions",
+    }
+    out = []
+    current = ""
+    with open(skill_file, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            if line.startswith("## "):
+                heading = line[3:].strip()
+                current = heading
+                if heading in selected_headings:
+                    out.append(line)
+                continue
+            if current in selected_headings and line:
+                out.append(line)
+    if not out:
+        out = Path(skill_file).read_text(encoding="utf-8").splitlines()[:18]
+    return clamp("\n".join(out), max_lines=20, max_chars=700)
+
+
+def workflow_steps(workflow_file):
+    if not os.path.isfile(workflow_file):
+        return []
+    steps = []
+    with open(workflow_file, "r", encoding="utf-8") as f:
+        in_steps = False
+        for raw in f:
+            line = raw.rstrip("\n")
+            if re.match(r"^steps:\s*$", line):
+                in_steps = True
+                continue
+            if in_steps:
+                m = re.match(r"^\s*-\s*use:\s*([A-Za-z0-9_\-]+)\s*$", line)
+                if m:
+                    steps.append(m.group(1))
+                    continue
+                if line and not line.startswith(" "):
+                    break
+    return steps
+
+
+def step_library_excerpt(step_library_file, step_names):
+    if not os.path.isfile(step_library_file):
+        return ""
+    wanted = {text(name) for name in step_names if text(name)}
+    if not wanted:
+        return ""
+    sections = []
+    current = ""
+    buffer = []
+    include = False
+    with open(step_library_file, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            if line.startswith("## "):
+                if include and current:
+                    sections.append((current, "\n".join(buffer).strip()))
+                current = line[3:].strip()
+                buffer = [line]
+                include = current in wanted
+                continue
+            if include:
+                buffer.append(line)
+        if include and current:
+            sections.append((current, "\n".join(buffer).strip()))
+    rendered = []
+    for name, body in sections:
+        rendered.append(clamp(body, max_lines=10, max_chars=240))
+    return "\n\n".join([part for part in rendered if part]).strip()
+
+
+def load_skill_snippet(root, skill_id, registry_file, max_chars):
+    skill_file = registry_lookup(registry_file, skill_id)
+    if not skill_file:
+        return {}
+    excerpt = skill_excerpt(skill_file)
+    if len(excerpt) > max_chars:
+        excerpt = excerpt[: max(0, max_chars - 3)].rstrip() + "..."
+    return {
+        "kind": "skill",
+        "id": skill_id,
+        "source_file": skill_file,
+        "snippet": excerpt,
+        "snippet_chars": len(excerpt),
+    }
+
+
+def load_workflow_snippet(root, workflow_id, max_chars):
+    workflow_file = os.path.join(root, "workflows", "pipelines", f"{workflow_id}.yaml")
+    if not os.path.isfile(workflow_file):
+        return {}
+    step_library_file = os.path.join(root, "workflows", "shared", "step-library.md")
+    steps = workflow_steps(workflow_file)
+    with open(workflow_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f]
+    summary = []
+    for line in lines:
+        if re.match(r"^(id|budget_profile|output_contract):\s*", line):
+            summary.append(line)
+    summary.append("steps: " + ", ".join(steps))
+    step_excerpt = step_library_excerpt(step_library_file, steps)
+    if step_excerpt:
+        summary.append("")
+        summary.append(step_excerpt)
+    snippet = clamp("\n".join(summary), max_lines=18, max_chars=max_chars)
+    return {
+        "kind": "workflow",
+        "id": workflow_id,
+        "source_file": workflow_file,
+        "snippet": snippet,
+        "snippet_chars": len(snippet),
+        "steps": steps,
+    }
+
+
+def main():
+    kind = text(sys.argv[1] if len(sys.argv) > 1 else "")
+    identifier = text(sys.argv[2] if len(sys.argv) > 2 else "")
+    max_chars = int(sys.argv[3]) if len(sys.argv) > 3 else 700
+    root = Path(text(sys.argv[4] if len(sys.argv) > 4 else str(Path.cwd())))
+    registry_file = text(sys.argv[5] if len(sys.argv) > 5 else os.environ.get("CODEX_SKILLS_REGISTRY", os.path.join(root, "skills", "registry.yaml")))
+
+    if kind not in {"skill", "workflow"} or not identifier:
+        print(json.dumps({"playbook_loaded": 0, "chars": 0, "results": []}, separators=(",", ":")))
+        print("playbook:metrics loaded=0 chars=0")
+        return 0
+
+    if kind == "skill":
+        report = load_skill_snippet(root, identifier, registry_file, max_chars)
+    else:
+        report = load_workflow_snippet(str(root), identifier, max_chars)
+
+    results = [report] if report else []
+    chars = sum(item.get("snippet_chars", 0) for item in results)
+    out = {
+        "playbook_loaded": len(results),
+        "chars": chars,
+        "results": results,
+    }
+    print(json.dumps(out, separators=(",", ":")))
+    print(f"playbook:metrics loaded={len(results)} chars={chars}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
