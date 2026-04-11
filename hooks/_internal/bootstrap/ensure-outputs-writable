@@ -39,6 +39,8 @@ required_files=(
   "tuning-open-request.json"
   "budget-summary.md"
   "budget-summary.json"
+  "external-skill-discovery.md"
+  "external-skill-discovery.json"
   "canary-report.json"
   "canary-token-budgets.yaml"
 )

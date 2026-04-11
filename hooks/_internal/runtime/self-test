@@ -96,6 +96,40 @@ echo "$skill_release_artifact" | tail -n1 | grep -qx 'release-publish' && pass s
 skill_deps_artifact="$(hooks/_internal/routing/select-skill general 0.9 "dependency maintenance" "$repo")"
 echo "$skill_deps_artifact" | tail -n1 | grep -qx 'dependency-maintenance' && pass select_skill_dependency_artifact || fail select_skill_dependency_artifact
 
+codex_home="$tmpdir/codex-home"
+mkdir -p "$codex_home/external-skills/external-debugger"
+cat > "$codex_home/external-skills/external-debugger/SKILL.md" <<'MD'
+---
+name: external-debugger
+description: root-cause helper for hard failures
+---
+
+# external-debugger
+MD
+CODEX_HOME="$codex_home" hooks/_internal/routing/sync-installed-skills-registry "$codex_home/external-skills" "$codex_home/external-skills/registry.yaml" >/dev/null && pass sync_installed_skills_registry || fail sync_installed_skills_registry
+grep -Fq 'external-debugger' "$codex_home/external-skills/registry.yaml" && pass sync_installed_skills_registry_file || fail sync_installed_skills_registry_file
+catalog_skill="$(CODEX_HOME="$codex_home" hooks/_internal/routing/select-skill-catalog general 0.9 "debug root cause" "$repo")"
+[[ "$catalog_skill" == "external-debugger" ]] && pass select_skill_catalog_external || fail select_skill_catalog_external
+hooks/_internal/routing/load-skill external-debugger metadata 200 "$codex_home/external-skills/registry.yaml" >/dev/null && pass load_skill_external_registry || fail load_skill_external_registry
+
+external_source="$tmpdir/external-source"
+mkdir -p "$external_source"
+cat > "$external_source/SKILL.md" <<'MD'
+---
+name: github-debug-helper
+description: debugging helper from external discovery
+---
+
+# github-debug-helper
+MD
+external_fixture='[{"source":"github","name":"github-debug-helper","repo":"openai/skills","path":"skills/.curated/github-debug-helper","ref":"main","source_dir":"REPLACE_SOURCE","description":"debugging helper from fixture"}]'
+external_fixture="${external_fixture/REPLACE_SOURCE/$external_source}"
+external_install_cmd='mkdir -p "{dest_dir}" && cp -R "{source_dir}/." "{dest_dir}/"'
+CODEX_HOME="$codex_home" CODEX_EXTERNAL_SKILL_DISCOVERY=install CODEX_EXTERNAL_SKILL_AUTO_INSTALL=1 CODEX_EXTERNAL_SKILL_DISCOVERY_JSON="$external_fixture" CODEX_EXTERNAL_SKILL_INSTALL_CMD="$external_install_cmd" hooks/_internal/routing/discover-external-skills general 0.9 "debug root cause" tool-minimization "$ROOT" >/dev/null && pass discover_external_skills || fail discover_external_skills
+grep -Fq '"attempted_install":true' outputs/external-skill-discovery.json && pass discover_external_skills_attempt || fail discover_external_skills_attempt
+grep -Fq '"installed":true' outputs/external-skill-discovery.json && pass discover_external_skills_installed || fail discover_external_skills_installed
+grep -Fq 'github-debug-helper' "$codex_home/external-skills/registry.yaml" && pass discover_external_skills_registry_sync || fail discover_external_skills_registry_sync
+
 mem="$tmpdir/memory"
 mkdir -p "$mem"
 cat > "$mem/session.json" <<'JSON'
@@ -217,7 +251,7 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false >/dev/null && pass postrun_metrics || fail postrun_metrics
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 0 2 4 5 6 7 8 TaskStart postrun debug-rca plan-verify-execute 600 false 3800 11800 12 242 61 0.0161 3739 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
 head -n1 outputs/token-metrics.csv | grep -Fq 'pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"

@@ -34,6 +34,7 @@ LEARNINGS_DIR = os.path.join(ROOT, ".learnings")
 LEARNINGS_PATH = os.path.join(LEARNINGS_DIR, "LEARNINGS.md")
 ERRORS_PATH = os.path.join(LEARNINGS_DIR, "ERRORS.md")
 FEATURE_REQUESTS_PATH = os.path.join(LEARNINGS_DIR, "FEATURE_REQUESTS.md")
+CODEX_HOME = os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex")
 
 
 def now_iso() -> str:
@@ -142,6 +143,8 @@ def default_state():
             "workflow": "unknown",
             "output_contract": "",
             "skill_id": "none",
+            "external_skill_id": "",
+            "external_skill_source": "",
             "confidence": 0.0,
             "objective": "",
             "pending_searches": [],
@@ -175,6 +178,9 @@ def default_state():
             "pre_prompt_utilization": 0.0,
             "pre_prompt_margin_tokens": 0,
             "pre_prompt_adjustment_warranted": False,
+            "external_skill_discovery_runs": 0,
+            "external_skill_install_attempts": 0,
+            "external_skill_install_successes": 0,
             "search_tool_count": 0,
             "search_query_count": 0,
             "search_source_count": 0,
@@ -221,6 +227,9 @@ def resolve_output_contract(workflow: str) -> str:
 def resolve_skills_registry():
     if os.path.isfile(SKILLS_REGISTRY):
         return SKILLS_REGISTRY
+    codex_registry = os.path.join(CODEX_HOME, "skills", "registry.yaml")
+    if os.path.isfile(codex_registry):
+        return codex_registry
     fallback = os.path.expanduser("~/.agents/skills/registry.yaml")
     if os.path.isfile(fallback):
         return fallback
@@ -546,6 +555,25 @@ def parse_skill_loaded_chars(output):
         if line.startswith("skill:metrics"):
             return parse_kv_metric(line, "loaded_chars")
     return 0
+
+
+def parse_external_skill_discovery(output):
+    report = {}
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("{") and not report:
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    report = parsed
+                    continue
+            except Exception:
+                pass
+        if line.startswith("external_skill:"):
+            report.setdefault("lines", []).append(line)
+    return report
 
 
 def format_event_line(
@@ -1024,6 +1052,36 @@ def main():
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
         skill_fallback = any("fallback=true" in l for l in skill_lines)
 
+        external_skill_report = {}
+        external_skill_mode = text(os.environ.get("CODEX_EXTERNAL_SKILL_DISCOVERY", "")).lower()
+        external_skill_enabled = external_skill_mode in {"1", "true", "yes", "on", "discover", "install", "auto"}
+        if (
+            skill_id in {"tool-minimization", "plan-verify-execute", "context-compaction"}
+            and external_skill_enabled
+        ):
+            _, discover_out = run_internal(
+                "discover-external-skills",
+                [str(task_class), f"{confidence:.3f}", keywords, skill_id, ROOT],
+            )
+            external_skill_report = parse_external_skill_discovery(discover_out)
+            state["metrics"]["external_skill_discovery_runs"] += 1
+            state["metrics"]["external_skill_install_attempts"] += int(bool(external_skill_report.get("attempted_install")))
+            state["metrics"]["external_skill_install_successes"] += int(bool(external_skill_report.get("installed")))
+            if external_skill_report.get("installed"):
+                _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
+                skill_lines = [l for l in skill_out.splitlines() if text(l)]
+                skill_id = text(skill_lines[-1]) if skill_lines else skill_id
+                skill_fallback = any("fallback=true" in l for l in skill_lines)
+                append_event_log(
+                    "external_skill_installed",
+                    hook_name,
+                    workflow=workflow,
+                    skill=skill_id,
+                    stage="selection",
+                    status="installed",
+                    details=text(external_skill_report.get("selected", {}).get("name", "")),
+                )
+
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
 
@@ -1040,6 +1098,8 @@ def main():
                 "workflow": workflow,
                 "output_contract": output_contract,
                 "skill_id": skill_id,
+                "external_skill_id": text(external_skill_report.get("selected", {}).get("name", "")),
+                "external_skill_source": text(external_skill_report.get("selected", {}).get("source", "")),
                 "confidence": confidence,
                 "objective": objective,
             }
@@ -1050,6 +1110,8 @@ def main():
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
         state["metrics"].update(pre_prompt_metrics)
+        state["metrics"]["external_skill_id"] = text(external_skill_report.get("selected", {}).get("name", ""))
+        state["metrics"]["external_skill_source"] = text(external_skill_report.get("selected", {}).get("source", ""))
 
         append_event_log(
             "workflow_selected",
@@ -1383,6 +1445,11 @@ def main():
                 str(state["metrics"].get("pre_prompt_utilization", 0.0)),
                 str(state["metrics"].get("pre_prompt_margin_tokens", 0)),
                 str(state["metrics"].get("pre_prompt_adjustment_warranted", False)).lower(),
+                str(state["metrics"].get("external_skill_discovery_runs", 0)),
+                str(state["metrics"].get("external_skill_install_attempts", 0)),
+                str(state["metrics"].get("external_skill_install_successes", 0)),
+                str(state["metrics"].get("external_skill_id", "")),
+                str(state["metrics"].get("external_skill_source", "")),
             ],
         )
         run_internal(

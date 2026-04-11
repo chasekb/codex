@@ -16,6 +16,7 @@ This repository is a global Codex runtime with:
 - `skills/research/`: Research-oriented skills
 - `skills/.system/`: Bundled system skills and templates
 - `skills/registry.yaml`: Repo-local skill registry preferred by the runtime
+- `~/.codex/external-skills/registry.yaml`: generated registry for dynamically installed skills
 - `workflows/`: Workflow registry, pipelines, contracts, guards, and shared step primitives
 - `MCP/`: Routing, prompt atoms, memory storage, budgets, and registry config
 - `rules/`: Policy rules (concise, routing discipline, token budgeting, etc.)
@@ -55,7 +56,8 @@ Main behavior by event:
 - `TaskStart`/`TaskResume`:
   - Select workflow (`select-workflow`)
   - Select skill (`select-skill`)
-  - Load skill metadata from repo-local `skills/registry.yaml` first, then `~/.agents/skills/registry.yaml` as fallback
+  - Load skill metadata from repo-local `skills/registry.yaml` first, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
+  - dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Load memory context (`load-memory`)
   - Write routing decision memory (`write-memory`)
 - `PreToolUse`:
@@ -80,6 +82,7 @@ Main behavior by event:
 - `select-workflow`, `select-skill`: task routing/classification helpers
 - `load-skill`, `validate-skill`: skill metadata load and schema validation
   - skill registry defaults to repo-local `skills/registry.yaml`
+- `select-skill-catalog`, `sync-installed-skills-registry`, `discover-external-skills`: registry-aware skill matching and optional external skill acquisition
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
 - `validate-output-contract`: required-key contract checks for workflow outputs
 - `postrun-metrics`: appends normalized run metrics row
@@ -143,6 +146,8 @@ Runtime tuning artifacts in `outputs/`:
 - `tuning-open-request.json`
 - `budget-summary.md`
 - `budget-summary.json`
+- `external-skill-discovery.md`
+- `external-skill-discovery.json`
 - `canary-token-budgets.yaml`
 - `canary-report.json`
 - `tuning-history.csv`

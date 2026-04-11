@@ -5,6 +5,7 @@ task_class="${1:-general}"
 confidence="${2:-1.0}"
 keywords="${3:-}"
 workspace_root="${4:-$(pwd)}"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 low_conf_threshold="0.70"
 skill="tool-minimization"
@@ -63,6 +64,13 @@ else
       plan|docs|research) skill="tool-minimization" ;;
       *) skill="tool-minimization" ;;
     esac
+
+    if [[ "$skill" == "tool-minimization" || "$skill" == "plan-verify-execute" ]]; then
+      catalog_skill="$("$script_dir/select-skill-catalog" "$task_class" "$confidence" "$keywords" "$workspace_root")"
+      if [[ -n "$catalog_skill" ]]; then
+        skill="$catalog_skill"
+      fi
+    fi
   fi
 
   if [[ "$skill" == "tool-minimization" || "$skill" == "plan-verify-execute" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(eval|metric|regression|baseline)([[:space:]]|$)'; then
