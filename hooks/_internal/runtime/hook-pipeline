@@ -626,6 +626,27 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
     }
 
 
+def prompt_stage_char_cap(remaining_chars, base_chars, floor_chars, weight):
+    remaining_chars = max(0, to_int(remaining_chars))
+    if remaining_chars <= 0:
+        return floor_chars
+    cap = int(remaining_chars * weight)
+    if cap <= 0:
+        cap = floor_chars
+    return max(floor_chars, min(base_chars, cap))
+
+
+def prompt_stage_result_cap(remaining_chars, base_results=6, floor_results=3):
+    remaining_chars = max(0, to_int(remaining_chars))
+    if remaining_chars <= 400:
+        return floor_results
+    if remaining_chars <= 900:
+        return max(floor_results, base_results - 2)
+    if remaining_chars <= 1600:
+        return max(floor_results, base_results - 1)
+    return base_results
+
+
 def parse_output_compact_result(output):
     for line in output.splitlines():
         line = line.strip()
@@ -1193,23 +1214,81 @@ def main():
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
 
-        _, load_mem_out = run_internal("load-memory", [str(task_class), keywords, "500", "6", "MCP/memory"])
+        token_defaults = load_token_defaults()
+        prompt_budget_chars = max(1, (token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"]) * 4)
+        remaining_prompt_chars = max(0, prompt_budget_chars - len(objective) - skill_loaded_chars)
+
+        memory_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 180, 0.24)
+        memory_max_results = prompt_stage_result_cap(remaining_prompt_chars)
+        _, load_mem_out = run_internal(
+            "load-memory",
+            [str(task_class), keywords, str(memory_max_chars), str(memory_max_results), "MCP/memory"],
+        )
         mem_loaded, mem_chars, mem_results = parse_memory_load_metrics(load_mem_out)
-        _, load_learning_out = run_internal("load-learning-context", [str(task_class), keywords, "500", "6", ".learnings"])
+
+        context_keywords_parts = [keywords]
+        if mem_results and isinstance(mem_results[0], dict) and mem_results[0].get("type") == "session":
+            session_focus = []
+            for key in ("objective", "constraints", "active_files", "latest_decisions", "blockers"):
+                value = mem_results[0].get(key, [])
+                if isinstance(value, list):
+                    session_focus.extend([text(item) for item in value if text(item)])
+                elif text(value):
+                    session_focus.append(text(value))
+            if session_focus:
+                context_keywords_parts.append(" ".join(session_focus[:12]))
+        context_keywords = " ".join(part for part in context_keywords_parts if text(part))
+
+        remaining_prompt_chars = max(0, remaining_prompt_chars - mem_chars)
+        learning_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 150, 0.18)
+        learning_max_results = prompt_stage_result_cap(remaining_prompt_chars)
+        _, load_learning_out = run_internal(
+            "load-learning-context",
+            [str(task_class), context_keywords, str(learning_max_chars), str(learning_max_results), ".learnings"],
+        )
         learning_loaded, learning_chars, learning_results = parse_learning_load_metrics(load_learning_out)
+        remaining_prompt_chars = max(0, remaining_prompt_chars - learning_chars)
+
+        failure_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 140, 0.16)
+        failure_max_results = prompt_stage_result_cap(remaining_prompt_chars)
         _, load_failure_out = run_internal(
             "load-failure-history",
-            [str(task_class), keywords, "500", "6", "outputs/hook-errors.log", "outputs/hook-file-error.log"],
+            [
+                str(task_class),
+                context_keywords,
+                str(failure_max_chars),
+                str(failure_max_results),
+                "outputs/hook-errors.log",
+                "outputs/hook-file-error.log",
+            ],
         )
         failure_history_loaded, failure_history_chars, failure_results = parse_failure_history_metrics(load_failure_out)
-        _, workflow_playbook_out = run_internal("load-playbook-snippet", ["workflow", workflow, "700", ROOT])
+        remaining_prompt_chars = max(0, remaining_prompt_chars - failure_history_chars)
+
+        playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 700, 180, 0.20)
+        _, workflow_playbook_out = run_internal(
+            "load-playbook-snippet",
+            ["workflow", workflow, str(playbook_max_chars), ROOT],
+        )
         workflow_playbook_loaded, workflow_playbook_chars, workflow_playbook_results = parse_playbook_metrics(workflow_playbook_out)
-        _, skill_playbook_out = run_internal("load-playbook-snippet", ["skill", skill_id, "700", ROOT, resolve_skills_registry()])
+        remaining_prompt_chars = max(0, remaining_prompt_chars - workflow_playbook_chars)
+        skill_playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 700, 180, 0.20)
+        _, skill_playbook_out = run_internal(
+            "load-playbook-snippet",
+            ["skill", skill_id, str(skill_playbook_max_chars), ROOT, resolve_skills_registry()],
+        )
         skill_playbook_loaded, skill_playbook_chars, skill_playbook_results = parse_playbook_metrics(skill_playbook_out)
         playbook_loaded = workflow_playbook_loaded + skill_playbook_loaded
         playbook_chars = workflow_playbook_chars + skill_playbook_chars
         playbook_results = workflow_playbook_results + skill_playbook_results
-        _, search_hint_out = run_internal("load-search-hints", [str(task_class), keywords, "500", "6", "MCP/memory"])
+        remaining_prompt_chars = max(0, remaining_prompt_chars - skill_playbook_chars)
+
+        search_hint_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 120, 0.12)
+        search_hint_max_results = prompt_stage_result_cap(remaining_prompt_chars)
+        _, search_hint_out = run_internal(
+            "load-search-hints",
+            [str(task_class), context_keywords, str(search_hint_max_chars), str(search_hint_max_results), "MCP/memory"],
+        )
         search_hint_loaded, search_hint_chars, search_hint_results = parse_search_hints_metrics(search_hint_out)
         pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, search_hint_chars, skill_loaded_chars)
 

@@ -17,13 +17,48 @@ decisions_file="$memory_root/decisions.jsonl"
 
 python3 - <<'PY' "$task_class" "$keywords" "$max_chars" "$max_results" "$session_file" "$facts_file" "$decisions_file"
 import json
+import re
 import sys
 from datetime import datetime
 
 task_class, keywords, max_chars, max_results, session_file, facts_file, decisions_file = sys.argv[1:]
 max_chars = int(max_chars)
 max_results = int(max_results)
-terms = [t.lower() for t in keywords.split() if len(t) > 1]
+
+
+def tokenize(value):
+    if not isinstance(value, str):
+        return []
+    return [part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 1]
+
+
+def normalize_text(value, limit=220):
+    return " ".join(str(value).split())[:limit]
+
+
+def normalize_list(values, max_items, limit=140):
+    if not isinstance(values, list):
+        return []
+    out = []
+    for item in values[:max_items]:
+        item_text = normalize_text(item, limit)
+        if item_text:
+            out.append(item_text)
+    return out
+
+
+def session_focus_terms(session_task):
+    values = [
+        session_task.get("objective", ""),
+        *session_task.get("constraints", []),
+        *session_task.get("active_files", []),
+        *session_task.get("latest_decisions", []),
+        *session_task.get("blockers", []),
+    ]
+    terms = []
+    for value in values:
+        terms.extend(tokenize(str(value)))
+    return {term for term in terms if len(term) > 1}
 
 def safe_jsonl(path):
     out = []
@@ -63,21 +98,55 @@ with open(session_file, "r", encoding="utf-8") as f:
     session = json.load(f)
 
 records = safe_jsonl(facts_file) + safe_jsonl(decisions_file)
+session_task = session.get("task", {}) if isinstance(session.get("task", {}), dict) else {}
+terms = [t for t in tokenize(f"{task_class} {keywords}") if t]
+terms.extend(sorted(session_focus_terms(session_task)))
 ranked = sorted(records, key=score_record, reverse=True)
 
 result = []
 used_chars = 0
 
-session_blob = {
-    "type": "session",
-    "objective": session.get("task", {}).get("objective", ""),
-    "constraints": session.get("task", {}).get("constraints", [])[:4],
-    "active_files": session.get("task", {}).get("active_files", [])[:6],
-}
-session_str = json.dumps(session_blob, separators=(",", ":"))
-if len(session_str) <= max_chars:
-    result.append(session_blob)
-    used_chars += len(session_str)
+session_variants = [
+    {
+        "type": "session",
+        "objective": normalize_text(session_task.get("objective", ""), 180),
+        "constraints": normalize_list(session_task.get("constraints", []), 4, 120),
+        "active_files": normalize_list(session_task.get("active_files", []), 6, 140),
+        "latest_decisions": normalize_list(session_task.get("latest_decisions", []), 4, 140),
+        "blockers": normalize_list(session_task.get("blockers", []), 4, 140),
+    },
+    {
+        "type": "session",
+        "objective": normalize_text(session_task.get("objective", ""), 180),
+        "constraints": normalize_list(session_task.get("constraints", []), 4, 120),
+        "active_files": normalize_list(session_task.get("active_files", []), 6, 140),
+        "latest_decisions": normalize_list(session_task.get("latest_decisions", []), 4, 140),
+        "blockers": [],
+    },
+    {
+        "type": "session",
+        "objective": normalize_text(session_task.get("objective", ""), 180),
+        "constraints": normalize_list(session_task.get("constraints", []), 4, 120),
+        "active_files": normalize_list(session_task.get("active_files", []), 6, 140),
+        "latest_decisions": [],
+        "blockers": [],
+    },
+    {
+        "type": "session",
+        "objective": normalize_text(session_task.get("objective", ""), 180),
+        "constraints": normalize_list(session_task.get("constraints", []), 3, 100),
+        "active_files": normalize_list(session_task.get("active_files", []), 4, 110),
+        "latest_decisions": [],
+        "blockers": [],
+    },
+]
+
+for session_blob in session_variants:
+    session_str = json.dumps(session_blob, separators=(",", ":"))
+    if len(session_str) <= max_chars:
+        result.append(session_blob)
+        used_chars += len(session_str)
+        break
 
 seen = set()
 for r in ranked:

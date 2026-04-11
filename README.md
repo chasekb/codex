@@ -113,6 +113,7 @@ The runtime now tries to improve the next prompt in this order:
   - `CODEX_EXTERNAL_SKILL_DISCOVERY=auto` enables the external acquisition path
 - `load-learning-context`, `load-failure-history`, `load-playbook-snippet`, `load-search-hints`: ranks learnings, recent runtime errors, skill/workflow playbooks, and search hints for pre-prompt retrieval
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
+  - `load-memory` now carries compact session objective, active files, latest decisions, and blockers in addition to ranked facts/decisions
 - `validate-output-contract`: required-key contract checks for workflow outputs
 - `postrun-metrics`: appends normalized run metrics row
 - `regression-guard`: token regression baseline checks
