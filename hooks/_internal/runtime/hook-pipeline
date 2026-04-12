@@ -876,6 +876,7 @@ def log_skill_gap(state, prompt, signal):
     if not prompt_text or signal not in {"feature_request", "self-improvement"}:
         return None
     prompt_excerpt = prompt_text[:220]
+    target = classify_skill_gap_target(prompt_text)
     entry = append_learning_entry(
         "learning",
         "knowledge_gap",
@@ -893,19 +894,33 @@ def log_skill_gap(state, prompt, signal):
         metadata_extra=[
             "Skill-Action: create_or_discover",
             "Skill-Owner: superpowers-or-external",
+            f"Skill-Target: {target}",
         ],
     )
     write_memory(
         state,
         "fact",
         "skills",
-        "self-improvement,skill-gap,reusable-behavior",
+        f"self-improvement,skill-gap,reusable-behavior,{target}",
         f"Prompt indicated a reusable skill gap: {prompt_excerpt[:120]}",
         source="user_prompt",
         confidence="0.82",
         ttl_days="30",
     )
     return entry
+
+
+def classify_skill_gap_target(prompt):
+    prompt_lc = text(prompt).lower()
+    if not prompt_lc:
+        return "runtime_policy"
+    if re.search(r"\b(discover|install|import|find|search)\b", prompt_lc):
+        return "discover_external"
+    if re.search(r"\b(create|write|author|extract|skill)\b", prompt_lc):
+        return "create_skill"
+    if re.search(r"\b(runtime|routing|memory|budget|output contract)\b", prompt_lc):
+        return "runtime_policy"
+    return "create_skill"
 
 
 def extract_search_query(tool_name, tool_input, payload):

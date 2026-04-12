@@ -66,6 +66,7 @@ def parse_entry(entry):
         "source": "",
         "skill_action": "",
         "skill_owner": "",
+        "skill_target": "",
         "logged": "",
         "source_file": entry.get("file", ""),
     }
@@ -110,6 +111,8 @@ def parse_entry(entry):
                 data["skill_action"] = meta_line.split(":", 1)[1].strip().lower()
             elif meta_line.startswith("Skill-Owner:"):
                 data["skill_owner"] = meta_line.split(":", 1)[1].strip().lower()
+            elif meta_line.startswith("Skill-Target:"):
+                data["skill_target"] = meta_line.split(":", 1)[1].strip().lower()
         elif section in section_lines and line:
             section_lines[section].append(line)
 
@@ -181,6 +184,7 @@ def compact_entry(entry):
         "pattern_key": entry.get("pattern_key", "")[:120],
         "skill_action": entry.get("skill_action", "")[:120],
         "skill_owner": entry.get("skill_owner", "")[:120],
+        "skill_target": entry.get("skill_target", "")[:120],
         "source_file": entry.get("source_file", ""),
         "logged": entry.get("logged", ""),
     }
