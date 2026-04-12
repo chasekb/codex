@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workflow="${1:-unknown}"
+task_class="${2:-general}"
+summary_file="${3:-outputs/budget-summary.json}"
+policy_file="${4:-MCP/budgets/tuning-policy.yaml}"
+budgets_file="${5:-MCP/budgets/token-budgets.yaml}"
+
+python3 - <<'PY' "$workflow" "$task_class" "$summary_file" "$policy_file" "$budgets_file"
+import json
+import re
+import sys
+from pathlib import Path
+
+workflow, task_class, summary_file, policy_file, budgets_file = sys.argv[1:]
+
+def load_json(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+def read_policy(path):
+    values = {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("#") or ":" not in line:
+                    continue
+                key, value = line.split(":", 1)
+                values[key.strip()] = value.strip()
+    except Exception:
+        pass
+    return {
+        "prompt_budget_high_utilization": float(values.get("prompt_budget_high_utilization", 0.85)),
+        "prompt_budget_low_utilization": float(values.get("prompt_budget_low_utilization", 0.45)),
+        "prompt_budget_adjustment_rate": float(values.get("prompt_budget_adjustment_rate", 0.5)),
+        "max_budget_shift_pct": float(values.get("max_budget_shift_pct", 10.0)),
+    }
+
+def parse_budgets(path):
+    current = {}
+    profile = None
+    in_budgets = False
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.rstrip("\n")
+                if re.match(r"^budgets:\s*$", line):
+                    in_budgets = True
+                    continue
+                if in_budgets and re.match(r"^[A-Za-z_]", line):
+                    break
+                m_profile = re.match(r"^\s{2}([a-zA-Z0-9_]+):\s*$", line)
+                if m_profile:
+                    profile = m_profile.group(1)
+                    current.setdefault(profile, {})
+                    continue
+                m_val = re.match(r"^\s{4}([a-zA-Z0-9_]+):\s*([0-9.]+)\s*$", line)
+                if m_val and profile:
+                    current[profile][m_val.group(1)] = float(m_val.group(2))
+    except Exception:
+        pass
+    return current
+
+def workflow_to_budget_profile(wf):
+    mapping = {
+        "plan-only": "plan",
+        "request-standard": "implement",
+        "implement-small": "implement",
+        "debug-rca": "debug_rca",
+        "verify": "verify",
+        "retro": "plan",
+    }
+    return mapping.get(wf, wf)
+
+def clamp(value, lower, upper):
+    return max(lower, min(upper, value))
+
+summary = load_json(summary_file, {})
+policy = read_policy(policy_file)
+budgets = parse_budgets(budgets_file)
+
+overall = summary.get("overall", {}) if isinstance(summary, dict) else {}
+workflow_rows = summary.get("workflow_summary", []) if isinstance(summary, dict) else []
+
+selected = None
+for row in workflow_rows:
+    if str(row.get("workflow", "")) == workflow:
+        selected = row
+        break
+
+status = "noop"
+reason = "missing_history"
+prompt_scale = 1.0
+memory_scale = 1.0
+learning_scale = 1.0
+failure_scale = 1.0
+playbook_scale = 1.0
+search_scale = 1.0
+skill_scale = 1.0
+budget_profile = workflow_to_budget_profile(workflow)
+profile_cfg = budgets.get(budget_profile, {}) if isinstance(budgets, dict) else {}
+
+source_row = selected or {}
+
+if isinstance(summary, dict) and summary.get("status") == "ok":
+    util = float(source_row.get("avg_utilization", overall.get("avg_utilization", 0.0)) or 0.0)
+    margin = float(source_row.get("avg_margin_tokens", overall.get("avg_margin_tokens", 0.0)) or 0.0)
+    proposal_rate = float(source_row.get("proposal_rate", 0.0) or 0.0)
+    target_util = (policy["prompt_budget_high_utilization"] + policy["prompt_budget_low_utilization"]) / 2.0
+    util_gap = target_util - util
+    adjustment = clamp(util_gap * policy["prompt_budget_adjustment_rate"] * 0.55, -0.18, 0.18)
+    prompt_scale = clamp(1.0 + adjustment, 0.85, 1.20)
+
+    if util <= policy["prompt_budget_low_utilization"] and margin >= 2500:
+        prompt_scale = clamp(prompt_scale + 0.05, 0.85, 1.20)
+    if util >= policy["prompt_budget_high_utilization"] and margin <= 2200:
+        prompt_scale = clamp(prompt_scale - 0.05, 0.85, 1.20)
+    if proposal_rate >= 0.75 and util <= policy["prompt_budget_low_utilization"]:
+        prompt_scale = clamp(prompt_scale + 0.03, 0.85, 1.20)
+
+    tuning = summary.get("tuning_history_summary", {}) if isinstance(summary, dict) else {}
+    last_action = str(tuning.get("last_action", "")).lower()
+    promote_count = int(tuning.get("promote_count", 0) or 0)
+    rollback_count = int(tuning.get("rollback_count", 0) or 0)
+    if rollback_count > promote_count:
+        prompt_scale = 1.0 + ((prompt_scale - 1.0) * 0.85)
+    if last_action == "rollback":
+        prompt_scale = 1.0 + ((prompt_scale - 1.0) * 0.90)
+        reason = "recent_rollback"
+    elif prompt_scale > 1.0:
+        reason = "underutilized_history"
+    elif prompt_scale < 1.0:
+        reason = "high_utilization_history"
+    else:
+        reason = "stable_history"
+
+    def stage_scale(avg_chars, soft_budget, floor=0.85, ceiling=1.20):
+        scale = prompt_scale
+        if soft_budget:
+            usage = float(avg_chars or 0.0) / float(soft_budget)
+            if usage >= 0.90:
+                scale -= min(0.12, (usage - 0.90) * 0.70)
+            elif usage <= 0.55 and util <= policy["prompt_budget_low_utilization"]:
+                scale += min(0.12, (0.55 - usage) * 0.45)
+        return clamp(scale, floor, ceiling)
+
+    memory_scale = stage_scale(source_row.get("avg_memory_chars", overall.get("avg_memory_chars", 0.0)), profile_cfg.get("memory_read_soft"))
+    learning_scale = stage_scale(source_row.get("avg_learning_chars", overall.get("avg_learning_chars", 0.0)), profile_cfg.get("learning_read_soft"))
+    failure_soft = profile_cfg.get("memory_read_soft") or profile_cfg.get("learning_read_soft")
+    failure_scale = stage_scale(source_row.get("avg_failure_history_chars", overall.get("avg_failure_history_chars", 0.0)), failure_soft, floor=0.85, ceiling=1.15)
+    playbook_scale = stage_scale(source_row.get("avg_playbook_chars", overall.get("avg_playbook_chars", 0.0)), profile_cfg.get("skill_read_soft"), floor=0.85, ceiling=1.20)
+    search_scale = stage_scale(source_row.get("avg_search_hints_chars", overall.get("avg_search_hints_chars", 0.0)), profile_cfg.get("skill_read_soft"), floor=0.85, ceiling=1.20)
+    skill_scale = stage_scale(source_row.get("avg_skill_loaded_chars", overall.get("avg_skill_loaded_chars", 0.0)), profile_cfg.get("skill_read_soft"), floor=0.90, ceiling=1.10)
+
+    status = "ok"
+
+report = {
+    "budget_controller_loaded": int(status == "ok"),
+    "status": status,
+    "workflow": workflow,
+    "task_class": task_class,
+    "budget_profile": budget_profile,
+    "prompt_scale": round(prompt_scale, 4),
+    "memory_scale": round(memory_scale, 4),
+    "learning_scale": round(learning_scale, 4),
+    "failure_scale": round(failure_scale, 4),
+    "playbook_scale": round(playbook_scale, 4),
+    "search_scale": round(search_scale, 4),
+    "skill_scale": round(skill_scale, 4),
+    "utilization": round(float(selected.get("avg_utilization", overall.get("avg_utilization", 0.0)) or 0.0), 4) if selected else 0.0,
+    "margin_tokens": round(float(selected.get("avg_margin_tokens", overall.get("avg_margin_tokens", 0.0)) or 0.0), 2) if selected else 0.0,
+    "reason": reason,
+}
+print(json.dumps(report, separators=(",", ":")))
+print(
+    "budget_controller:metrics "
+    f"loaded={report['budget_controller_loaded']} "
+    f"prompt_scale={report['prompt_scale']} "
+    f"memory_scale={report['memory_scale']} "
+    f"learning_scale={report['learning_scale']} "
+    f"failure_scale={report['failure_scale']} "
+    f"playbook_scale={report['playbook_scale']} "
+    f"search_scale={report['search_scale']} "
+    f"skill_scale={report['skill_scale']}"
+)
+PY

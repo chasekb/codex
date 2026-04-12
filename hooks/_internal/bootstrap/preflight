@@ -45,6 +45,7 @@ required_rel=(
   "hooks/_internal/memory/write-memory"
   "hooks/_internal/memory/compact-memory"
   "hooks/_internal/metrics/tune-from-metrics"
+  "hooks/_internal/metrics/load-budget-controller"
   "hooks/_internal/metrics/apply-tuning-canary"
   "hooks/_internal/metrics/promote-tuning"
   "hooks/_internal/metrics/rollback-tuning"

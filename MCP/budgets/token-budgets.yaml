@@ -74,3 +74,4 @@ tool_limits:
   failure_load: 500
   playbook_load: 700
   search_hint_load: 500
+  budget_controller_load: 500

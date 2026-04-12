@@ -61,12 +61,46 @@ echo "$deps_skill_out" | tail -n1 | grep -qx 'dependency-maintenance' && pass se
 
 hooks/_internal/memory/write-memory fact research search,reuse "search tool=web_search query=codex runtime search hints sources=docs accepted=docs reuse_hit=1" self-test 0.9 30 MCP/memory >/dev/null && pass write_search_memory || fail write_search_memory
 
+controller_summary="$tmpdir/budget-summary-controller.json"
+cat > "$controller_summary" <<'JSON'
+{"generated_at":"2026-04-12T00:00:00Z","status":"ok","history_count":8,"tuning_history_count":2,"overall":{"runs":8,"proposal_runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0},"weekly":[{"period":"2026-W15","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"monthly":[{"period":"2026-04","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"workflow_summary":[{"workflow":"debug-rca","runs":8,"proposal_emitted_runs":8,"proposal_rate":1.0,"samples_sum":40,"avg_utilization":0.0353,"avg_margin_tokens":3666.0,"avg_pass_rate":1.0,"avg_memory_chars":80.0,"avg_learning_chars":34.0,"avg_failure_history_chars":44.0,"avg_playbook_chars":172.0,"avg_search_hints_chars":120.0,"avg_skill_loaded_chars":150.0}],"tuning_history_summary":{"rows":2,"promote_count":1,"rollback_count":1,"last_action":"rollback","last_timestamp":"2026-04-07T16:02:34Z"}}
+JSON
+controller_policy="$tmpdir/tuning-policy-controller.yaml"
+cat > "$controller_policy" <<'YAML'
+mode: observe
+min_samples_per_workflow: 5
+max_budget_shift_pct: 10
+max_contract_invalid_rate: 0.02
+min_pass_rate: 0.95
+max_retry_rate: 0.20
+max_fallback_rate: 0.20
+prompt_budget_high_utilization: 0.85
+prompt_budget_low_utilization: 0.45
+prompt_budget_adjustment_rate: 0.50
+YAML
+controller_budgets="$tmpdir/token-budgets-controller.yaml"
+cat > "$controller_budgets" <<'YAML'
+budgets:
+  debug_rca:
+    input_soft: 4200
+    output_soft: 520
+    memory_read_soft: 500
+    learning_read_soft: 280
+    skill_read_soft: 420
+YAML
+bc="$(hooks/_internal/metrics/load-budget-controller debug-rca implement "$controller_summary" "$controller_policy" "$controller_budgets")"
+echo "$bc" | grep -Fq 'budget_controller:metrics loaded=1' && pass load_budget_controller || fail load_budget_controller
+echo "$bc" | grep -Fq '"budget_controller_loaded":1' && pass load_budget_controller_json || fail load_budget_controller_json
+echo "$bc" | grep -Eq '"prompt_scale":1\.[0-9]+' && pass load_budget_controller_prompt_scale || fail load_budget_controller_prompt_scale
+
 pipeline_payload='{"task":{"class":"implement","objective":"pipeline resolver smoke"},"classification":{"confidence":0.91}}'
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$pipeline_payload" >/dev/null && pass hook_pipeline_smoke || fail hook_pipeline_smoke
 grep -Fq '"workflow": "implement-small"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow || fail hook_pipeline_state_workflow
 grep -Fq '"skill_id": "plan-verify-execute"' outputs/hook-runtime-state.json && pass hook_pipeline_state_skill || fail hook_pipeline_state_skill
 grep -Fq '"playbook_loaded": 2' outputs/hook-runtime-state.json && pass hook_pipeline_state_playbook || fail hook_pipeline_state_playbook
 grep -Eq '"search_hints_loaded": [1-9]' outputs/hook-runtime-state.json && pass hook_pipeline_state_search_hints || fail hook_pipeline_state_search_hints
+grep -Fq '"budget_controller_loaded": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller || fail hook_pipeline_state_budget_controller
+grep -Eq '"budget_controller_prompt_scale": 1\.[0-9]+' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller_scale || fail hook_pipeline_state_budget_controller_scale
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
 

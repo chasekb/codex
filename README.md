@@ -98,7 +98,7 @@ The runtime now tries to improve the next prompt in this order:
 7. Search reuse and provenance hints
    - Reuses the last useful search queries, sources, pending searches, and hit metadata when the task is research-heavy.
 8. Budget-pressure adaptation
-   - Expands or shrinks prompt-side context loading based on measured pre-prompt utilization.
+   - Expands or shrinks prompt-side context loading based on measured pre-prompt utilization and the recent budget-history controller.
 
 ## Internal Script Functions
 `hooks/_internal/*` highlights, now grouped by function:
@@ -111,7 +111,7 @@ The runtime now tries to improve the next prompt in this order:
   - skill registry defaults to repo-local `skills/registry.yaml`
 - `select-skill-catalog`, `sync-installed-skills-registry`, `discover-external-skills`: registry-aware skill matching and optional external skill acquisition
   - `CODEX_EXTERNAL_SKILL_DISCOVERY=auto` enables the external acquisition path
-- `load-learning-context`, `load-failure-history`, `load-playbook-snippet`, `load-search-hints`: ranks learnings, recent runtime errors, skill/workflow playbooks, and search hints for pre-prompt retrieval
+- `load-learning-context`, `load-failure-history`, `load-playbook-snippet`, `load-search-hints`, `load-budget-controller`: ranks learnings, recent runtime errors, skill/workflow playbooks, search hints, and recent budget history for pre-prompt retrieval and adaptive loading
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
   - `load-memory` now carries compact session objective, active files, latest decisions, and blockers in addition to ranked facts/decisions
 - `validate-output-contract`: required-key contract checks for workflow outputs

@@ -171,6 +171,14 @@ def default_state():
             "playbook_chars": 0,
             "search_hints_loaded": 0,
             "search_hints_chars": 0,
+            "budget_controller_loaded": 0,
+            "budget_controller_prompt_scale": 1.0,
+            "budget_controller_memory_scale": 1.0,
+            "budget_controller_learning_scale": 1.0,
+            "budget_controller_failure_scale": 1.0,
+            "budget_controller_playbook_scale": 1.0,
+            "budget_controller_search_scale": 1.0,
+            "budget_controller_skill_scale": 1.0,
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
@@ -572,6 +580,46 @@ def parse_search_hints_metrics(output):
             loaded = parse_kv_metric(line, "loaded")
             chars = parse_kv_metric(line, "chars")
     return loaded, chars, results
+
+
+def parse_budget_controller_metrics(output):
+    report = {
+        "loaded": 0,
+        "prompt_scale": 1.0,
+        "memory_scale": 1.0,
+        "learning_scale": 1.0,
+        "failure_scale": 1.0,
+        "playbook_scale": 1.0,
+        "search_scale": 1.0,
+        "skill_scale": 1.0,
+        "reason": "",
+    }
+    for line in output.splitlines():
+        if line.startswith("{"):
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    report["loaded"] = to_int(parsed.get("budget_controller_loaded", report["loaded"]))
+                    report["prompt_scale"] = to_float(parsed.get("prompt_scale", report["prompt_scale"]), report["prompt_scale"])
+                    report["memory_scale"] = to_float(parsed.get("memory_scale", report["memory_scale"]), report["memory_scale"])
+                    report["learning_scale"] = to_float(parsed.get("learning_scale", report["learning_scale"]), report["learning_scale"])
+                    report["failure_scale"] = to_float(parsed.get("failure_scale", report["failure_scale"]), report["failure_scale"])
+                    report["playbook_scale"] = to_float(parsed.get("playbook_scale", report["playbook_scale"]), report["playbook_scale"])
+                    report["search_scale"] = to_float(parsed.get("search_scale", report["search_scale"]), report["search_scale"])
+                    report["skill_scale"] = to_float(parsed.get("skill_scale", report["skill_scale"]), report["skill_scale"])
+                    report["reason"] = text(parsed.get("reason", report["reason"]))
+            except Exception:
+                pass
+        if line.startswith("budget_controller:metrics"):
+            report["loaded"] = parse_kv_metric(line, "loaded")
+            report["prompt_scale"] = to_float(re.search(r"\bprompt_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bprompt_scale=([0-9.]+)", line) else 1.0
+            report["memory_scale"] = to_float(re.search(r"\bmemory_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bmemory_scale=([0-9.]+)", line) else 1.0
+            report["learning_scale"] = to_float(re.search(r"\blearning_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\blearning_scale=([0-9.]+)", line) else 1.0
+            report["failure_scale"] = to_float(re.search(r"\bfailure_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bfailure_scale=([0-9.]+)", line) else 1.0
+            report["playbook_scale"] = to_float(re.search(r"\bplaybook_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bplaybook_scale=([0-9.]+)", line) else 1.0
+            report["search_scale"] = to_float(re.search(r"\bsearch_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bsearch_scale=([0-9.]+)", line) else 1.0
+            report["skill_scale"] = to_float(re.search(r"\bskill_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bskill_scale=([0-9.]+)", line) else 1.0
+    return report
 
 
 def parse_compact_kept(output):
@@ -1214,11 +1262,17 @@ def main():
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
 
+        _, controller_out = run_internal(
+            "load-budget-controller",
+            [workflow, str(task_class), "outputs/budget-summary.json", "MCP/budgets/tuning-policy.yaml", "MCP/budgets/token-budgets.yaml"],
+        )
+        budget_controller = parse_budget_controller_metrics(controller_out)
+
         token_defaults = load_token_defaults()
         prompt_budget_chars = max(1, (token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"]) * 4)
         remaining_prompt_chars = max(0, prompt_budget_chars - len(objective) - skill_loaded_chars)
 
-        memory_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 180, 0.24)
+        memory_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["memory_scale"]), int(180 * budget_controller["memory_scale"]), 0.24 * budget_controller["memory_scale"])
         memory_max_results = prompt_stage_result_cap(remaining_prompt_chars)
         _, load_mem_out = run_internal(
             "load-memory",
@@ -1240,7 +1294,7 @@ def main():
         context_keywords = " ".join(part for part in context_keywords_parts if text(part))
 
         remaining_prompt_chars = max(0, remaining_prompt_chars - mem_chars)
-        learning_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 150, 0.18)
+        learning_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["learning_scale"]), int(150 * budget_controller["learning_scale"]), 0.18 * budget_controller["learning_scale"])
         learning_max_results = prompt_stage_result_cap(remaining_prompt_chars)
         _, load_learning_out = run_internal(
             "load-learning-context",
@@ -1249,7 +1303,7 @@ def main():
         learning_loaded, learning_chars, learning_results = parse_learning_load_metrics(load_learning_out)
         remaining_prompt_chars = max(0, remaining_prompt_chars - learning_chars)
 
-        failure_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 140, 0.16)
+        failure_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["failure_scale"]), int(140 * budget_controller["failure_scale"]), 0.16 * budget_controller["failure_scale"])
         failure_max_results = prompt_stage_result_cap(remaining_prompt_chars)
         _, load_failure_out = run_internal(
             "load-failure-history",
@@ -1265,14 +1319,14 @@ def main():
         failure_history_loaded, failure_history_chars, failure_results = parse_failure_history_metrics(load_failure_out)
         remaining_prompt_chars = max(0, remaining_prompt_chars - failure_history_chars)
 
-        playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 700, 180, 0.20)
+        playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(700 * budget_controller["playbook_scale"]), int(180 * budget_controller["playbook_scale"]), 0.20 * budget_controller["playbook_scale"])
         _, workflow_playbook_out = run_internal(
             "load-playbook-snippet",
             ["workflow", workflow, str(playbook_max_chars), ROOT],
         )
         workflow_playbook_loaded, workflow_playbook_chars, workflow_playbook_results = parse_playbook_metrics(workflow_playbook_out)
         remaining_prompt_chars = max(0, remaining_prompt_chars - workflow_playbook_chars)
-        skill_playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 700, 180, 0.20)
+        skill_playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(700 * budget_controller["skill_scale"]), int(180 * budget_controller["skill_scale"]), 0.20 * budget_controller["skill_scale"])
         _, skill_playbook_out = run_internal(
             "load-playbook-snippet",
             ["skill", skill_id, str(skill_playbook_max_chars), ROOT, resolve_skills_registry()],
@@ -1283,7 +1337,7 @@ def main():
         playbook_results = workflow_playbook_results + skill_playbook_results
         remaining_prompt_chars = max(0, remaining_prompt_chars - skill_playbook_chars)
 
-        search_hint_max_chars = prompt_stage_char_cap(remaining_prompt_chars, 500, 120, 0.12)
+        search_hint_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["search_scale"]), int(120 * budget_controller["search_scale"]), 0.12 * budget_controller["search_scale"])
         search_hint_max_results = prompt_stage_result_cap(remaining_prompt_chars)
         _, search_hint_out = run_internal(
             "load-search-hints",
@@ -1317,6 +1371,14 @@ def main():
         state["metrics"]["playbook_chars"] = playbook_chars
         state["metrics"]["search_hints_loaded"] = search_hint_loaded
         state["metrics"]["search_hints_chars"] = search_hint_chars
+        state["metrics"]["budget_controller_loaded"] = budget_controller["loaded"]
+        state["metrics"]["budget_controller_prompt_scale"] = budget_controller["prompt_scale"]
+        state["metrics"]["budget_controller_memory_scale"] = budget_controller["memory_scale"]
+        state["metrics"]["budget_controller_learning_scale"] = budget_controller["learning_scale"]
+        state["metrics"]["budget_controller_failure_scale"] = budget_controller["failure_scale"]
+        state["metrics"]["budget_controller_playbook_scale"] = budget_controller["playbook_scale"]
+        state["metrics"]["budget_controller_search_scale"] = budget_controller["search_scale"]
+        state["metrics"]["budget_controller_skill_scale"] = budget_controller["skill_scale"]
         state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
@@ -1342,6 +1404,19 @@ def main():
                 stage="preprompt",
                 status="loaded",
                 details=f"items={len(search_hint_results)} chars={search_hint_chars}",
+            )
+        if budget_controller["loaded"]:
+            append_event_log(
+                "budget_controller_loaded",
+                hook_name,
+                workflow=workflow,
+                skill=skill_id,
+                stage="preprompt",
+                status="loaded",
+                details=(
+                    f"prompt_scale={budget_controller['prompt_scale']} "
+                    f"reason={budget_controller['reason']}"
+                ),
             )
 
         append_event_log(
