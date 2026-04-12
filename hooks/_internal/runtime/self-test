@@ -290,6 +290,10 @@ echo "$ll" | grep -Fq 'learning:metrics loaded=' && pass load_learning_context |
 echo "$ll" | grep -Fq 'create_or_discover' && pass load_learning_context_skill_gap || fail load_learning_context_skill_gap
 echo "$ll" | grep -Fq 'create_skill' && pass load_learning_context_skill_target || fail load_learning_context_skill_target
 
+prompt_payload='{"userPromptSubmit":{"prompt":"I have a knowledge gap and want to extract skill from this recurring pattern."}}'
+python3 hooks/_internal/runtime/hook-pipeline UserPromptSubmit <<<"$prompt_payload" >/dev/null
+grep -Fq 'Skill-Target: create_skill' .learnings/LEARNINGS.md && pass prompt_skill_gap_signal || fail prompt_skill_gap_signal
+
 cm="$(hooks/_internal/memory/compact-memory "$mem")"
 echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
 
