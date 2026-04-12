@@ -839,11 +839,13 @@ def detect_self_improvement_signal(prompt):
     return ""
 
 
-def log_prompt_learning(prompt, signal):
+def log_prompt_learning(state, prompt, signal):
     prompt_text = text(prompt)
     if not prompt_text or not signal:
         return None
     prompt_excerpt = prompt_text[:220]
+    if signal in {"feature_request", "self-improvement"}:
+        log_skill_gap(state, prompt_text, signal)
     if signal == "feature_request":
         return append_learning_entry(
             "feature_request",
@@ -867,6 +869,43 @@ def log_prompt_learning(prompt, signal):
         "user_prompt",
         tags=["self-improvement", "prompt", signal],
     )
+
+
+def log_skill_gap(state, prompt, signal):
+    prompt_text = text(prompt)
+    if not prompt_text or signal not in {"feature_request", "self-improvement"}:
+        return None
+    prompt_excerpt = prompt_text[:220]
+    entry = append_learning_entry(
+        "learning",
+        "knowledge_gap",
+        "config",
+        f"Skill gap surfaced in prompt: {prompt_excerpt[:80]}",
+        (
+            "Prompt suggests a reusable capability may be missing.\n\n"
+            f"Source prompt:\n{prompt_excerpt}\n\n"
+            "The runtime should decide whether to author a new Superpowers skill, "
+            "update an existing skill, or discover an external skill."
+        ),
+        "Review the gap, classify it as runtime policy or reusable behavior, then create, update, or discover the appropriate skill.",
+        "user_prompt",
+        tags=["self-improvement", "skill-gap", signal],
+        metadata_extra=[
+            "Skill-Action: create_or_discover",
+            "Skill-Owner: superpowers-or-external",
+        ],
+    )
+    write_memory(
+        state,
+        "fact",
+        "skills",
+        "self-improvement,skill-gap,reusable-behavior",
+        f"Prompt indicated a reusable skill gap: {prompt_excerpt[:120]}",
+        source="user_prompt",
+        confidence="0.82",
+        ttl_days="30",
+    )
+    return entry
 
 
 def extract_search_query(tool_name, tool_input, payload):
@@ -1605,7 +1644,7 @@ def main():
             write_memory(state, "fact", "session", "prompt,user", prompt[:220], confidence="0.85", ttl_days="14")
             self_improvement_signal = detect_self_improvement_signal(prompt)
             if self_improvement_signal:
-                log_prompt_learning(prompt, self_improvement_signal)
+                log_prompt_learning(state, prompt, self_improvement_signal)
                 append_event_log(
                     "self_improvement_signal",
                     hook_name,
