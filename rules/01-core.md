@@ -25,6 +25,7 @@ Ask the user only when one of these applies:
 - Shared step primitives: `workflows/shared/step-library.md`
 - Routing contract: `MCP/routing.yaml`
 - Hook enforcement: `hooks/*`, `hooks/_internal/*`
+- Skill libraries may be overlaid into the selector, but `~/.codex` remains the authority for when and how skills are used.
 
 ## Failure Handling
 When corrected by the user, stop and re-anchor to evidence.
