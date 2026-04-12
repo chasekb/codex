@@ -877,6 +877,8 @@ def log_skill_gap(state, prompt, signal):
         return None
     prompt_excerpt = prompt_text[:220]
     target = classify_skill_gap_target(prompt_text)
+    if target in {"create_skill", "discover_external"}:
+        queue_skill_candidate(state, prompt_excerpt, target)
     entry = append_learning_entry(
         "learning",
         "knowledge_gap",
@@ -908,6 +910,31 @@ def log_skill_gap(state, prompt, signal):
         ttl_days="30",
     )
     return entry
+
+
+def queue_skill_candidate(state, prompt_excerpt, target):
+    if not prompt_excerpt:
+        return None
+    category = "skill_candidate" if target == "create_skill" else "external_skill_candidate"
+    return append_learning_entry(
+        "feature_request",
+        category,
+        "config",
+        f"Reusable skill candidate surfaced: {prompt_excerpt[:80]}",
+        (
+            "The runtime classified this prompt as a reusable skill gap.\n\n"
+            f"Source prompt:\n{prompt_excerpt}\n\n"
+            "Candidate should be turned into a Superpowers skill or external skill."
+        ),
+        "Review the candidate, extract a skill if it belongs in Superpowers, or discover/install an external skill if it already exists.",
+        "user_prompt",
+        tags=["self-improvement", "skill-gap", target],
+        metadata_extra=[
+            "Skill-Action: create_or_discover",
+            "Skill-Owner: superpowers-or-external",
+            f"Skill-Target: {target}",
+        ],
+    )
 
 
 def classify_skill_gap_target(prompt):
