@@ -253,6 +253,30 @@ Call the learning loader during task start.
 - Pattern-Key: prompt.context.loader
 
 ---
+
+## [LRN-20260411-002] knowledge_gap
+
+**Logged**: 2026-04-11T00:00:00Z
+**Priority**: high
+**Status**: pending
+**Area**: config
+
+### Summary
+Skill gap surfaced for reusable behavior.
+
+### Details
+The runtime should decide whether to author a Superpowers skill or discover an external one.
+
+### Suggested Action
+Classify the gap and create, update, or discover the appropriate skill.
+
+### Metadata
+- Source: user_prompt
+- Tags: self-improvement, skill-gap, prompt
+- Skill-Action: create_or_discover
+- Skill-Owner: superpowers-or-external
+
+---
 MD
 cat > "$learn/ERRORS.md" <<'MD'
 # Errors
@@ -260,8 +284,9 @@ MD
 cat > "$learn/FEATURE_REQUESTS.md" <<'MD'
 # Feature Requests
 MD
-ll="$(hooks/_internal/memory/load-learning-context general "prompt assembly" 700 6 "$learn")"
+ll="$(hooks/_internal/memory/load-learning-context general "skill gap" 700 6 "$learn")"
 echo "$ll" | grep -Fq 'learning:metrics loaded=' && pass load_learning_context || fail load_learning_context
+echo "$ll" | grep -Fq 'create_or_discover' && pass load_learning_context_skill_gap || fail load_learning_context_skill_gap
 
 cm="$(hooks/_internal/memory/compact-memory "$mem")"
 echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
