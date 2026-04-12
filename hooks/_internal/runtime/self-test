@@ -93,6 +93,10 @@ echo "$bc" | grep -Fq 'budget_controller:metrics loaded=1' && pass load_budget_c
 echo "$bc" | grep -Fq '"budget_controller_loaded":1' && pass load_budget_controller_json || fail load_budget_controller_json
 echo "$bc" | grep -Eq '"prompt_scale":1\.[0-9]+' && pass load_budget_controller_prompt_scale || fail load_budget_controller_prompt_scale
 
+cat > outputs/budget-summary.json <<'JSON'
+{"generated_at":"2026-04-12T00:00:00Z","status":"ok","history_count":8,"tuning_history_count":2,"overall":{"runs":8,"proposal_runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0},"weekly":[{"period":"2026-W15","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"monthly":[{"period":"2026-04","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"workflow_summary":[{"workflow":"implement-small","runs":8,"proposal_emitted_runs":8,"proposal_rate":1.0,"samples_sum":40,"avg_utilization":0.0353,"avg_margin_tokens":3666.0,"avg_pass_rate":1.0,"avg_memory_chars":80.0,"avg_learning_chars":34.0,"avg_failure_history_chars":44.0,"avg_playbook_chars":172.0,"avg_search_hints_chars":120.0,"avg_skill_loaded_chars":150.0}],"tuning_history_summary":{"rows":2,"promote_count":1,"rollback_count":1,"last_action":"rollback","last_timestamp":"2026-04-07T16:02:34Z"}}
+JSON
+
 pipeline_payload='{"task":{"class":"implement","objective":"pipeline resolver smoke"},"classification":{"confidence":0.91}}'
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$pipeline_payload" >/dev/null && pass hook_pipeline_smoke || fail hook_pipeline_smoke
 grep -Fq '"workflow": "implement-small"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow || fail hook_pipeline_state_workflow
