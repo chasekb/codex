@@ -152,6 +152,9 @@ def step_library_excerpt(step_library_file, step_names):
 def load_skill_snippet(root, skill_id, registry_file, max_chars):
     skill_file = registry_lookup(registry_file, skill_id)
     if not skill_file:
+        overlay_registry = os.path.join(root, "superpowers", "skills", "registry.yaml")
+        skill_file = registry_lookup(overlay_registry, skill_id)
+    if not skill_file:
         return {}
     excerpt = skill_excerpt(skill_file)
     if len(excerpt) > max_chars:

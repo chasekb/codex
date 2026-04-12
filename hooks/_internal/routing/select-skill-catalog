@@ -58,7 +58,7 @@ def parse_registry(path):
 
 def score_entry(entry, task_class, terms):
     skill_id = entry.get("id", "")
-    if skill_id in {"tool-minimization", "plan-verify-execute", "context-compaction"}:
+    if skill_id in {"tool-minimization", "context-compaction"}:
         return None
 
     haystack = " ".join(
@@ -71,10 +71,13 @@ def score_entry(entry, task_class, terms):
     tokens = set(tokenize(haystack))
     score = 0.0
 
-    if task_class and task_class.lower() in tokens:
+    def token_matches(term, token):
+        return token == term or token.startswith(term) or term.startswith(token)
+
+    if task_class and any(token_matches(task_class.lower(), token) for token in tokens):
         score += 3.0
     if terms:
-        score += sum(1.0 for term in terms if term in tokens)
+        score += sum(1.0 for term in terms if any(token_matches(term, token) for token in tokens))
 
     if score <= 0:
         return None
@@ -103,8 +106,12 @@ def main():
     env_registry = os.environ.get("CODEX_SKILLS_REGISTRY")
     if env_registry:
         registry_candidates.append(Path(env_registry))
-    if scope == "all":
-        registry_candidates.append(workspace_root / "skills" / "registry.yaml")
+    core_registry = workspace_root / "skills" / "registry.yaml"
+    if core_registry.is_file():
+        registry_candidates.append(core_registry)
+    overlay_registry = workspace_root / "superpowers" / "skills" / "registry.yaml"
+    if overlay_registry.is_file():
+        registry_candidates.append(overlay_registry)
     registry_candidates.extend(
         [
             Path(os.environ.get("CODEX_EXTERNAL_SKILLS_REGISTRY", str(code_home / "external-skills" / "registry.yaml"))),

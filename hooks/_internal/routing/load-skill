@@ -61,8 +61,23 @@ if [[ ! -f "$skill_file" && "$registry_file" != "${CODEX_EXTERNAL_SKILLS_REGISTR
     found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
   ' "$registry_file")"
   registry_dir="$(cd -- "$(dirname -- "$registry_file")" && pwd)"
-  if [[ "$skill_file" != /* ]]; then
-    skill_file="$registry_dir/$skill_file"
+    if [[ "$skill_file" != /* ]]; then
+      skill_file="$registry_dir/$skill_file"
+    fi
+fi
+
+if [[ ! -f "$skill_file" ]]; then
+  overlay_registry="$root/superpowers/skills/registry.yaml"
+  if [[ -f "$overlay_registry" ]]; then
+    registry_file="$overlay_registry"
+    skill_file="$(awk -v id="$skill_id" '
+      $0 ~ "^  - id: "id"$" { found=1; next }
+      found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
+    ' "$registry_file")"
+    registry_dir="$(cd -- "$(dirname "$registry_file")" && pwd)"
+    if [[ "$skill_file" != /* ]]; then
+      skill_file="$registry_dir/$skill_file"
+    fi
   fi
 fi
 
