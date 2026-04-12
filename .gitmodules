@@ -1,0 +1,4 @@
+[submodule "superpowers"]
+	path = superpowers
+	url = git@github.com:chasekb/superpowers.git
+	branch = main
