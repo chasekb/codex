@@ -89,6 +89,10 @@ required_abs=(
   "$root/skills/registry.yaml"
 )
 
+if [[ -d "$root/superpowers" ]]; then
+  required_rel+=("superpowers/skills/registry.yaml")
+fi
+
 for f in "${required_abs[@]}"; do
   [[ -f "$f" ]] || { echo "missing: $f"; exit 1; }
 done
