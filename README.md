@@ -16,6 +16,7 @@ This repository is a global Codex runtime with:
 - `skills/research/`: Research-oriented skills
 - `skills/.system/`: Bundled system skills and templates
 - `skills/registry.yaml`: Repo-local skill registry preferred by the runtime
+- `superpowers/`: Git submodule containing the reusable Superpowers skills library
 - `~/.codex/external-skills/registry.yaml`: generated registry for dynamically installed skills
 - `workflows/`: Workflow registry, pipelines, contracts, guards, and shared step primitives
 - `MCP/`: Routing, prompt atoms, memory storage, budgets, and registry config
@@ -56,8 +57,8 @@ Main behavior by event:
 - `TaskStart`/`TaskResume`:
   - Select workflow (`select-workflow`)
   - Select skill (`select-skill`)
-  - Load skill metadata from repo-local `skills/registry.yaml` first, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
-  - dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
+  - Load skill metadata from repo-local `skills/registry.yaml` first, then the Superpowers overlay registry, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
+  - Dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Load memory context (`load-memory`)
   - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
   - Load compact skill/workflow playbook snippets (`load-playbook-snippet`)
@@ -131,12 +132,17 @@ Current workflow targets:
 - `plan-only`
 - `request-standard`
 - `implement-small`
+- `multi-task-implementation`
 - `debug-rca`
 - `verify`
 - `ci-triage`
 - `release-publish`
 - `dependency-maintenance`
 - `research`
+- `project-backlog-management`
+- `backlog-triage`
+- `recommendation-to-task`
+- `review-closeout`
 - `retro`
 
 ### Workflow registry (`workflows/index.yaml`)
@@ -144,12 +150,17 @@ Pipeline files:
 - `workflows/pipelines/plan-only.yaml`
 - `workflows/pipelines/request-standard.yaml`
 - `workflows/pipelines/implement-small.yaml`
+- `workflows/pipelines/multi-task-implementation.yaml`
 - `workflows/pipelines/debug-rca.yaml`
 - `workflows/pipelines/verify.yaml`
 - `workflows/pipelines/ci-triage.yaml`
 - `workflows/pipelines/release-publish.yaml`
 - `workflows/pipelines/dependency-maintenance.yaml`
 - `workflows/pipelines/research.yaml`
+- `workflows/pipelines/project-backlog-management.yaml`
+- `workflows/pipelines/backlog-triage.yaml`
+- `workflows/pipelines/recommendation-to-task.yaml`
+- `workflows/pipelines/review-closeout.yaml`
 - `workflows/pipelines/retro.yaml`
 
 Shared contracts/guards:
