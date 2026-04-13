@@ -20,13 +20,15 @@
       "updated_at": "2026-04-13T00:00:00Z"
     },
     {
+      "closed_at": "2026-04-13T15:34:11Z",
+      "commit_sha": "82c8bbe",
       "created_at": "2026-04-13T00:00:00Z",
       "details": "Use ClawHub as an optional external project-management surface for intake, triage, and status sync when available.",
       "id": "REC-20260413-002",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Mirror backlog state to ClawHub when configured.",
       "tags": [
         "backlog",
@@ -35,7 +37,8 @@
         "project-management"
       ],
       "title": "Add the ClawHub MCP so backlog intake, triage, and project-status sync can use an external project-management surface",
-      "updated_at": "2026-04-13T00:00:00Z"
+      "updated_at": "2026-04-13T15:34:11Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T00:00:00Z",
@@ -131,9 +134,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 5,
+    "open_recommendations": 4,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T15:29:16Z",
+  "updated_at": "2026-04-13T15:34:11Z",
   "version": 1
 }
