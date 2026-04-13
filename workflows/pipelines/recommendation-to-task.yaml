@@ -1,0 +1,13 @@
+id: recommendation-to-task
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: backlog_load
+  - use: plan
+  - use: task_decompose
+  - use: backlog_promote
+  - use: backlog_sync
+  - use: report
+  - use: memory_commit
+budget_profile: plan
+output_contract: request_standard

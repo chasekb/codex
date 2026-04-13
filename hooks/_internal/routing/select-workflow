@@ -38,13 +38,23 @@ if has_files "$workspace_root" "package.json" "pyproject.toml" "Cargo.toml" "go.
   has_package_markers="true"
 fi
 
-if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(backlog|recommendation|recommendations|roadmap|prioritiz|project backlog|project management|task list|todo list|incomplete project)([[:space:]]|$)'; then
-  echo "project-backlog-management"
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(triage backlog|backlog triage|prioritize backlog|prioritise backlog|sort backlog|classify backlog|backlog review)([[:space:]]|$)'; then
+  echo "backlog-triage"
+  exit 0
+fi
+
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(recommendation to task|promote recommendation|convert recommendation|task decomposition|decompose recommendation|break down recommendation)([[:space:]]|$)'; then
+  echo "recommendation-to-task"
   exit 0
 fi
 
 if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(review closeout|closeout|request code review|code review|merge ready|finish branch|finish development branch|finalize branch|complete branch)([[:space:]]|$)'; then
   echo "review-closeout"
+  exit 0
+fi
+
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(backlog|recommendation|recommendations|roadmap|prioritiz|project backlog|project management|task list|todo list|incomplete project)([[:space:]]|$)'; then
+  echo "project-backlog-management"
   exit 0
 fi
 

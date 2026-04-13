@@ -51,6 +51,16 @@
 - prioritize by impact, urgency, and dependency
 - promote only accepted recommendations
 
+## backlog_promote
+- promote accepted recommendations into implementation tasks
+- keep the source recommendation open until the derived task closes
+- record parent-child linkage explicitly
+
+## task_decompose
+- break recommendations into independently verifiable tasks
+- keep tasks scoped to one outcome each
+- capture explicit success criteria
+
 ## backlog_sync
 - close tasks with commit and verification evidence
 - keep recommendations open until derived tasks close
