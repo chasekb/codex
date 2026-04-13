@@ -29,6 +29,40 @@ hooks/_internal/bootstrap/preflight >/dev/null && pass preflight || fail preflig
 
 skill_out="$(hooks/_internal/routing/select-skill implement 0.9 "build fix")"
 echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_skill_implement || fail select_skill_implement
+hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog || fail load_skill_backlog
+[[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
+
+backlog_dir="$tmpdir/backlog"
+mkdir -p "$backlog_dir"
+backlog_file="$backlog_dir/backlog.json"
+backlog_payload='{"kind":"recommendation","title":"Add backlog integration tests","summary":"Add regression coverage for backlog intake and completion","details":"Track backlog item lifecycle end to end in the runtime tests.","source":"self-test","priority":"high","tags":["backlog","test"]}'
+CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager intake <<<"$backlog_payload" >/dev/null && pass backlog_intake || fail backlog_intake
+backlog_rec_id="$(python3 - <<'PY' "$backlog_file"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+print(data["recommendations"][0]["id"])
+PY
+)"
+CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager promote "$backlog_rec_id" <<<"{}" >/dev/null && pass backlog_promote || fail backlog_promote
+backlog_task_id="$(python3 - <<'PY' "$backlog_file"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+print(data["implementation_tasks"][0]["id"])
+PY
+)"
+CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager complete "$backlog_task_id" <<<'{"commit_sha":"abc123","verified":true}' >/dev/null && pass backlog_complete || fail backlog_complete
+python3 - <<'PY' "$backlog_file"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["recommendations"][0]["status"] == "completed"
+assert data["implementation_tasks"][0]["status"] == "completed"
+assert data["implementation_tasks"][0]["commit_sha"] == "abc123"
+print("backlog_state:ok")
+PY
+pass backlog_state
 
 hooks/_internal/routing/load-skill plan-verify-execute metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
 hooks/_internal/routing/validate-skill "$ROOT/skills/core/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill

@@ -5,6 +5,8 @@ skill_id="${1:-}"
 mode="${2:-metadata}"
 max_chars="${3:-700}"
 script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+export PYTHONPATH="$script_dir:${PYTHONPATH:-}"
+
 find_repo_root() {
   local dir="$1"
   while [[ "$dir" != "/" ]]; do
@@ -19,67 +21,46 @@ find_repo_root() {
 
 root="$(find_repo_root "$script_dir")"
 registry_file="${4:-${CODEX_SKILLS_REGISTRY:-$root/skills/registry.yaml}}"
+code_home="${CODEX_HOME:-$HOME/.codex}"
 
 [[ -n "$skill_id" ]] || { echo "skill:error missing_id"; exit 1; }
 if [[ ! -f "$registry_file" ]]; then
-  if [[ -f "${CODEX_EXTERNAL_SKILLS_REGISTRY:-${CODEX_HOME:-$HOME/.codex}/external-skills/registry.yaml}" ]]; then
-    registry_file="${CODEX_EXTERNAL_SKILLS_REGISTRY:-${CODEX_HOME:-$HOME/.codex}/external-skills/registry.yaml}"
-  elif [[ -f "$HOME/.agents/skills/registry.yaml" ]]; then
-    registry_file="$HOME/.agents/skills/registry.yaml"
-  else
-    echo "skill:error missing_registry"
-    exit 1
-  fi
+  registry_file=""
 fi
 
-skill_file="$(awk -v id="$skill_id" '
-  $0 ~ "^  - id: "id"$" { found=1; next }
-  found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
-' "$registry_file")"
+python_result="$(python3 - "$skill_id" "$root" "$code_home" "$registry_file" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-registry_dir="$(cd -- "$(dirname -- "$registry_file")" && pwd)"
-if [[ "$skill_file" != /* ]]; then
-  skill_file="$registry_dir/$skill_file"
+from skill_registry import resolve_skill_entry
+
+skill_id, root, code_home, preferred = sys.argv[1:5]
+preferred_path = Path(preferred) if preferred else None
+entry = resolve_skill_entry(skill_id, root=Path(root), code_home=Path(code_home), preferred=preferred_path)
+if not entry:
+    print(json.dumps({"error": "missing_file_for_id", "skill_id": skill_id}))
+    raise SystemExit(1)
+print(json.dumps(entry))
+PY
+)"
+skill_resolved_rc=$?
+if [[ $skill_resolved_rc -ne 0 ]]; then
+  echo "skill:error missing_file_for_id=$skill_id"
+  exit 1
 fi
 
-if [[ ! -f "$skill_file" && "$registry_file" != "$HOME/.agents/skills/registry.yaml" && -f "$HOME/.agents/skills/registry.yaml" ]]; then
-  registry_file="$HOME/.agents/skills/registry.yaml"
-  skill_file="$(awk -v id="$skill_id" '
-    $0 ~ "^  - id: "id"$" { found=1; next }
-    found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
-  ' "$registry_file")"
-  registry_dir="$(cd -- "$(dirname -- "$registry_file")" && pwd)"
-  if [[ "$skill_file" != /* ]]; then
-    skill_file="$registry_dir/$skill_file"
-  fi
-fi
+resolved_fields="$(python3 - "$python_result" <<'PY'
+import json
+import sys
 
-if [[ ! -f "$skill_file" && "$registry_file" != "${CODEX_EXTERNAL_SKILLS_REGISTRY:-${CODEX_HOME:-$HOME/.codex}/external-skills/registry.yaml}" && -f "${CODEX_EXTERNAL_SKILLS_REGISTRY:-${CODEX_HOME:-$HOME/.codex}/external-skills/registry.yaml}" ]]; then
-  registry_file="${CODEX_EXTERNAL_SKILLS_REGISTRY:-${CODEX_HOME:-$HOME/.codex}/external-skills/registry.yaml}"
-  skill_file="$(awk -v id="$skill_id" '
-    $0 ~ "^  - id: "id"$" { found=1; next }
-    found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
-  ' "$registry_file")"
-  registry_dir="$(cd -- "$(dirname -- "$registry_file")" && pwd)"
-    if [[ "$skill_file" != /* ]]; then
-      skill_file="$registry_dir/$skill_file"
-    fi
-fi
-
-if [[ ! -f "$skill_file" ]]; then
-  overlay_registry="$root/superpowers/skills/registry.yaml"
-  if [[ -f "$overlay_registry" ]]; then
-    registry_file="$overlay_registry"
-    skill_file="$(awk -v id="$skill_id" '
-      $0 ~ "^  - id: "id"$" { found=1; next }
-      found && $0 ~ "^    file: " { sub(/^    file: /, "", $0); print $0; exit }
-    ' "$registry_file")"
-    registry_dir="$(cd -- "$(dirname "$registry_file")" && pwd)"
-    if [[ "$skill_file" != /* ]]; then
-      skill_file="$registry_dir/$skill_file"
-    fi
-  fi
-fi
+data = json.loads(sys.argv[1])
+print(data.get("file", ""))
+print(data.get("registry", ""))
+PY
+)"
+skill_file="$(printf '%s\n' "$resolved_fields" | sed -n '1p')"
+registry_file="$(printf '%s\n' "$resolved_fields" | sed -n '2p')"
 
 [[ -n "$skill_file" && -f "$skill_file" ]] || { echo "skill:error missing_file_for_id=$skill_id"; exit 1; }
 

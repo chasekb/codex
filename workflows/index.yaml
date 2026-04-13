@@ -27,6 +27,9 @@ workflows:
   - id: research
     trigger: research_request
     pipeline: pipelines/research.yaml
+  - id: project-backlog-management
+    trigger: backlog_management_request
+    pipeline: pipelines/project-backlog-management.yaml
   - id: retro
     trigger: retrospective_request
     pipeline: pipelines/retro.yaml

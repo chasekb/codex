@@ -38,6 +38,11 @@ if has_files "$workspace_root" "package.json" "pyproject.toml" "Cargo.toml" "go.
   has_package_markers="true"
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(backlog|recommendation|recommendations|roadmap|prioritiz|project backlog|project management|task list|todo list|incomplete project)([[:space:]]|$)'; then
+  echo "project-backlog-management"
+  exit 0
+fi
+
 if is_low_confidence; then
   echo "plan-only"
   exit 0

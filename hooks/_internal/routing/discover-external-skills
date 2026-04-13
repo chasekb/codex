@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from skill_registry import resolve_skill_entry
+
 
 def tokenize(value):
     if not isinstance(value, str):
@@ -275,6 +277,11 @@ def main():
             continue
         candidate.setdefault("source", "github")
         candidate.setdefault("ref", "main")
+        resolved = resolve_skill_entry(candidate["name"], root=root, code_home=code_home)
+        if resolved:
+            candidate["installed"] = True
+            candidate["registry"] = resolved.get("registry", "")
+            candidate["registry_label"] = resolved.get("registry_label", "")
         candidate["score"] = round(score_candidate(candidate, terms), 4)
         ranked.append(candidate)
     ranked.sort(key=lambda item: (item.get("score", 0.0), item.get("installed", False)), reverse=True)
@@ -284,7 +291,7 @@ def main():
     install_rc = -1
     install_output = ""
     auto_install = mode in {"install", "auto"} or os.environ.get("CODEX_EXTERNAL_SKILL_AUTO_INSTALL", "").strip().lower() in {"1", "true", "yes", "on"}
-    attempted_install = bool(selected and auto_install and selected.get("score", 0.0) > 0)
+    attempted_install = bool(selected and auto_install and selected.get("score", 0.0) > 0 and not selected.get("installed", False))
     if attempted_install:
         install_rc, install_output = install_candidate(selected, code_home)
         installed = install_rc == 0

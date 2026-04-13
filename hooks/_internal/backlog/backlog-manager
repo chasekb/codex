@@ -1,0 +1,299 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def now_iso():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def today_stamp():
+    return datetime.now(timezone.utc).strftime("%Y%m%d")
+
+
+def repo_root():
+    script_dir = Path(__file__).resolve().parent
+    root = script_dir.parent.parent
+    while root != root.parent:
+        if (root / "hooks.json").is_file() and (root / "skills").is_dir() and (root / "rules").is_dir():
+            return root
+        root = root.parent
+    return Path.cwd()
+
+
+def backlog_path():
+    return Path(os.environ.get("CODEX_BACKLOG_FILE", str(repo_root() / "MCP" / "backlog" / "backlog.json")))
+
+
+def default_state():
+    return {
+        "version": 1,
+        "updated_at": "",
+        "recommendations": [],
+        "implementation_tasks": [],
+        "stats": {
+            "open_recommendations": 0,
+            "open_tasks": 0,
+            "completed_tasks": 0,
+        },
+    }
+
+
+def load_state():
+    path = backlog_path()
+    if not path.is_file():
+        return default_state()
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        if isinstance(data, dict):
+            state = default_state()
+            state.update({k: v for k, v in data.items() if k in state})
+            state.setdefault("recommendations", [])
+            state.setdefault("implementation_tasks", [])
+            state.setdefault("stats", {})
+            return state
+    except Exception:
+        pass
+    return default_state()
+
+
+def save_state(state):
+    path = backlog_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    state["updated_at"] = now_iso()
+    open_recs = [item for item in state["recommendations"] if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}]
+    open_tasks = [item for item in state["implementation_tasks"] if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}]
+    state["stats"] = {
+        "open_recommendations": len(open_recs),
+        "open_tasks": len(open_tasks),
+        "completed_tasks": sum(1 for item in state["implementation_tasks"] if item.get("status") == "completed"),
+    }
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(state, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+
+
+def read_input_payload():
+    raw = sys.stdin.read().strip()
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
+def normalize_text(value):
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
+def normalize_tags(value):
+    if not isinstance(value, list):
+        return []
+    tags = []
+    for item in value:
+        text = normalize_text(item)
+        if text:
+            tags.append(text.lower())
+    return sorted(set(tags))
+
+
+def item_matches(item, kind, title):
+    return item.get("kind") == kind and normalize_text(item.get("title")).lower() == normalize_text(title).lower()
+
+
+def recommendation_id(state):
+    existing = [item.get("id", "") for item in state["recommendations"]]
+    seq = 1
+    stamp = today_stamp()
+    while True:
+        candidate = f"REC-{stamp}-{seq:03d}"
+        if candidate not in existing:
+            return candidate
+        seq += 1
+
+
+def task_id(state):
+    existing = [item.get("id", "") for item in state["implementation_tasks"]]
+    seq = 1
+    stamp = today_stamp()
+    while True:
+        candidate = f"TASK-{stamp}-{seq:03d}"
+        if candidate not in existing:
+            return candidate
+        seq += 1
+
+
+def intake(state, payload):
+    kind = normalize_text(payload.get("kind", "recommendation")).lower() or "recommendation"
+    title = normalize_text(payload.get("title"))
+    if not title:
+        return 1, {"error": "missing_title"}
+    summary = normalize_text(payload.get("summary"))
+    details = normalize_text(payload.get("details"))
+    source = normalize_text(payload.get("source")) or "conversation"
+    priority = normalize_text(payload.get("priority")) or "medium"
+    tags = normalize_tags(payload.get("tags", []))
+    related = normalize_text(payload.get("related_id")) or normalize_text(payload.get("parent_id"))
+
+    if kind not in {"recommendation", "task"}:
+        return 1, {"error": f"unsupported_kind={kind}"}
+
+    target_list = state["recommendations"] if kind == "recommendation" else state["implementation_tasks"]
+    for item in target_list:
+        if item_matches(item, kind, title) and item.get("status") not in {"completed", "closed", "resolved"}:
+            return 0, {"status": "duplicate", "id": item.get("id"), "kind": kind}
+
+    ident = recommendation_id(state) if kind == "recommendation" else task_id(state)
+    item = {
+        "id": ident,
+        "kind": kind,
+        "title": title,
+        "summary": summary or title,
+        "details": details,
+        "source": source,
+        "priority": priority,
+        "status": "open" if kind == "recommendation" else "pending",
+        "tags": tags,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    if related:
+        item["related_id"] = related
+    if kind == "task":
+        item["commit_sha"] = normalize_text(payload.get("commit_sha"))
+        item["verified"] = bool(payload.get("verified", False))
+    target_list.append(item)
+    return 0, {"status": "intaked", "id": ident, "kind": kind}
+
+
+def promote(state, recommendation_id_value, payload):
+    rec = next((item for item in state["recommendations"] if item.get("id") == recommendation_id_value), None)
+    if not rec:
+        return 1, {"error": f"missing_recommendation={recommendation_id_value}"}
+    if rec.get("status") in {"completed", "closed", "resolved"}:
+        return 0, {"status": "noop", "reason": "already_closed", "id": recommendation_id_value}
+
+    title = normalize_text(payload.get("title")) or rec.get("title", "")
+    task = {
+        "id": task_id(state),
+        "kind": "task",
+        "title": title,
+        "summary": normalize_text(payload.get("summary")) or rec.get("summary", title),
+        "details": normalize_text(payload.get("details")) or rec.get("details", ""),
+        "source": normalize_text(payload.get("source")) or rec.get("source", "recommendation"),
+        "priority": normalize_text(payload.get("priority")) or rec.get("priority", "medium"),
+        "status": "pending",
+        "tags": normalize_tags(payload.get("tags", rec.get("tags", []))),
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+        "related_id": recommendation_id_value,
+        "recommendation_id": recommendation_id_value,
+    }
+    task_commit = normalize_text(payload.get("commit_sha"))
+    if task_commit:
+        task["commit_sha"] = task_commit
+    task_verified = payload.get("verified")
+    if task_verified is not None:
+        task["verified"] = bool(task_verified)
+    state["implementation_tasks"].append(task)
+    rec["status"] = "promoted"
+    rec["updated_at"] = now_iso()
+    rec.setdefault("implementation_tasks", []).append(task["id"])
+    return 0, {"status": "promoted", "recommendation_id": recommendation_id_value, "task_id": task["id"]}
+
+
+def complete(state, task_id_value, payload):
+    task = next((item for item in state["implementation_tasks"] if item.get("id") == task_id_value), None)
+    if not task:
+        return 1, {"error": f"missing_task={task_id_value}"}
+    task["status"] = "completed"
+    task["updated_at"] = now_iso()
+    commit_sha = normalize_text(payload.get("commit_sha"))
+    if commit_sha:
+        task["commit_sha"] = commit_sha
+    if payload.get("verified") is not None:
+        task["verified"] = bool(payload.get("verified"))
+    task["completed_at"] = now_iso()
+
+    rec_id = normalize_text(task.get("recommendation_id")) or normalize_text(task.get("related_id"))
+    if rec_id:
+        rec = next((item for item in state["recommendations"] if item.get("id") == rec_id), None)
+        if rec:
+            rec["status"] = "completed"
+            rec["updated_at"] = now_iso()
+            rec["closed_at"] = now_iso()
+    return 0, {"status": "completed", "task_id": task_id_value, "commit_sha": commit_sha}
+
+
+def list_state(state):
+    recommendations = [item for item in state["recommendations"] if item.get("status") not in {"completed", "closed", "resolved", "deferred"}]
+    tasks = [item for item in state["implementation_tasks"] if item.get("status") not in {"completed", "closed", "resolved", "cancelled"}]
+    priority_rank = {"high": 0, "medium": 1, "low": 2}
+
+    def sort_key(item):
+        return (priority_rank.get(normalize_text(item.get("priority")).lower(), 3), item.get("created_at", ""))
+
+    recommendations.sort(key=sort_key)
+    tasks.sort(key=sort_key)
+    report = {
+        "status": "ok",
+        "backlog_file": str(backlog_path()),
+        "stats": deepcopy(state.get("stats", {})),
+        "recommendations": recommendations[:20],
+        "implementation_tasks": tasks[:20],
+    }
+    print(json.dumps(report, indent=2, sort_keys=True))
+    print(
+        "backlog:metrics "
+        f"open_recommendations={report['stats'].get('open_recommendations', len(recommendations))} "
+        f"open_tasks={report['stats'].get('open_tasks', len(tasks))} "
+        f"completed_tasks={report['stats'].get('completed_tasks', 0)}"
+    )
+    return 0
+
+
+def main():
+    state = load_state()
+    if len(sys.argv) < 2:
+        return list_state(state)
+
+    command = sys.argv[1].strip().lower()
+    payload = read_input_payload()
+
+    if command == "intake":
+        rc, result = intake(state, payload)
+    elif command == "promote":
+        rec_id = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("recommendation_id"))
+        rc, result = promote(state, rec_id, payload)
+    elif command == "complete":
+        task_id_value = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("task_id"))
+        rc, result = complete(state, task_id_value, payload)
+    elif command in {"list", "status"}:
+        return list_state(state)
+    else:
+        print(f"backlog:error unsupported_command={command}")
+        return 1
+
+    if rc == 0:
+        save_state(state)
+    print(json.dumps(result, sort_keys=True))
+    print(
+        "backlog:metrics "
+        f"open_recommendations={state['stats'].get('open_recommendations', 0)} "
+        f"open_tasks={state['stats'].get('open_tasks', 0)} "
+        f"completed_tasks={state['stats'].get('completed_tasks', 0)}"
+    )
+    return rc
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,59 +1,9 @@
 #!/usr/bin/env python3
 import os
-import re
 import sys
 from pathlib import Path
 
-
-def tokenize(value):
-    if not isinstance(value, str):
-        return []
-    return [part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2]
-
-
-def parse_registry(path):
-    entries = []
-    if not path.is_file():
-        return entries
-
-    current = None
-    in_skills = False
-    with path.open("r", encoding="utf-8") as f:
-        for raw in f:
-            line = raw.rstrip("\n")
-            stripped = line.strip()
-            if stripped == "skills:":
-                in_skills = True
-                continue
-            if not in_skills:
-                continue
-            if stripped.startswith("- id:"):
-                if current:
-                    entries.append(current)
-                current = {
-                    "id": stripped.split(":", 1)[1].strip(),
-                    "file": "",
-                    "tags": [],
-                    "priority": 99,
-                    "registry": str(path),
-                }
-                continue
-            if current is None:
-                continue
-            if stripped.startswith("file:"):
-                current["file"] = stripped.split(":", 1)[1].strip()
-            elif stripped.startswith("priority:"):
-                try:
-                    current["priority"] = int(float(stripped.split(":", 1)[1].strip()))
-                except Exception:
-                    pass
-            elif stripped.startswith("tags:"):
-                value = stripped.split(":", 1)[1].strip()
-                if value.startswith("[") and value.endswith("]"):
-                    current["tags"] = [part.strip().strip("'\"") for part in value[1:-1].split(",") if part.strip()]
-        if current:
-            entries.append(current)
-    return entries
+from skill_registry import parse_registry, registry_candidates as resolve_registry_candidates, tokenize
 
 
 def score_entry(entry, task_class, terms):
@@ -98,31 +48,15 @@ def main():
     task_class = sys.argv[1] if len(sys.argv) > 1 else "general"
     keywords = sys.argv[3] if len(sys.argv) > 3 else ""
     workspace_root = Path(sys.argv[4]) if len(sys.argv) > 4 else Path.cwd()
-    scope = sys.argv[5] if len(sys.argv) > 5 else "external"
 
     terms = [term for term in tokenize(f"{task_class} {keywords}") if term]
     code_home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
-    registry_candidates = []
-    env_registry = os.environ.get("CODEX_SKILLS_REGISTRY")
-    if env_registry:
-        registry_candidates.append(Path(env_registry))
-    core_registry = workspace_root / "skills" / "registry.yaml"
-    if core_registry.is_file():
-        registry_candidates.append(core_registry)
-    overlay_registry = workspace_root / "superpowers" / "skills" / "registry.yaml"
-    if overlay_registry.is_file():
-        registry_candidates.append(overlay_registry)
-    registry_candidates.extend(
-        [
-            Path(os.environ.get("CODEX_EXTERNAL_SKILLS_REGISTRY", str(code_home / "external-skills" / "registry.yaml"))),
-            Path.home() / ".agents" / "skills" / "registry.yaml",
-        ]
-    )
+    registry_paths = resolve_registry_candidates(root=workspace_root, code_home=code_home)
 
     best = None
     best_score = -1.0
     best_index = 10**6
-    for index, registry_path in enumerate(registry_candidates):
+    for index, registry_path in enumerate(registry_paths):
         for entry in parse_registry(registry_path):
             score = score_entry(entry, task_class, terms)
             if score is None:

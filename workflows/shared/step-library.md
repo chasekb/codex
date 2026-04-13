@@ -40,3 +40,18 @@
 ## memory_commit
 - write only verified high-signal facts/decisions
 - enforce compact one-line record format
+
+## backlog_load
+- read the canonical backlog store first
+- surface open recommendations before implementation tasks
+- keep recommendation and task lists separate
+
+## backlog_triage
+- classify items as recommendation, task, or noise
+- prioritize by impact, urgency, and dependency
+- promote only accepted recommendations
+
+## backlog_sync
+- close tasks with commit and verification evidence
+- keep recommendations open until derived tasks close
+- mirror to external project surfaces only when configured

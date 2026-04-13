@@ -24,6 +24,9 @@ def find_repo_root(start: str) -> str:
 
 
 ROOT = find_repo_root(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(ROOT, "hooks", "_internal", "routing"))
+from skill_registry import registry_candidates as skill_registry_candidates
+
 STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
 DEFAULTS_PATH = os.path.join(ROOT, "MCP", "defaults.yaml")
@@ -197,6 +200,11 @@ def default_state():
             "external_skill_discovery_runs": 0,
             "external_skill_install_attempts": 0,
             "external_skill_install_successes": 0,
+            "backlog_loaded": 0,
+            "backlog_open_recommendations": 0,
+            "backlog_open_tasks": 0,
+            "backlog_completed_tasks": 0,
+            "backlog_intake_runs": 0,
             "search_tool_count": 0,
             "search_query_count": 0,
             "search_source_count": 0,
@@ -241,14 +249,9 @@ def resolve_output_contract(workflow: str) -> str:
 
 
 def resolve_skills_registry():
-    if os.path.isfile(SKILLS_REGISTRY):
-        return SKILLS_REGISTRY
-    codex_registry = os.path.join(CODEX_HOME, "skills", "registry.yaml")
-    if os.path.isfile(codex_registry):
-        return codex_registry
-    fallback = os.path.expanduser("~/.agents/skills/registry.yaml")
-    if os.path.isfile(fallback):
-        return fallback
+    candidates = skill_registry_candidates(root=ROOT, code_home=CODEX_HOME)
+    if candidates:
+        return str(candidates[0])
     return SKILLS_REGISTRY
 
 
@@ -311,6 +314,7 @@ def resolve_internal_script(script_name):
         "logging",
         "bootstrap",
         "runtime",
+        "backlog",
     )
     for subdir in candidate_dirs:
         candidate = os.path.join(internal_root, subdir, script_name) if subdir else os.path.join(internal_root, script_name)
@@ -753,6 +757,35 @@ def parse_external_skill_discovery(output):
     return report
 
 
+def parse_backlog_metrics(output):
+    report = {
+        "loaded": 0,
+        "open_recommendations": 0,
+        "open_tasks": 0,
+        "completed_tasks": 0,
+    }
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("{"):
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    stats = parsed.get("stats") if isinstance(parsed.get("stats"), dict) else {}
+                    report["open_recommendations"] = to_int(stats.get("open_recommendations", report["open_recommendations"]))
+                    report["open_tasks"] = to_int(stats.get("open_tasks", report["open_tasks"]))
+                    report["completed_tasks"] = to_int(stats.get("completed_tasks", report["completed_tasks"]))
+            except Exception:
+                pass
+        if line.startswith("backlog:metrics"):
+            report["loaded"] = 1
+            report["open_recommendations"] = parse_kv_metric(line, "open_recommendations")
+            report["open_tasks"] = parse_kv_metric(line, "open_tasks")
+            report["completed_tasks"] = parse_kv_metric(line, "completed_tasks")
+    return report
+
+
 def format_event_line(
     event_name,
     hook_name,
@@ -837,6 +870,62 @@ def detect_self_improvement_signal(prompt):
         if re.search(pattern, prompt_lc):
             return label
     return ""
+
+
+def detect_backlog_signal(prompt):
+    prompt_lc = text(prompt).lower()
+    if not prompt_lc:
+        return False
+    return bool(
+        re.search(
+            r"\b(backlog|recommendation|recommendations|roadmap|prioritiz|project management|project recommendation|incomplete project|task list|todo list)\b",
+            prompt_lc,
+        )
+    )
+
+
+def log_backlog_intake(state, prompt, signal_source="user_prompt"):
+    prompt_text = text(prompt)
+    if not prompt_text:
+        return None
+    payload = {
+        "kind": "recommendation",
+        "title": prompt_text[:100],
+        "summary": prompt_text[:220],
+        "details": prompt_text,
+        "source": signal_source,
+        "priority": "medium",
+        "tags": ["backlog", "recommendation", "project-management"],
+    }
+    rc, out = run_internal("backlog-manager", ["intake"], stdin_text=json.dumps(payload))
+    state["metrics"]["backlog_intake_runs"] += 1
+    if rc == 0:
+        try:
+            for line in out.splitlines():
+                line = line.strip()
+                if line.startswith("{"):
+                    parsed = json.loads(line)
+                    if isinstance(parsed, dict) and text(parsed.get("id", "")):
+                        state["session"]["backlog_recommendation_id"] = text(parsed.get("id", ""))
+                        state["session"]["backlog_recommendation_source"] = signal_source
+                        break
+        except Exception:
+            pass
+        backlog_metrics = parse_backlog_metrics(out)
+        state["metrics"]["backlog_loaded"] = backlog_metrics["loaded"]
+        state["metrics"]["backlog_open_recommendations"] = backlog_metrics["open_recommendations"]
+        state["metrics"]["backlog_open_tasks"] = backlog_metrics["open_tasks"]
+        state["metrics"]["backlog_completed_tasks"] = backlog_metrics["completed_tasks"]
+        append_event_log(
+            "backlog_intake",
+            "UserPromptSubmit",
+            workflow=str(state["session"].get("workflow", "unknown")),
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="prompt",
+            status="intaked",
+            details=prompt_text[:120],
+        )
+    return out
 
 
 def log_prompt_learning(state, prompt, signal):
@@ -1338,7 +1427,28 @@ def main():
                     stage="selection",
                     status="installed",
                     details=text(external_skill_report.get("selected", {}).get("name", "")),
-                )
+                    )
+
+        backlog_report = {}
+        if workflow == "project-backlog-management":
+            _, backlog_out = run_internal("backlog-manager", ["status"])
+            backlog_report = parse_backlog_metrics(backlog_out)
+            state["metrics"]["backlog_loaded"] = backlog_report["loaded"]
+            state["metrics"]["backlog_open_recommendations"] = backlog_report["open_recommendations"]
+            state["metrics"]["backlog_open_tasks"] = backlog_report["open_tasks"]
+            state["metrics"]["backlog_completed_tasks"] = backlog_report["completed_tasks"]
+            append_event_log(
+                "backlog_loaded",
+                hook_name,
+                workflow=workflow,
+                skill=skill_id,
+                stage="preprompt",
+                status="loaded",
+                details=(
+                    f"open_recommendations={backlog_report['open_recommendations']} "
+                    f"open_tasks={backlog_report['open_tasks']}"
+                ),
+            )
 
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
@@ -1684,6 +1794,8 @@ def main():
         if prompt:
             state["session"]["objective"] = state["session"].get("objective") or prompt[:220]
             write_memory(state, "fact", "session", "prompt,user", prompt[:220], confidence="0.85", ttl_days="14")
+            if detect_backlog_signal(prompt):
+                log_backlog_intake(state, prompt)
             self_improvement_signal = detect_self_improvement_signal(prompt)
             if self_improvement_signal:
                 log_prompt_learning(state, prompt, self_improvement_signal)
