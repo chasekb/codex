@@ -65,6 +65,8 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-13T17:17:30Z",
+      "commit_sha": "52ef190",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a weekly workflow that re-sorts priorities, flags stale items, and enforces work-in-progress limits on active backlog items.",
       "id": "REC-20260413-011",
@@ -79,19 +81,19 @@
         "review"
       ],
       "title": "Add a weekly-backlog-review workflow to refresh priority, identify stale items, and enforce WIP limits",
-      "commit_sha": "52ef190",
-      "closed_at": "2026-04-13T17:17:30Z",
-      "verified": true,
-      "updated_at": "2026-04-13T17:17:30Z"
+      "updated_at": "2026-04-13T17:17:30Z",
+      "verified": true
     },
     {
+      "closed_at": "2026-04-13T17:28:29Z",
+      "commit_sha": "24d3cbe",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a workflow that promotes reusable skill gaps into new or updated skills, or discovers and installs external skills when they are a better fit.",
       "id": "REC-20260413-012",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Turn repeated gaps into skill updates or installs.",
       "tags": [
         "skills",
@@ -99,7 +101,8 @@
         "self-improvement"
       ],
       "title": "Add a skill-maintenance workflow for reusable skill gaps and external skill discovery",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T17:28:29Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -331,9 +334,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 13,
+    "open_recommendations": 12,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T17:17:30Z",
+  "updated_at": "2026-04-13T17:28:29Z",
   "version": 1
 }
