@@ -206,8 +206,25 @@
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
-      "details": "Trim the session-start guidance so the Superpowers overlay primes behavior without becoming a heavy always-on context payload.",
+      "details": "Create a skill that translates backlog items into GitHub Issues or GitHub Projects entries with clean titles, summaries, and acceptance criteria.",
       "id": "REC-20260413-018",
+      "kind": "recommendation",
+      "priority": "medium",
+      "source": "conversation",
+      "status": "open",
+      "summary": "Write backlog items into GitHub issue/project surfaces.",
+      "tags": [
+        "skills",
+        "backlog",
+        "github"
+      ],
+      "title": "Add an issue-writing skill to turn backlog items into GitHub Issues or GitHub Projects entries cleanly",
+      "updated_at": "2026-04-13T15:45:00Z"
+    },
+    {
+      "created_at": "2026-04-13T15:45:00Z",
+      "details": "Trim the session-start guidance so the Superpowers overlay primes behavior without becoming a heavy always-on context payload.",
+      "id": "REC-20260413-019",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
@@ -224,7 +241,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Add rules that keep runtime policy in core Codex and reserve Superpowers skills for behavior-shaping content, not execution control.",
-      "id": "REC-20260413-019",
+      "id": "REC-20260413-020",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
@@ -241,7 +258,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Add rules that force verification and review before any work can be marked complete or closed out in the backlog.",
-      "id": "REC-20260413-020",
+      "id": "REC-20260413-021",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
@@ -258,7 +275,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Add rules that keep one canonical backlog, separate recommendations from tasks, and close recommendations only after derived tasks are committed and verified.",
-      "id": "REC-20260413-021",
+      "id": "REC-20260413-022",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
@@ -275,7 +292,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Keep skill loading metadata-only by default so workflows only pull full skill bodies when they explicitly need more context.",
-      "id": "REC-20260413-022",
+      "id": "REC-20260413-023",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
@@ -292,7 +309,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Extend skill-gap handling so repeated reusable gaps can become new skills or external installs, instead of only being recorded as memory.",
-      "id": "REC-20260413-023",
+      "id": "REC-20260413-024",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
@@ -309,7 +326,7 @@
     {
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Add a bootstrap check that verifies the Superpowers submodule is present and initialized for fresh clones before any workflow depends on it.",
-      "id": "REC-20260413-024",
+      "id": "REC-20260413-025",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
@@ -321,23 +338,6 @@
         "superpowers"
       ],
       "title": "Add a lightweight bootstrap check for the submodule so fresh clones initialize superpowers cleanly",
-      "updated_at": "2026-04-13T15:45:00Z"
-    },
-    {
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Promote reusable skill gaps into new or updated skills, or discover and install external skills when that is the better fit.",
-      "id": "REC-20260413-025",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "open",
-      "summary": "Turn repeated gaps into skill updates or installs.",
-      "tags": [
-        "skills",
-        "workflow",
-        "self-improvement"
-      ],
-      "title": "Expand skill-gap promotion so reusable gaps become new skills or external installs, not just memory entries",
       "updated_at": "2026-04-13T15:45:00Z"
     }
   ],
