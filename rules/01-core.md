@@ -26,6 +26,8 @@ Ask the user only when one of these applies:
 - Routing contract: `MCP/routing.yaml`
 - Hook enforcement: `hooks/*`, `hooks/_internal/*`
 - Skill libraries may be overlaid into the selector, but `~/.codex` remains the authority for when and how skills are used.
+- Prefer core runtime skills for policy, routing, memory, budgets, validation, and output contracts.
+- Prefer Superpowers skills for reusable behavior-shaping content, task guidance, and authoring patterns.
 - Maintain a single canonical backlog of incomplete project recommendations; derive implementation tasks from promoted recommendations, and close recommendations only after the derived tasks are committed and verified.
 - Keep backlog intake, promotion, and closeout in the codex runtime, even if an external project surface like ClawHub is used as a mirror.
 - Treat review and branch-finish as mandatory closeout behavior for completed implementation work before the backlog recommendation is marked done.

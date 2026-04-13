@@ -15,3 +15,4 @@ Composition rules:
 - Default output format: structured bullets/checklists.
 - Procedural behavior should live in `workflows/*` and `hooks/*`; rules remain policy-first.
 - Shared behavior libraries such as Superpowers may own reusable skill content, but they do not own routing or enforcement policy.
+- Use core runtime skills for policy-owned decisions; use Superpowers skills for behavior-shaping tasks and authoring patterns.
