@@ -105,13 +105,15 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-13T17:36:22Z",
+      "commit_sha": "d61f834",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a workflow that routes recurring failures into the systematic-debugging skill before any patching, so root causes are understood before mutation.",
       "id": "REC-20260413-013",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Make repeated failures go through a deeper debug path.",
       "tags": [
         "debugging",
@@ -119,7 +121,8 @@
         "systematic-debugging"
       ],
       "title": "Add a debug-deep-dive workflow that invokes systematic debugging before patching repeated failures",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T17:36:22Z",
+      "verified": true
     },
     {
       "closed_at": "2026-04-13T16:05:00Z",
@@ -334,9 +337,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 12,
+    "open_recommendations": 10,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T17:28:29Z",
+  "updated_at": "2026-04-13T17:36:22Z",
   "version": 1
 }
