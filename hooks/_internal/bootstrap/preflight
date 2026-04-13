@@ -31,6 +31,7 @@ required_rel=(
   "workflows/pipelines/request-standard.yaml"
   "workflows/pipelines/retro.yaml"
   "workflows/pipelines/project-backlog-management.yaml"
+  "workflows/pipelines/review-closeout.yaml"
   "workflows/shared/output-handling.yaml"
   "workflows/shared/output-contracts.yaml"
   "hooks/_internal/routing/select-skill"

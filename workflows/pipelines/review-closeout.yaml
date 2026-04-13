@@ -1,0 +1,11 @@
+id: review-closeout
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: review_request
+  - use: branch_finish
+  - use: verify
+  - use: report
+  - use: memory_commit
+budget_profile: implement
+output_contract: request_standard

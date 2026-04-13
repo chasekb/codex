@@ -70,6 +70,13 @@ intents:
     min_confidence: 0.55
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  review_closeout:
+    primary: local_files
+    fallback: none
+    workflow: review-closeout
+    min_confidence: 0.65
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   implementation:
     primary: local_files
     fallback: none

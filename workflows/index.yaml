@@ -30,6 +30,9 @@ workflows:
   - id: project-backlog-management
     trigger: backlog_management_request
     pipeline: pipelines/project-backlog-management.yaml
+  - id: review-closeout
+    trigger: review_closeout_request
+    pipeline: pipelines/review-closeout.yaml
   - id: retro
     trigger: retrospective_request
     pipeline: pipelines/retro.yaml

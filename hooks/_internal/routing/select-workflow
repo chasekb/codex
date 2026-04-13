@@ -43,6 +43,11 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(backlog|recommendation|recom
   exit 0
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(review closeout|closeout|request code review|code review|merge ready|finish branch|finish development branch|finalize branch|complete branch)([[:space:]]|$)'; then
+  echo "review-closeout"
+  exit 0
+fi
+
 if is_low_confidence; then
   echo "plan-only"
   exit 0
