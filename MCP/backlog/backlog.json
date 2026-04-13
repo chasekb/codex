@@ -225,9 +225,9 @@
       "verified": true
     },
     {
-      "created_at": "2026-04-13T15:45:00Z",
       "closed_at": "2026-04-13T21:07:55Z",
       "commit_sha": "2390396",
+      "created_at": "2026-04-13T15:45:00Z",
       "details": "Trim the session-start guidance so the Superpowers overlay primes behavior without becoming a heavy always-on context payload.",
       "id": "REC-20260413-019",
       "kind": "recommendation",
@@ -246,12 +246,14 @@
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
+      "closed_at": "2026-04-13T21:13:43Z",
+      "commit_sha": "45a12c2",
       "details": "Add rules that keep runtime policy in core Codex and reserve Superpowers skills for behavior-shaping content, not execution control.",
       "id": "REC-20260413-020",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Clarify which layer owns policy versus behavior.",
       "tags": [
         "rules",
@@ -259,7 +261,8 @@
         "skills"
       ],
       "title": "Add rules that prefer core runtime skills for policy and Superpowers skills for behavior-shaping work",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T21:13:43Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -349,9 +352,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 6,
+    "open_recommendations": 5,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T21:07:55Z",
+  "updated_at": "2026-04-13T21:13:43Z",
   "version": 1
 }
