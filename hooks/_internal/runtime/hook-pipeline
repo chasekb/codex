@@ -928,6 +928,37 @@ def log_backlog_intake(state, prompt, signal_source="user_prompt"):
     return out
 
 
+def maybe_close_backlog(state, commit_sha="", verified=None):
+    session = state.get("session", {}) if isinstance(state.get("session"), dict) else {}
+    candidate_id = text(first(session.get("backlog_task_id"), session.get("backlog_recommendation_id")))
+    if not candidate_id:
+        return ""
+    payload = {}
+    if text(commit_sha):
+        payload["commit_sha"] = text(commit_sha)
+    if verified is not None:
+        payload["verified"] = bool(verified)
+    rc, out = run_internal("backlog-manager", ["complete", candidate_id], stdin_text=json.dumps(payload))
+    if rc != 0:
+        return out
+    backlog_metrics = parse_backlog_metrics(out)
+    state["metrics"]["backlog_loaded"] = backlog_metrics["loaded"]
+    state["metrics"]["backlog_open_recommendations"] = backlog_metrics["open_recommendations"]
+    state["metrics"]["backlog_open_tasks"] = backlog_metrics["open_tasks"]
+    state["metrics"]["backlog_completed_tasks"] = backlog_metrics["completed_tasks"]
+    state["session"]["backlog_task_closed_id"] = candidate_id
+    append_event_log(
+        "backlog_closed",
+        "TaskComplete",
+        workflow=str(session.get("workflow", "unknown")),
+        skill=str(session.get("skill_id", "none")),
+        stage="postrun",
+        status="completed",
+        details=candidate_id,
+    )
+    return out
+
+
 def log_prompt_learning(state, prompt, signal):
     prompt_text = text(prompt)
     if not prompt_text or not signal:
@@ -1882,6 +1913,20 @@ def main():
         summary = text(first(payload.get("summary"), payload.get("message"), ""))
         if summary:
             write_memory(state, "decision", "session", "completion,status", summary[:220], confidence="0.9", ttl_days="45")
+        if hook_name == "TaskComplete":
+            maybe_close_backlog(
+                state,
+                commit_sha=text(first(
+                    payload.get("commit_sha"),
+                    payload.get("commitSha"),
+                    nested(payload, ["taskComplete", "commit_sha"]),
+                    nested(payload, ["taskComplete", "commitSha"]),
+                    nested(payload, ["stop", "commit_sha"]),
+                    nested(payload, ["stop", "commitSha"]),
+                    "",
+                )),
+                verified=state["metrics"].get("contract_valid", True),
+            )
 
         append_event_log(
             "postrun_summary",

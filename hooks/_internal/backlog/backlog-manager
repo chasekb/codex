@@ -213,25 +213,36 @@ def promote(state, recommendation_id_value, payload):
 
 def complete(state, task_id_value, payload):
     task = next((item for item in state["implementation_tasks"] if item.get("id") == task_id_value), None)
-    if not task:
-        return 1, {"error": f"missing_task={task_id_value}"}
-    task["status"] = "completed"
-    task["updated_at"] = now_iso()
     commit_sha = normalize_text(payload.get("commit_sha"))
-    if commit_sha:
-        task["commit_sha"] = commit_sha
-    if payload.get("verified") is not None:
-        task["verified"] = bool(payload.get("verified"))
-    task["completed_at"] = now_iso()
+    if task:
+        task["status"] = "completed"
+        task["updated_at"] = now_iso()
+        if commit_sha:
+            task["commit_sha"] = commit_sha
+        if payload.get("verified") is not None:
+            task["verified"] = bool(payload.get("verified"))
+        task["completed_at"] = now_iso()
 
-    rec_id = normalize_text(task.get("recommendation_id")) or normalize_text(task.get("related_id"))
-    if rec_id:
-        rec = next((item for item in state["recommendations"] if item.get("id") == rec_id), None)
-        if rec:
-            rec["status"] = "completed"
-            rec["updated_at"] = now_iso()
-            rec["closed_at"] = now_iso()
-    return 0, {"status": "completed", "task_id": task_id_value, "commit_sha": commit_sha}
+        rec_id = normalize_text(task.get("recommendation_id")) or normalize_text(task.get("related_id"))
+        if rec_id:
+            rec = next((item for item in state["recommendations"] if item.get("id") == rec_id), None)
+            if rec:
+                rec["status"] = "completed"
+                rec["updated_at"] = now_iso()
+                rec["closed_at"] = now_iso()
+        return 0, {"status": "completed", "task_id": task_id_value, "commit_sha": commit_sha}
+
+    rec = next((item for item in state["recommendations"] if item.get("id") == task_id_value), None)
+    if not rec:
+        return 1, {"error": f"missing_task_or_recommendation={task_id_value}"}
+    rec["status"] = "completed"
+    rec["updated_at"] = now_iso()
+    rec["closed_at"] = now_iso()
+    if commit_sha:
+        rec["commit_sha"] = commit_sha
+    if payload.get("verified") is not None:
+        rec["verified"] = bool(payload.get("verified"))
+    return 0, {"status": "completed", "recommendation_id": task_id_value, "commit_sha": commit_sha}
 
 
 def list_state(state):
