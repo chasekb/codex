@@ -165,13 +165,15 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-13T17:55:48Z",
+      "commit_sha": "9c7d53d",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a skill that reports backlog aging, active work, completion rates, and other project-health signals for regular review.",
       "id": "REC-20260413-016",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Summarize backlog health and flow metrics.",
       "tags": [
         "skills",
@@ -179,7 +181,8 @@
         "metrics"
       ],
       "title": "Add a project-insights skill to report backlog health, aging items, WIP, and completion rates",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T17:55:48Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -337,9 +340,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 10,
+    "open_recommendations": 9,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T17:36:22Z",
+  "updated_at": "2026-04-13T17:55:48Z",
   "version": 1
 }
