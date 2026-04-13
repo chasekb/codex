@@ -46,6 +46,12 @@
 - surface open recommendations before implementation tasks
 - keep recommendation and task lists separate
 
+## backlog_review
+- refresh the backlog review cadence and timestamp
+- sort open items by priority and age
+- flag stale recommendations and WIP pressure
+- keep the weekly review report separate from implementation closeout
+
 ## backlog_triage
 - classify items as recommendation, task, or noise
 - prioritize by impact, urgency, and dependency

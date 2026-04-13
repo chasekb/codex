@@ -36,6 +36,9 @@ workflows:
   - id: project-backlog-management
     trigger: backlog_management_request
     pipeline: pipelines/project-backlog-management.yaml
+  - id: weekly-backlog-review
+    trigger: weekly_backlog_review_request
+    pipeline: pipelines/weekly-backlog-review.yaml
   - id: backlog-triage
     trigger: backlog_triage_request
     pipeline: pipelines/backlog-triage.yaml

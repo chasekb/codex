@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -34,6 +34,9 @@ def default_state():
     return {
         "version": 1,
         "updated_at": "",
+        "meta": {
+            "last_weekly_review_at": "",
+        },
         "recommendations": [],
         "implementation_tasks": [],
         "stats": {
@@ -54,6 +57,7 @@ def load_state():
         if isinstance(data, dict):
             state = default_state()
             state.update({k: v for k, v in data.items() if k in state})
+            state.setdefault("meta", {})
             state.setdefault("recommendations", [])
             state.setdefault("implementation_tasks", [])
             state.setdefault("stats", {})
@@ -150,6 +154,64 @@ def task_id(state):
         if candidate not in existing:
             return candidate
         seq += 1
+
+
+def parse_iso_datetime(value):
+    text_value = normalize_text(value)
+    if not text_value:
+        return None
+    try:
+        if text_value.endswith("Z"):
+            text_value = text_value[:-1] + "+00:00"
+        return datetime.fromisoformat(text_value)
+    except Exception:
+        return None
+
+
+def active_recommendations(state):
+    return [
+        item for item in state["recommendations"]
+        if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}
+    ]
+
+
+def active_tasks(state):
+    return [
+        item for item in state["implementation_tasks"]
+        if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}
+    ]
+
+
+def sort_key(item):
+    priority_rank = {"high": 0, "medium": 1, "low": 2}
+    created = normalize_text(item.get("created_at"))
+    return (priority_rank.get(normalize_text(item.get("priority")).lower(), 3), created)
+
+
+def render_backlog_report(state, stale_after_days=7, wip_limit=3):
+    recommendations = active_recommendations(state)
+    tasks = active_tasks(state)
+    recommendations.sort(key=sort_key)
+    tasks.sort(key=sort_key)
+    stale_cutoff = datetime.now(timezone.utc) - timedelta(days=max(1, int(stale_after_days)))
+    stale_recommendations = []
+    for item in recommendations:
+        created_at = parse_iso_datetime(item.get("created_at"))
+        if created_at and created_at <= stale_cutoff:
+            stale_recommendations.append(item)
+    over_wip_limit = max(0, len(tasks) - max(1, int(wip_limit)))
+    return {
+        "status": "ok",
+        "backlog_file": str(backlog_path()),
+        "meta": deepcopy(state.get("meta", {})),
+        "stats": deepcopy(state.get("stats", {})),
+        "recommendations": recommendations[:20],
+        "implementation_tasks": tasks[:20],
+        "stale_recommendations": stale_recommendations[:20],
+        "stale_count": len(stale_recommendations),
+        "wip_limit": max(1, int(wip_limit)),
+        "wip_over_limit": over_wip_limit,
+    }
 
 
 def intake(state, payload):
@@ -265,6 +327,26 @@ def complete(state, task_id_value, payload):
     return 0, {"status": "completed", "recommendation_id": task_id_value, "commit_sha": commit_sha}
 
 
+def review(state, payload):
+    stale_after_days = int(payload.get("stale_after_days", 7) or 7)
+    wip_limit = int(payload.get("wip_limit", 3) or 3)
+    force = bool(payload.get("force", False))
+    last_review = normalize_text(state.get("meta", {}).get("last_weekly_review_at"))
+    last_review_dt = parse_iso_datetime(last_review)
+    due = force or not last_review_dt or (datetime.now(timezone.utc) - last_review_dt >= timedelta(days=max(1, stale_after_days)))
+    report = render_backlog_report(state, stale_after_days=stale_after_days, wip_limit=wip_limit)
+    report["review_due"] = due
+    report["last_weekly_review_at"] = last_review
+
+    if due:
+        state.setdefault("meta", {})["last_weekly_review_at"] = now_iso()
+        report["last_weekly_review_at"] = state["meta"]["last_weekly_review_at"]
+        report["reviewed_at"] = report["last_weekly_review_at"]
+        save_state(state)
+        report["stats"] = deepcopy(state.get("stats", {}))
+    return 0, report
+
+
 def mirror(state, action, payload, result):
     sync_template = os.environ.get("CODEX_CLAWHUB_BACKLOG_SYNC_CMD", "").strip()
     if not sync_template:
@@ -298,27 +380,12 @@ def mirror(state, action, payload, result):
 
 
 def list_state(state):
-    recommendations = [item for item in state["recommendations"] if item.get("status") not in {"completed", "closed", "resolved", "deferred"}]
-    tasks = [item for item in state["implementation_tasks"] if item.get("status") not in {"completed", "closed", "resolved", "cancelled"}]
-    priority_rank = {"high": 0, "medium": 1, "low": 2}
-
-    def sort_key(item):
-        return (priority_rank.get(normalize_text(item.get("priority")).lower(), 3), item.get("created_at", ""))
-
-    recommendations.sort(key=sort_key)
-    tasks.sort(key=sort_key)
-    report = {
-        "status": "ok",
-        "backlog_file": str(backlog_path()),
-        "stats": deepcopy(state.get("stats", {})),
-        "recommendations": recommendations[:20],
-        "implementation_tasks": tasks[:20],
-    }
+    report = render_backlog_report(state)
     print(json.dumps(report, indent=2, sort_keys=True))
     print(
         "backlog:metrics "
-        f"open_recommendations={report['stats'].get('open_recommendations', len(recommendations))} "
-        f"open_tasks={report['stats'].get('open_tasks', len(tasks))} "
+        f"open_recommendations={report['stats'].get('open_recommendations', len(report['recommendations']))} "
+        f"open_tasks={report['stats'].get('open_tasks', len(report['implementation_tasks']))} "
         f"completed_tasks={report['stats'].get('completed_tasks', 0)}"
     )
     return 0
@@ -340,26 +407,47 @@ def main():
     elif command == "complete":
         task_id_value = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("task_id"))
         rc, result = complete(state, task_id_value, payload)
+    elif command == "review":
+        rc, result = review(state, payload)
     elif command in {"list", "status"}:
         return list_state(state)
     else:
         print(f"backlog:error unsupported_command={command}")
         return 1
 
-    if rc == 0:
+    if rc == 0 and command != "review":
         save_state(state)
         mirror_rc, mirror_result = mirror(state, command, payload, result)
         if mirror_rc == 0:
             print("backlog:mirror status=ok")
         elif mirror_result.get("output"):
             print(f"backlog:mirror status=failed details={normalize_text(mirror_result['output'])[:220]}")
+    elif rc == 0 and command == "review" and result.get("review_due"):
+        mirror_rc, mirror_result = mirror(state, command, payload, result)
+        if mirror_rc == 0:
+            print("backlog:mirror status=ok")
+        elif mirror_result.get("output"):
+            print(f"backlog:mirror status=failed details={normalize_text(mirror_result['output'])[:220]}")
     print(json.dumps(result, sort_keys=True))
-    print(
-        "backlog:metrics "
-        f"open_recommendations={state['stats'].get('open_recommendations', 0)} "
-        f"open_tasks={state['stats'].get('open_tasks', 0)} "
-        f"completed_tasks={state['stats'].get('completed_tasks', 0)}"
-    )
+    if command == "review":
+        print(
+            "backlog:review "
+            f"loaded=1 "
+            f"review_due={int(bool(result.get('review_due', False)))} "
+            f"open_recommendations={result.get('stats', {}).get('open_recommendations', state['stats'].get('open_recommendations', 0))} "
+            f"open_tasks={result.get('stats', {}).get('open_tasks', state['stats'].get('open_tasks', 0))} "
+            f"completed_tasks={result.get('stats', {}).get('completed_tasks', state['stats'].get('completed_tasks', 0))} "
+            f"stale_count={int(result.get('stale_count', 0))} "
+            f"wip_over_limit={int(result.get('wip_over_limit', 0))} "
+            f"last_weekly_review_at={normalize_text(result.get('last_weekly_review_at', ''))}"
+        )
+    else:
+        print(
+            "backlog:metrics "
+            f"open_recommendations={state['stats'].get('open_recommendations', 0)} "
+            f"open_tasks={state['stats'].get('open_tasks', 0)} "
+            f"completed_tasks={state['stats'].get('completed_tasks', 0)}"
+        )
     return rc
 
 

@@ -204,6 +204,10 @@ def default_state():
             "backlog_open_recommendations": 0,
             "backlog_open_tasks": 0,
             "backlog_completed_tasks": 0,
+            "backlog_weekly_review_runs": 0,
+            "backlog_weekly_review_due": False,
+            "backlog_weekly_review_stale": 0,
+            "backlog_weekly_review_over_wip": 0,
             "backlog_intake_runs": 0,
             "search_tool_count": 0,
             "search_query_count": 0,
@@ -783,6 +787,49 @@ def parse_backlog_metrics(output):
             report["open_recommendations"] = parse_kv_metric(line, "open_recommendations")
             report["open_tasks"] = parse_kv_metric(line, "open_tasks")
             report["completed_tasks"] = parse_kv_metric(line, "completed_tasks")
+    return report
+
+
+def parse_backlog_review_metrics(output):
+    report = {
+        "loaded": 0,
+        "open_recommendations": 0,
+        "open_tasks": 0,
+        "completed_tasks": 0,
+        "review_due": False,
+        "stale_count": 0,
+        "wip_over_limit": 0,
+        "last_weekly_review_at": "",
+    }
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("{"):
+            try:
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    stats = parsed.get("stats") if isinstance(parsed.get("stats"), dict) else {}
+                    report["open_recommendations"] = to_int(stats.get("open_recommendations", report["open_recommendations"]))
+                    report["open_tasks"] = to_int(stats.get("open_tasks", report["open_tasks"]))
+                    report["completed_tasks"] = to_int(stats.get("completed_tasks", report["completed_tasks"]))
+                    report["review_due"] = bool(parsed.get("review_due", report["review_due"]))
+                    report["stale_count"] = to_int(parsed.get("stale_count", report["stale_count"]))
+                    report["wip_over_limit"] = to_int(parsed.get("wip_over_limit", report["wip_over_limit"]))
+                    report["last_weekly_review_at"] = text(parsed.get("last_weekly_review_at", report["last_weekly_review_at"]))
+            except Exception:
+                pass
+        if line.startswith("backlog:review"):
+            report["loaded"] = 1
+            report["open_recommendations"] = parse_kv_metric(line, "open_recommendations")
+            report["open_tasks"] = parse_kv_metric(line, "open_tasks")
+            report["completed_tasks"] = parse_kv_metric(line, "completed_tasks")
+            report["stale_count"] = parse_kv_metric(line, "stale_count")
+            report["wip_over_limit"] = parse_kv_metric(line, "wip_over_limit")
+            report["review_due"] = parse_kv_metric(line, "review_due") == 1
+            last_review = re.search(r"\blast_weekly_review_at=([^\s]+)", line)
+            if last_review:
+                report["last_weekly_review_at"] = text(last_review.group(1))
     return report
 
 
@@ -1478,6 +1525,28 @@ def main():
                 details=(
                     f"open_recommendations={backlog_report['open_recommendations']} "
                     f"open_tasks={backlog_report['open_tasks']}"
+                ),
+            )
+
+        weekly_review_report = {}
+        _, weekly_review_out = run_internal("backlog-manager", ["review"])
+        weekly_review_report = parse_backlog_review_metrics(weekly_review_out)
+        state["metrics"]["backlog_weekly_review_runs"] += int(bool(weekly_review_report.get("review_due")))
+        state["metrics"]["backlog_weekly_review_due"] = bool(weekly_review_report.get("review_due"))
+        state["metrics"]["backlog_weekly_review_stale"] = weekly_review_report.get("stale_count", 0)
+        state["metrics"]["backlog_weekly_review_over_wip"] = weekly_review_report.get("wip_over_limit", 0)
+        if weekly_review_report.get("review_due"):
+            append_event_log(
+                "backlog_weekly_review",
+                hook_name,
+                workflow=workflow,
+                skill=skill_id,
+                stage="preprompt",
+                status="due",
+                details=(
+                    f"stale_count={weekly_review_report['stale_count']} "
+                    f"wip_over_limit={weekly_review_report['wip_over_limit']} "
+                    f"last_weekly_review_at={weekly_review_report['last_weekly_review_at']}"
                 ),
             )
 

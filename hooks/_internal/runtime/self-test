@@ -34,6 +34,7 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "request code review and finish branch")" == "review-closeout" ]] && pass select_workflow_review_closeout || fail select_workflow_review_closeout
+[[ "$(hooks/_internal/routing/select-workflow general 0.9 "weekly backlog review stale items")" == "weekly-backlog-review" ]] && pass select_workflow_weekly_backlog_review || fail select_workflow_weekly_backlog_review
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "implementation execution commit verify complete")" == "implementation-execution" ]] && pass select_workflow_implementation_execution || fail select_workflow_implementation_execution
 [[ "$(hooks/_internal/routing/select-workflow implement 0.9 "multi-task parallel subagents worktree")" == "multi-task-implementation" ]] && pass select_workflow_multi_task || fail select_workflow_multi_task
 
@@ -106,6 +107,115 @@ assert data["state"]["recommendations"][0]["title"] == "Mirror to ClawHub"
 print("backlog_clawhub_state:ok")
 PY
 pass backlog_clawhub_state
+
+weekly_backlog="$tmpdir/weekly-backlog.json"
+cat > "$weekly_backlog" <<'JSON'
+{
+  "version": 1,
+  "updated_at": "",
+  "meta": {
+    "last_weekly_review_at": ""
+  },
+  "recommendations": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Older recommendation for review testing.",
+      "id": "REC-20260401-001",
+      "kind": "recommendation",
+      "priority": "high",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Review test recommendation",
+      "tags": ["backlog", "review"],
+      "title": "Review test recommendation",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "implementation_tasks": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Older task for WIP review testing.",
+      "id": "TASK-20260401-001",
+      "kind": "task",
+      "priority": "high",
+      "related_id": "REC-20260401-001",
+      "recommendation_id": "REC-20260401-001",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Review test task",
+      "tags": ["backlog", "review"],
+      "title": "Review test task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "stats": {
+    "completed_tasks": 0,
+    "open_recommendations": 1,
+    "open_tasks": 1
+  }
+}
+JSON
+CODEX_BACKLOG_FILE="$weekly_backlog" hooks/_internal/backlog/backlog-manager review >/dev/null && pass backlog_weekly_review || fail backlog_weekly_review
+python3 - <<'PY' "$weekly_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["meta"]["last_weekly_review_at"]
+print("backlog_weekly_review_state:ok")
+PY
+pass backlog_weekly_review_state
+
+weekly_backlog_hook="$tmpdir/weekly-backlog-hook.json"
+cat > "$weekly_backlog_hook" <<'JSON'
+{
+  "version": 1,
+  "updated_at": "",
+  "meta": {
+    "last_weekly_review_at": ""
+  },
+  "recommendations": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Older recommendation for review testing.",
+      "id": "REC-20260401-001",
+      "kind": "recommendation",
+      "priority": "high",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Review test recommendation",
+      "tags": ["backlog", "review"],
+      "title": "Review test recommendation",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "implementation_tasks": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Older task for WIP review testing.",
+      "id": "TASK-20260401-001",
+      "kind": "task",
+      "priority": "high",
+      "related_id": "REC-20260401-001",
+      "recommendation_id": "REC-20260401-001",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Review test task",
+      "tags": ["backlog", "review"],
+      "title": "Review test task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "stats": {
+    "completed_tasks": 0,
+    "open_recommendations": 1,
+    "open_tasks": 1
+  }
+}
+JSON
+weekly_payload='{"task":{"class":"general","objective":"weekly review smoke"},"classification":{"confidence":0.9}}'
+CODEX_BACKLOG_FILE="$weekly_backlog_hook" python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$weekly_payload" >/dev/null && pass weekly_review_hook || fail weekly_review_hook
+grep -Fq '"backlog_weekly_review_due": true' outputs/hook-runtime-state.json && pass weekly_review_hook_due || fail weekly_review_hook_due
+grep -Eq '"backlog_weekly_review_runs": [1-9]' outputs/hook-runtime-state.json && pass weekly_review_hook_runs || fail weekly_review_hook_runs
 
 hooks/_internal/routing/load-skill plan-verify-execute metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
 hooks/_internal/routing/validate-skill "$ROOT/skills/core/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill

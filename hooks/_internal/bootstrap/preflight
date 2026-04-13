@@ -33,6 +33,7 @@ required_rel=(
   "workflows/pipelines/project-backlog-management.yaml"
   "workflows/pipelines/backlog-triage.yaml"
   "workflows/pipelines/recommendation-to-task.yaml"
+  "workflows/pipelines/weekly-backlog-review.yaml"
   "workflows/pipelines/review-closeout.yaml"
   "workflows/pipelines/multi-task-implementation.yaml"
   "workflows/shared/output-handling.yaml"
