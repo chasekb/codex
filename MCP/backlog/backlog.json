@@ -2,13 +2,15 @@
   "implementation_tasks": [],
   "recommendations": [
     {
+      "closed_at": "2026-04-13T15:36:58Z",
+      "commit_sha": "9982d39",
       "created_at": "2026-04-13T00:00:00Z",
       "details": "Create the backlog skill, backlog workflow, and supporting store so recommendations stay separate from executable tasks.",
       "id": "REC-20260413-001",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "in_progress",
+      "status": "completed",
       "summary": "Add a skill/workflow pair that keeps recommendations canonical and derives implementation tasks from them.",
       "tags": [
         "backlog",
@@ -17,7 +19,8 @@
         "skill"
       ],
       "title": "Add a Codex skill plus workflow for maintaining a canonical backlog of project recommendations",
-      "updated_at": "2026-04-13T00:00:00Z"
+      "updated_at": "2026-04-13T15:36:58Z",
+      "verified": true
     },
     {
       "closed_at": "2026-04-13T15:34:11Z",
@@ -41,13 +44,15 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-13T15:36:58Z",
+      "commit_sha": "9982d39",
       "created_at": "2026-04-13T00:00:00Z",
       "details": "Replace duplicate registry fallback logic with a shared resolver so core, overlay, and external skill paths stay aligned.",
       "id": "REC-20260413-003",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Unify registry precedence across selection, loading, and discovery.",
       "tags": [
         "skills",
@@ -55,16 +60,19 @@
         "routing"
       ],
       "title": "Add a shared registry resolver so skill selection, skill loading, and external discovery all use one precedence path",
-      "updated_at": "2026-04-13T00:00:00Z"
+      "updated_at": "2026-04-13T15:36:58Z",
+      "verified": true
     },
     {
+      "closed_at": "2026-04-13T15:37:08Z",
+      "commit_sha": "9982d39",
       "created_at": "2026-04-13T00:00:00Z",
       "details": "Detect backlog language in prompts and append recommendation records so the list stays current.",
       "id": "REC-20260413-004",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Capture backlog-worthy prompts automatically.",
       "tags": [
         "hooks",
@@ -72,16 +80,19 @@
         "intake"
       ],
       "title": "Add a backlog-intake hook on UserPromptSubmit to capture new recommendations, tasks, and project requests",
-      "updated_at": "2026-04-13T00:00:00Z"
+      "updated_at": "2026-04-13T15:37:08Z",
+      "verified": true
     },
     {
+      "closed_at": "2026-04-13T15:36:58Z",
+      "commit_sha": "1476f83",
       "created_at": "2026-04-13T00:00:00Z",
       "details": "Record completion evidence from the runtime so recommendation and task status stay in sync with actual commits.",
       "id": "REC-20260413-005",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Close backlog items when implementation is committed and verified.",
       "tags": [
         "hooks",
@@ -89,7 +100,8 @@
         "closeout"
       ],
       "title": "Add a backlog-sync hook on TaskComplete or Stop to mark items complete with commit SHA and verification status",
-      "updated_at": "2026-04-13T00:00:00Z"
+      "updated_at": "2026-04-13T15:36:58Z",
+      "verified": true
     },
     {
       "closed_at": "2026-04-13T15:29:16Z",
@@ -134,9 +146,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 4,
+    "open_recommendations": 0,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T15:34:11Z",
+  "updated_at": "2026-04-13T15:37:08Z",
   "version": 1
 }
