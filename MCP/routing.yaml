@@ -56,6 +56,13 @@ intents:
     min_confidence: 0.70
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  debug_deep_dive:
+    primary: local_files
+    fallback: playwright
+    workflow: debug-deep-dive
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   ui_validation:
     primary: playwright
     fallback: local_files

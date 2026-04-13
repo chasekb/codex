@@ -34,6 +34,7 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "request code review and finish branch")" == "review-closeout" ]] && pass select_workflow_review_closeout || fail select_workflow_review_closeout
+[[ "$(hooks/_internal/routing/select-workflow debug 0.9 "repeated failure failing test")" == "debug-deep-dive" ]] && pass select_workflow_debug_deep_dive || fail select_workflow_debug_deep_dive
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "skill maintenance external skill discovery")" == "skill-maintenance" ]] && pass select_workflow_skill_maintenance || fail select_workflow_skill_maintenance
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "weekly backlog review stale items")" == "weekly-backlog-review" ]] && pass select_workflow_weekly_backlog_review || fail select_workflow_weekly_backlog_review
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "implementation execution commit verify complete")" == "implementation-execution" ]] && pass select_workflow_implementation_execution || fail select_workflow_implementation_execution
@@ -41,6 +42,9 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 
 skill_maintenance_out="$(hooks/_internal/routing/select-skill general 0.9 "skill maintenance external skill discovery")"
 echo "$skill_maintenance_out" | tail -n1 | grep -qx 'self-improvement' && pass select_skill_skill_maintenance || fail select_skill_skill_maintenance
+debug_deep_dive_skill_out="$(hooks/_internal/routing/select-skill debug 0.9 "repeated failure failing test")"
+echo "$debug_deep_dive_skill_out" | tail -n1 | grep -qx 'systematic-debugging' && pass select_skill_debug_deep_dive || fail select_skill_debug_deep_dive
+hooks/_internal/routing/load-skill systematic-debugging metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_systematic_debugging || fail load_skill_systematic_debugging
 hooks/_internal/routing/load-skill backlog-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog_triage || fail load_skill_backlog_triage
 hooks/_internal/routing/load-skill task-decomposition metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_task_decomposition || fail load_skill_task_decomposition
 

@@ -1,0 +1,12 @@
+id: debug-deep-dive
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: verify
+  - use: debug_deep_dive
+  - use: patch
+  - use: verify
+  - use: report
+  - use: memory_commit
+budget_profile: debug_rca
+output_contract: debug_rca

@@ -37,6 +37,13 @@
 - verification evidence
 - final status
 
+## debug_deep_dive
+- reproduce or inspect the repeating failure
+- load systematic-debugging metadata only before any patching
+- capture root-cause notes before mutation
+- patch minimally after root cause is understood
+- verify the same failure path after the change
+
 ## memory_commit
 - write only verified high-signal facts/decisions
 - enforce compact one-line record format

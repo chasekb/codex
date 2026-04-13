@@ -60,6 +60,7 @@ Main behavior by event:
   - Load skill metadata from repo-local `skills/registry.yaml` first, then the Superpowers overlay registry, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
   - Dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Run the weekly backlog review cadence check and refresh `MCP/backlog/backlog.json` when due
+  - Route repeated local or CI/test-linked failures into `debug-deep-dive` so `systematic-debugging` runs before patching
   - Route skill-gap and external-skill prompts into `skill-maintenance` when they need authoring or discovery support
   - Load memory context (`load-memory`)
   - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
@@ -136,6 +137,7 @@ Current workflow targets:
 - `implement-small`
 - `multi-task-implementation`
 - `debug-rca`
+- `debug-deep-dive`
 - `verify`
 - `ci-triage`
 - `release-publish`
@@ -156,6 +158,7 @@ Pipeline files:
 - `workflows/pipelines/implement-small.yaml`
 - `workflows/pipelines/multi-task-implementation.yaml`
 - `workflows/pipelines/debug-rca.yaml`
+- `workflows/pipelines/debug-deep-dive.yaml`
 - `workflows/pipelines/verify.yaml`
 - `workflows/pipelines/ci-triage.yaml`
 - `workflows/pipelines/release-publish.yaml`

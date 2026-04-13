@@ -18,6 +18,9 @@ workflows:
   - id: debug-rca
     trigger: bug_or_failure_report
     pipeline: pipelines/debug-rca.yaml
+  - id: debug-deep-dive
+    trigger: recurring_failure_investigation
+    pipeline: pipelines/debug-deep-dive.yaml
   - id: verify
     trigger: verification_only_request
     pipeline: pipelines/verify.yaml
