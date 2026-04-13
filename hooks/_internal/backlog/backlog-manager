@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import subprocess
 import sys
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -87,6 +88,25 @@ def read_input_payload():
         return parsed if isinstance(parsed, dict) else {}
     except Exception:
         return {}
+
+
+def render_template(template, mapping):
+    rendered = template
+    for key, value in mapping.items():
+        rendered = rendered.replace("{" + key + "}", value)
+    return rendered
+
+
+def run_command_with_input(command, stdin_text, cwd=None):
+    proc = subprocess.run(
+        ["/bin/bash", "-lc", command],
+        input=stdin_text,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 
 
 def normalize_text(value):
@@ -245,6 +265,38 @@ def complete(state, task_id_value, payload):
     return 0, {"status": "completed", "recommendation_id": task_id_value, "commit_sha": commit_sha}
 
 
+def mirror(state, action, payload, result):
+    sync_template = os.environ.get("CODEX_CLAWHUB_BACKLOG_SYNC_CMD", "").strip()
+    if not sync_template:
+        return 0, {"status": "skipped", "reason": "missing_clawhub_sync_cmd"}
+    dest_root = Path(os.environ.get("CODEX_CLAWHUB_BACKLOG_DEST", str(repo_root() / "outputs" / "clawhub-backlog")))
+    dest_root.mkdir(parents=True, exist_ok=True)
+    mapping = {
+        "backlog_file": str(backlog_path()),
+        "dest_root": str(dest_root),
+        "open_recommendations": str(state.get("stats", {}).get("open_recommendations", 0)),
+        "open_tasks": str(state.get("stats", {}).get("open_tasks", 0)),
+        "completed_tasks": str(state.get("stats", {}).get("completed_tasks", 0)),
+        "action": action,
+        "payload_json": json.dumps(payload or {}, sort_keys=True),
+        "result_json": json.dumps(result or {}, sort_keys=True),
+    }
+    command = render_template(sync_template, mapping)
+    stdin_text = json.dumps(
+        {
+            "backlog_file": str(backlog_path()),
+            "state": state,
+            "payload": payload or {},
+            "result": result or {},
+            "action": action,
+        },
+        indent=2,
+        sort_keys=True,
+    )
+    rc, out = run_command_with_input(command, stdin_text)
+    return rc, {"status": "ok" if rc == 0 else "failed", "output": out[:1000]}
+
+
 def list_state(state):
     recommendations = [item for item in state["recommendations"] if item.get("status") not in {"completed", "closed", "resolved", "deferred"}]
     tasks = [item for item in state["implementation_tasks"] if item.get("status") not in {"completed", "closed", "resolved", "cancelled"}]
@@ -296,6 +348,11 @@ def main():
 
     if rc == 0:
         save_state(state)
+        mirror_rc, mirror_result = mirror(state, command, payload, result)
+        if mirror_rc == 0:
+            print("backlog:mirror status=ok")
+        elif mirror_result.get("output"):
+            print(f"backlog:mirror status=failed details={normalize_text(mirror_result['output'])[:220]}")
     print(json.dumps(result, sort_keys=True))
     print(
         "backlog:metrics "

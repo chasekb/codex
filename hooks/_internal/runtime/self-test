@@ -86,6 +86,21 @@ print("backlog_rec_only_state:ok")
 PY
 pass backlog_rec_only_state
 
+clawhub_dir="$tmpdir/clawhub"
+mkdir -p "$clawhub_dir"
+clawhub_backlog="$tmpdir/clawhub-backlog.json"
+CODEX_BACKLOG_FILE="$clawhub_backlog" CODEX_CLAWHUB_BACKLOG_DEST="$clawhub_dir" CODEX_CLAWHUB_BACKLOG_SYNC_CMD='cat > "{dest_root}/mirror.json"' hooks/_internal/backlog/backlog-manager intake <<<'{"kind":"recommendation","title":"Mirror to ClawHub","summary":"Verify optional backlog mirroring","source":"self-test","priority":"medium"}' >/dev/null && pass backlog_clawhub_intake || fail backlog_clawhub_intake
+python3 - <<'PY' "$clawhub_dir/mirror.json"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["action"] == "intake"
+assert data["payload"]["kind"] == "recommendation"
+assert data["state"]["recommendations"][0]["title"] == "Mirror to ClawHub"
+print("backlog_clawhub_state:ok")
+PY
+pass backlog_clawhub_state
+
 hooks/_internal/routing/load-skill plan-verify-execute metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill || fail load_skill
 hooks/_internal/routing/validate-skill "$ROOT/skills/core/plan-verify-execute/SKILL.md" >/dev/null && pass validate_skill || fail validate_skill
 hooks/_internal/routing/load-skill github-actions-remote-build metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_github_remote || fail load_skill_github_remote

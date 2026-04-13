@@ -55,6 +55,7 @@
 - close tasks with commit and verification evidence
 - keep recommendations open until derived tasks close
 - mirror to external project surfaces only when configured
+- use the ClawHub backlog sync command when present
 
 ## review_request
 - load requesting-code-review metadata only

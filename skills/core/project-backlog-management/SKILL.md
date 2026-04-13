@@ -27,5 +27,6 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Prefer concise, outcome-focused backlog items
 - Use stable titles and explicit success criteria
 - Do not mix strategic recommendations with executable tasks in one item
-- Treat ClawHub as an optional external mirror if MCP/search/install tooling is configured
+- Treat ClawHub as an optional external mirror if `CODEX_CLAWHUB_BACKLOG_SYNC_CMD` is configured
+- Use `CODEX_CLAWHUB_BACKLOG_DEST` to control where mirror payloads are staged
 - Keep the backlog small enough to review regularly
