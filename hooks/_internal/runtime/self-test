@@ -32,6 +32,7 @@ echo "$skill_out" | tail -n1 | grep -qx 'plan-verify-execute' && pass select_ski
 hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog || fail load_skill_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "request code review and finish branch")" == "review-closeout" ]] && pass select_workflow_review_closeout || fail select_workflow_review_closeout
+[[ "$(hooks/_internal/routing/select-workflow implement 0.9 "multi-task parallel subagents worktree")" == "multi-task-implementation" ]] && pass select_workflow_multi_task || fail select_workflow_multi_task
 
 backlog_dir="$tmpdir/backlog"
 mkdir -p "$backlog_dir"

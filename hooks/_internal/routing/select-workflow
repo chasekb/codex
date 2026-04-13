@@ -48,6 +48,11 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(review closeout|closeout|req
   exit 0
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(multi-task|multitask|parallel|worktree|worktrees|subagent|dispatch agents|dispatching agents|independent tasks|split tasks|fan out)([[:space:]]|$)'; then
+  echo "multi-task-implementation"
+  exit 0
+fi
+
 if is_low_confidence; then
   echo "plan-only"
   exit 0

@@ -84,6 +84,13 @@ intents:
     min_confidence: 0.70
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  multi_task_implementation:
+    primary: local_files
+    fallback: none
+    workflow: multi-task-implementation
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   retrospective:
     primary: local_files
     fallback: none

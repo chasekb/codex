@@ -65,3 +65,18 @@
 - load finishing-a-development-branch metadata only
 - verify tests before merge or PR decisions
 - present completion options after the work is verified
+
+## worktree_setup
+- load using-git-worktrees metadata only
+- ensure the workspace is isolated before multi-file implementation
+- prefer an existing worktree if one is already present
+
+## parallel_dispatch
+- load dispatching-parallel-agents metadata only
+- split independent tasks before dispatching subagents
+- keep dependent edits in one lane
+
+## subagent_development
+- load subagent-driven-development metadata only
+- use a fresh subagent per independent task
+- require spec review before quality review before closeout

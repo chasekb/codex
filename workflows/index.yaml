@@ -9,6 +9,9 @@ workflows:
   - id: implement-small
     trigger: scoped_change_request
     pipeline: pipelines/implement-small.yaml
+  - id: multi-task-implementation
+    trigger: multi_task_implementation_request
+    pipeline: pipelines/multi-task-implementation.yaml
   - id: debug-rca
     trigger: bug_or_failure_report
     pipeline: pipelines/debug-rca.yaml
