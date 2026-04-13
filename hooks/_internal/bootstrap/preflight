@@ -37,6 +37,7 @@ required_rel=(
   "workflows/pipelines/review-closeout.yaml"
   "workflows/pipelines/project-insights.yaml"
   "workflows/pipelines/stale-item-review.yaml"
+  "workflows/pipelines/issue-writing.yaml"
   "workflows/pipelines/debug-deep-dive.yaml"
   "workflows/pipelines/multi-task-implementation.yaml"
   "workflows/pipelines/skill-maintenance.yaml"

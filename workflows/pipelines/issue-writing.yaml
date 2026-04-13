@@ -1,0 +1,10 @@
+id: issue-writing
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: backlog_load
+  - use: issue_writing
+  - use: report
+  - use: memory_commit
+budget_profile: plan
+output_contract: request_standard

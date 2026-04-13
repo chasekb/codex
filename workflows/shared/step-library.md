@@ -65,6 +65,12 @@
 - keep keep/defer/drop decisions explicit and separate by item type
 - avoid expanding into general backlog metrics or runtime flow
 
+## issue_writing
+- read the backlog item before drafting the issue
+- preserve the backlog title and add concise context
+- include acceptance criteria and labels
+- keep the output issues-only in this version
+
 ## backlog_review
 - refresh the backlog review cadence and timestamp
 - sort open items by priority and age

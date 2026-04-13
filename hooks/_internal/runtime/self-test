@@ -36,6 +36,7 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "request code review and finish branch")" == "review-closeout" ]] && pass select_workflow_review_closeout || fail select_workflow_review_closeout
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "project insights backlog health aging items")" == "project-insights" ]] && pass select_workflow_project_insights || fail select_workflow_project_insights
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "stale item review stale backlog items")" == "stale-item-review" ]] && pass select_workflow_stale_item_review || fail select_workflow_stale_item_review
+[[ "$(hooks/_internal/routing/select-workflow general 0.9 "issue writing github issue backlog item")" == "issue-writing" ]] && pass select_workflow_issue_writing || fail select_workflow_issue_writing
 [[ "$(hooks/_internal/routing/select-workflow debug 0.9 "repeated failure failing test")" == "debug-deep-dive" ]] && pass select_workflow_debug_deep_dive || fail select_workflow_debug_deep_dive
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "skill maintenance external skill discovery")" == "skill-maintenance" ]] && pass select_workflow_skill_maintenance || fail select_workflow_skill_maintenance
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "weekly backlog review stale items")" == "weekly-backlog-review" ]] && pass select_workflow_weekly_backlog_review || fail select_workflow_weekly_backlog_review
@@ -48,10 +49,13 @@ project_insights_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "
 echo "$project_insights_skill_out" | tail -n1 | grep -qx 'project-insights' && pass select_skill_project_insights || fail select_skill_project_insights
 stale_item_review_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "stale item review stale backlog items")"
 echo "$stale_item_review_skill_out" | tail -n1 | grep -qx 'stale-item-review' && pass select_skill_stale_item_review || fail select_skill_stale_item_review
+issue_writing_skill_out="$(hooks/_internal/routing/select-skill general 0.9 "issue writing github issue backlog item")"
+echo "$issue_writing_skill_out" | tail -n1 | grep -qx 'issue-writing' && pass select_skill_issue_writing || fail select_skill_issue_writing
 debug_deep_dive_skill_out="$(hooks/_internal/routing/select-skill debug 0.9 "repeated failure failing test")"
 echo "$debug_deep_dive_skill_out" | tail -n1 | grep -qx 'systematic-debugging' && pass select_skill_debug_deep_dive || fail select_skill_debug_deep_dive
 hooks/_internal/routing/load-skill project-insights metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_project_insights || fail load_skill_project_insights
 hooks/_internal/routing/load-skill stale-item-review metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_stale_item_review || fail load_skill_stale_item_review
+hooks/_internal/routing/load-skill issue-writing metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_issue_writing || fail load_skill_issue_writing
 hooks/_internal/routing/load-skill systematic-debugging metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_systematic_debugging || fail load_skill_systematic_debugging
 hooks/_internal/routing/load-skill backlog-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog_triage || fail load_skill_backlog_triage
 hooks/_internal/routing/load-skill task-decomposition metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_task_decomposition || fail load_skill_task_decomposition
@@ -246,6 +250,7 @@ hooks/_internal/routing/validate-skill "$ROOT/skills/ops/release-publish/SKILL.m
 hooks/_internal/routing/validate-skill "$ROOT/skills/ops/dependency-maintenance/SKILL.md" >/dev/null && pass validate_skill_dependency_maintenance || fail validate_skill_dependency_maintenance
 hooks/_internal/routing/validate-skill "$ROOT/skills/core/project-insights/SKILL.md" >/dev/null && pass validate_skill_project_insights || fail validate_skill_project_insights
 hooks/_internal/routing/validate-skill "$ROOT/skills/core/stale-item-review/SKILL.md" >/dev/null && pass validate_skill_stale_item_review || fail validate_skill_stale_item_review
+hooks/_internal/routing/validate-skill "$ROOT/skills/core/issue-writing/SKILL.md" >/dev/null && pass validate_skill_issue_writing || fail validate_skill_issue_writing
 hooks/_internal/runtime/rule-regression >/dev/null && pass rule_regression || fail rule_regression
 
 github_remote_out="$(hooks/_internal/routing/select-skill request 0.9 "github actions build workflow")"

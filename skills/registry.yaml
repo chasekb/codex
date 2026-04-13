@@ -48,6 +48,10 @@ skills:
     file: core/stale-item-review/SKILL.md
     tags: [backlog, stale, review, recommendations, tasks]
     priority: 2
+  - id: issue-writing
+    file: core/issue-writing/SKILL.md
+    tags: [backlog, github, issues, writing, workflow]
+    priority: 2
   - id: backlog-triage
     file: core/backlog-triage/SKILL.md
     tags: [backlog, triage, prioritization, workflow]
