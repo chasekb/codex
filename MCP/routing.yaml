@@ -14,6 +14,13 @@ intents:
     min_confidence: 0.65
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  implementation_execution:
+    primary: local_files
+    fallback: none
+    workflow: implementation-execution
+    min_confidence: 0.70
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   ci_triage:
     primary: local_files
     fallback: none

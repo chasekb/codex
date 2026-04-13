@@ -1,0 +1,12 @@
+id: implementation-execution
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: backlog_load
+  - use: patch
+  - use: verify
+  - use: backlog_sync
+  - use: report
+  - use: memory_commit
+budget_profile: implement
+output_contract: implement

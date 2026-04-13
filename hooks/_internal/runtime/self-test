@@ -34,6 +34,7 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "request code review and finish branch")" == "review-closeout" ]] && pass select_workflow_review_closeout || fail select_workflow_review_closeout
+[[ "$(hooks/_internal/routing/select-workflow general 0.9 "implementation execution commit verify complete")" == "implementation-execution" ]] && pass select_workflow_implementation_execution || fail select_workflow_implementation_execution
 [[ "$(hooks/_internal/routing/select-workflow implement 0.9 "multi-task parallel subagents worktree")" == "multi-task-implementation" ]] && pass select_workflow_multi_task || fail select_workflow_multi_task
 
 hooks/_internal/routing/load-skill backlog-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog_triage || fail load_skill_backlog_triage

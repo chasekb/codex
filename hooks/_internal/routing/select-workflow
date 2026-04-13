@@ -53,6 +53,11 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(review closeout|closeout|req
   exit 0
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(implementation execution|execute implementation|implementation task|commit verify closeout|complete implementation)([[:space:]]|$)'; then
+  echo "implementation-execution"
+  exit 0
+fi
+
 if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(backlog|recommendation|recommendations|roadmap|prioritiz|project backlog|project management|task list|todo list|incomplete project)([[:space:]]|$)'; then
   echo "project-backlog-management"
   exit 0
