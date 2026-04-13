@@ -2,6 +2,8 @@
   "implementation_tasks": [],
   "recommendations": [
     {
+      "closed_at": "2026-04-13T16:05:00Z",
+      "commit_sha": "7ee8669",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a workflow that classifies new backlog items, prioritizes them, and promotes only accepted recommendations into implementation work.",
       "id": "REC-20260413-008",
@@ -16,12 +18,12 @@
         "triage"
       ],
       "title": "Add a backlog-triage workflow to classify and prioritize new items",
-      "commit_sha": "7ee8669",
-      "closed_at": "2026-04-13T16:05:00Z",
-      "verified": true,
-      "updated_at": "2026-04-13T16:12:00Z"
+      "updated_at": "2026-04-13T16:12:00Z",
+      "verified": true
     },
     {
+      "closed_at": "2026-04-13T16:05:00Z",
+      "commit_sha": "7ee8669",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a workflow that converts accepted recommendations into implementation tasks with explicit success criteria, keeping the recommendation open until derived work closes.",
       "id": "REC-20260413-009",
@@ -36,10 +38,8 @@
         "promotion"
       ],
       "title": "Add a recommendation-to-task workflow to promote accepted recommendations into implementation tasks",
-      "commit_sha": "7ee8669",
-      "closed_at": "2026-04-13T16:05:00Z",
-      "verified": true,
-      "updated_at": "2026-04-13T16:12:00Z"
+      "updated_at": "2026-04-13T16:12:00Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -48,7 +48,7 @@
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Track implementation through commit and verification evidence.",
       "tags": [
         "backlog",
@@ -56,7 +56,10 @@
         "implementation"
       ],
       "title": "Add an implementation-execution workflow that updates task status, captures commit SHAs, and verifies completion",
-      "updated_at": "2026-04-13T16:12:00Z"
+      "commit_sha": "bfc0e7a",
+      "closed_at": "2026-04-13T16:20:00Z",
+      "verified": true,
+      "updated_at": "2026-04-13T16:20:00Z"
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -110,6 +113,8 @@
       "updated_at": "2026-04-13T15:45:00Z"
     },
     {
+      "closed_at": "2026-04-13T16:05:00Z",
+      "commit_sha": "7ee8669",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a skill that reviews new backlog items and classifies them as recommendations, implementation tasks, or noise before they enter the active queue.",
       "id": "REC-20260413-014",
@@ -124,12 +129,12 @@
         "triage"
       ],
       "title": "Add a backlog-triage skill to classify new items as recommendation, task, or noise",
-      "commit_sha": "7ee8669",
-      "closed_at": "2026-04-13T16:05:00Z",
-      "verified": true,
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T15:45:00Z",
+      "verified": true
     },
     {
+      "closed_at": "2026-04-13T16:05:00Z",
+      "commit_sha": "7ee8669",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Create a skill that decomposes accepted recommendations into implementation-ready tasks with clear acceptance criteria and manageable scope.",
       "id": "REC-20260413-015",
@@ -144,10 +149,8 @@
         "planning"
       ],
       "title": "Add a task-decomposition skill to convert recommendations into implementation-ready tasks",
-      "commit_sha": "7ee8669",
-      "closed_at": "2026-04-13T16:05:00Z",
-      "verified": true,
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-13T15:45:00Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -322,9 +325,9 @@
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 14,
+    "open_recommendations": 13,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T16:12:00Z",
+  "updated_at": "2026-04-13T16:20:00Z",
   "version": 1
 }
