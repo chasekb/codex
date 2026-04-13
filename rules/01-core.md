@@ -30,6 +30,7 @@ Ask the user only when one of these applies:
 - Prefer Superpowers skills for reusable behavior-shaping content, task guidance, and authoring patterns.
 - Maintain a single canonical backlog of incomplete project recommendations; derive implementation tasks from promoted recommendations, and close recommendations only after the derived tasks are committed and verified.
 - Keep backlog intake, promotion, and closeout in the codex runtime, even if an external project surface like ClawHub is used as a mirror.
+- Require verification-before-completion and requesting-code-review before any implementation work can be marked complete or used to close a backlog recommendation.
 - Treat review and branch-finish as mandatory closeout behavior for completed implementation work before the backlog recommendation is marked done.
 - Route multi-file or multi-task implementation through the multi-task workflow with worktrees and parallel subagents when tasks are independent.
 

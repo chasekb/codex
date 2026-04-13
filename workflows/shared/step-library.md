@@ -99,7 +99,7 @@
 - capture explicit success criteria
 
 ## backlog_sync
-- close tasks with commit and verification evidence
+- close tasks with commit, verification, and review evidence
 - keep recommendations open until derived tasks close
 - mirror to external project surfaces only when configured
 - use the ClawHub backlog sync command when present

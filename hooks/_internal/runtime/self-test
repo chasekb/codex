@@ -25,6 +25,8 @@ fail() { printf 'FAIL %s\n' "$1"; exit 1; }
 hooks/_internal/bootstrap/preflight >/dev/null && pass preflight || fail preflight
 grep -q 'Prefer core runtime skills for policy, routing, memory, budgets, validation, and output contracts\.' "$ROOT/rules/01-core.md" && pass core_policy_split || fail core_policy_split
 grep -q 'Use core runtime skills for policy-owned decisions; use Superpowers skills for behavior-shaping tasks and authoring patterns\.' "$ROOT/rules/00-index.md" && pass index_policy_split || fail index_policy_split
+grep -q 'Require verification-before-completion and requesting-code-review before any implementation work can be marked complete or used to close a backlog recommendation\.' "$ROOT/rules/01-core.md" && pass completion_gate_rule || fail completion_gate_rule
+grep -q 'Treat verification and code review as mandatory inputs for completion and recommendation closeout\.' "$ROOT/skills/core/project-backlog-management/SKILL.md" && pass backlog_completion_gate || fail backlog_completion_gate
 
 [[ "$(hooks/_internal/routing/select-workflow debug 0.9)" == "debug-rca" ]] && pass select_workflow_debug || fail select_workflow_debug
 [[ "$(hooks/_internal/routing/select-workflow implement 0.2)" == "plan-only" ]] && pass select_workflow_low_conf || fail select_workflow_low_conf

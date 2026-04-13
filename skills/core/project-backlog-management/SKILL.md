@@ -22,6 +22,7 @@ description: Manage a canonical backlog of incomplete project recommendations an
 3. Promote accepted recommendations into implementation tasks.
 4. Close tasks only when committed and verified.
 5. Keep the recommendation list open until all derived tasks are closed.
+6. Require review evidence before closing the source recommendation.
 
 ## Guidance
 - Prefer concise, outcome-focused backlog items
@@ -33,3 +34,4 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Use `project-insights` for backlog health snapshots, aging-item summaries, and WIP pressure checks
 - Use `stale-item-review` for keep, defer, or drop decisions on stale recommendations and stale tasks
 - Use `issue-writing` for GitHub Issues exports of backlog items
+- Treat verification and code review as mandatory inputs for completion and recommendation closeout.
