@@ -36,6 +36,7 @@ required_rel=(
   "workflows/pipelines/weekly-backlog-review.yaml"
   "workflows/pipelines/review-closeout.yaml"
   "workflows/pipelines/multi-task-implementation.yaml"
+  "workflows/pipelines/skill-maintenance.yaml"
   "workflows/shared/output-handling.yaml"
   "workflows/shared/output-contracts.yaml"
   "hooks/_internal/routing/select-skill"

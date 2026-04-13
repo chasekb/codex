@@ -44,6 +44,8 @@ if awk -v c="$confidence" -v t="$low_conf_threshold" 'BEGIN { exit !(c < t) }'; 
 else
   if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(self[-[:space:]]?improvement|log[[:space:]]+(this|that)?[[:space:]]*to[[:space:]]+learnings?|review[[:space:]]+learnings?|learning[[:space:]]+capture|extract[[:space:]]+skill|promote[[:space:]]+(this[[:space:]]+)?learning|pattern[[:space:]]+key|recurring[[:space:]]+pattern|knowledge[[:space:]]+gap|best[[:space:]]+practice|lesson[[:space:]]+learned)([[:space:]]|$)'; then
     skill="self-improvement"
+  elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(skill[[:space:]]+maintenance|skill[[:space:]]+gap|skill[[:space:]]+gaps|skill[[:space:]]+candidate|skill[[:space:]]+candidates|skill[[:space:]]+authoring|skill[[:space:]]+discovery|external[[:space:]]+skill[[:space:]]+discovery|discover[[:space:]]+external[[:space:]]+skills|external[[:space:]]+skills|reusable[[:space:]]+skill|skill[[:space:]]+extraction|extract[[:space:]]+skill|install[[:space:]]+skill|update[[:space:]]+skill|author[[:space:]]+skill|create[[:space:]]+skill)([[:space:]]|$)'; then
+    skill="self-improvement"
   elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(ci triage|failed ci|failed[[:space:]]+(github actions[[:space:]]+)?workflow|workflow failure|job log|build log|investigate ci|triage ci)([[:space:]]|$)'; then
     skill="ci-triage"
   elif [[ "$has_ci_workflows" == "true" ]] && echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(github actions build|workflow build|remote build|build workflow|ci build)([[:space:]]|$)'; then

@@ -52,6 +52,12 @@
 - flag stale recommendations and WIP pressure
 - keep the weekly review report separate from implementation closeout
 
+## skill_maintenance
+- review learning context and queued skill candidates
+- classify the gap as create, update, discover, install, or runtime policy
+- keep reusable behavior in Superpowers and execution policy in Codex
+- prefer metadata-only skill loads until the target path is clear
+
 ## backlog_triage
 - classify items as recommendation, task, or noise
 - prioritize by impact, urgency, and dependency

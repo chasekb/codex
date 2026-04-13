@@ -60,6 +60,7 @@ Main behavior by event:
   - Load skill metadata from repo-local `skills/registry.yaml` first, then the Superpowers overlay registry, then `~/.codex/external-skills/registry.yaml`, then `~/.agents/skills/registry.yaml`
   - Dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Run the weekly backlog review cadence check and refresh `MCP/backlog/backlog.json` when due
+  - Route skill-gap and external-skill prompts into `skill-maintenance` when they need authoring or discovery support
   - Load memory context (`load-memory`)
   - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
   - Load compact skill/workflow playbook snippets (`load-playbook-snippet`)
@@ -141,6 +142,7 @@ Current workflow targets:
 - `dependency-maintenance`
 - `research`
 - `project-backlog-management`
+- `skill-maintenance`
 - `weekly-backlog-review`
 - `backlog-triage`
 - `recommendation-to-task`
@@ -160,6 +162,7 @@ Pipeline files:
 - `workflows/pipelines/dependency-maintenance.yaml`
 - `workflows/pipelines/research.yaml`
 - `workflows/pipelines/project-backlog-management.yaml`
+- `workflows/pipelines/skill-maintenance.yaml`
 - `workflows/pipelines/weekly-backlog-review.yaml`
 - `workflows/pipelines/backlog-triage.yaml`
 - `workflows/pipelines/recommendation-to-task.yaml`
