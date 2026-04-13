@@ -30,3 +30,4 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Treat ClawHub as an optional external mirror if `CODEX_CLAWHUB_BACKLOG_SYNC_CMD` is configured
 - Use `CODEX_CLAWHUB_BACKLOG_DEST` to control where mirror payloads are staged
 - Keep the backlog small enough to review regularly
+- Use `project-insights` for backlog health snapshots, aging-item summaries, and WIP pressure checks

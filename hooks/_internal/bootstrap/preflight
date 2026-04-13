@@ -35,6 +35,7 @@ required_rel=(
   "workflows/pipelines/recommendation-to-task.yaml"
   "workflows/pipelines/weekly-backlog-review.yaml"
   "workflows/pipelines/review-closeout.yaml"
+  "workflows/pipelines/project-insights.yaml"
   "workflows/pipelines/debug-deep-dive.yaml"
   "workflows/pipelines/multi-task-implementation.yaml"
   "workflows/pipelines/skill-maintenance.yaml"

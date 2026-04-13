@@ -53,6 +53,12 @@
 - surface open recommendations before implementation tasks
 - keep recommendation and task lists separate
 
+## project_insights
+- read the backlog report before drafting the summary
+- report open recommendations, open tasks, and completed tasks first
+- surface stale items and WIP pressure clearly
+- keep the output focused on backlog health only
+
 ## backlog_review
 - refresh the backlog review cadence and timestamp
 - sort open items by priority and age

@@ -63,6 +63,11 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(review closeout|closeout|req
   exit 0
 fi
 
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(project insights|project health|backlog health|backlog metrics|backlog report|project report|aging items|stale items|wip pressure|wip limit|completion rate|completion rates)([[:space:]]|$)'; then
+  echo "project-insights"
+  exit 0
+fi
+
 if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(debug deep dive|deep debug|repeated failure|recurring failure|same failure|failing test|failing tests|tests failing|test failure|test failures|ci failure|ci failures|flaky test|flaky tests|regression failure|regression failures)([[:space:]]|$)'; then
   echo "debug-deep-dive"
   exit 0

@@ -46,6 +46,8 @@ else
     skill="self-improvement"
   elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(skill[[:space:]]+maintenance|skill[[:space:]]+gap|skill[[:space:]]+gaps|skill[[:space:]]+candidate|skill[[:space:]]+candidates|skill[[:space:]]+authoring|skill[[:space:]]+discovery|external[[:space:]]+skill[[:space:]]+discovery|discover[[:space:]]+external[[:space:]]+skills|external[[:space:]]+skills|reusable[[:space:]]+skill|skill[[:space:]]+extraction|extract[[:space:]]+skill|install[[:space:]]+skill|update[[:space:]]+skill|author[[:space:]]+skill|create[[:space:]]+skill)([[:space:]]|$)'; then
     skill="self-improvement"
+  elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(project insights|project health|backlog health|backlog metrics|backlog report|project report|aging items|stale items|wip pressure|wip limit|completion rate|completion rates)([[:space:]]|$)'; then
+    skill="project-insights"
   elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(debug deep dive|deep debug|repeated failure|recurring failure|same failure|failing test|failing tests|tests failing|test failure|test failures|ci failure|ci failures|flaky test|flaky tests|regression failure|regression failures)([[:space:]]|$)'; then
     skill="systematic-debugging"
   elif echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(ci triage|failed ci|failed[[:space:]]+(github actions[[:space:]]+)?workflow|workflow failure|job log|build log|investigate ci|triage ci)([[:space:]]|$)'; then

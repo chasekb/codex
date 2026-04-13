@@ -40,6 +40,10 @@ skills:
     file: core/project-backlog-management/SKILL.md
     tags: [backlog, recommendations, project-management, planning, workflow]
     priority: 2
+  - id: project-insights
+    file: core/project-insights/SKILL.md
+    tags: [backlog, health, metrics, wip, reporting]
+    priority: 2
   - id: backlog-triage
     file: core/backlog-triage/SKILL.md
     tags: [backlog, triage, prioritization, workflow]

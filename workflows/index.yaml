@@ -39,6 +39,9 @@ workflows:
   - id: project-backlog-management
     trigger: backlog_management_request
     pipeline: pipelines/project-backlog-management.yaml
+  - id: project-insights
+    trigger: project_insights_request
+    pipeline: pipelines/project-insights.yaml
   - id: skill-maintenance
     trigger: skill_maintenance_request
     pipeline: pipelines/skill-maintenance.yaml

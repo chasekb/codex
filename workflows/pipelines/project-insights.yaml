@@ -1,0 +1,10 @@
+id: project-insights
+steps:
+  - use: memory_load
+  - use: inspect
+  - use: backlog_load
+  - use: project_insights
+  - use: report
+  - use: memory_commit
+budget_profile: plan
+output_contract: request_standard

@@ -91,6 +91,13 @@ intents:
     min_confidence: 0.55
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  project_insights:
+    primary: local_files
+    fallback: none
+    workflow: project-insights
+    min_confidence: 0.55
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   weekly_backlog_review:
     primary: local_files
     fallback: none
