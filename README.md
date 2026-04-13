@@ -61,6 +61,7 @@ Main behavior by event:
   - Dynamic installs sync to `~/.codex/external-skills/registry.yaml` and are considered by skill selection
   - Run the weekly backlog review cadence check and refresh `MCP/backlog/backlog.json` when due
   - Route backlog-health prompts into `project-insights` when the user wants open-item counts, aging, WIP, or completion-rate summaries
+  - Route stale-item prompts into `stale-item-review` when the user wants recommendations and tasks classified as keep, defer, or drop
   - Route repeated local or CI/test-linked failures into `debug-deep-dive` so `systematic-debugging` runs before patching
   - Route skill-gap and external-skill prompts into `skill-maintenance` when they need authoring or discovery support
   - Load memory context (`load-memory`)
@@ -139,6 +140,7 @@ Current workflow targets:
 - `multi-task-implementation`
 - `debug-rca`
 - `project-insights`
+- `stale-item-review`
 - `debug-deep-dive`
 - `verify`
 - `ci-triage`
@@ -161,6 +163,7 @@ Pipeline files:
 - `workflows/pipelines/multi-task-implementation.yaml`
 - `workflows/pipelines/debug-rca.yaml`
 - `workflows/pipelines/project-insights.yaml`
+- `workflows/pipelines/stale-item-review.yaml`
 - `workflows/pipelines/debug-deep-dive.yaml`
 - `workflows/pipelines/verify.yaml`
 - `workflows/pipelines/ci-triage.yaml`

@@ -42,6 +42,9 @@ workflows:
   - id: project-insights
     trigger: project_insights_request
     pipeline: pipelines/project-insights.yaml
+  - id: stale-item-review
+    trigger: stale_item_review_request
+    pipeline: pipelines/stale-item-review.yaml
   - id: skill-maintenance
     trigger: skill_maintenance_request
     pipeline: pipelines/skill-maintenance.yaml

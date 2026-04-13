@@ -44,6 +44,10 @@ skills:
     file: core/project-insights/SKILL.md
     tags: [backlog, health, metrics, wip, reporting]
     priority: 2
+  - id: stale-item-review
+    file: core/stale-item-review/SKILL.md
+    tags: [backlog, stale, review, recommendations, tasks]
+    priority: 2
   - id: backlog-triage
     file: core/backlog-triage/SKILL.md
     tags: [backlog, triage, prioritization, workflow]

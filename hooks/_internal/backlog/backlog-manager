@@ -195,10 +195,15 @@ def render_backlog_report(state, stale_after_days=7, wip_limit=3):
     tasks.sort(key=sort_key)
     stale_cutoff = datetime.now(timezone.utc) - timedelta(days=max(1, int(stale_after_days)))
     stale_recommendations = []
+    stale_tasks = []
     for item in recommendations:
         created_at = parse_iso_datetime(item.get("created_at"))
         if created_at and created_at <= stale_cutoff:
             stale_recommendations.append(item)
+    for item in tasks:
+        created_at = parse_iso_datetime(item.get("created_at"))
+        if created_at and created_at <= stale_cutoff:
+            stale_tasks.append(item)
     over_wip_limit = max(0, len(tasks) - max(1, int(wip_limit)))
     return {
         "status": "ok",
@@ -208,7 +213,10 @@ def render_backlog_report(state, stale_after_days=7, wip_limit=3):
         "recommendations": recommendations[:20],
         "implementation_tasks": tasks[:20],
         "stale_recommendations": stale_recommendations[:20],
+        "stale_tasks": stale_tasks[:20],
         "stale_count": len(stale_recommendations),
+        "stale_task_count": len(stale_tasks),
+        "stale_total_count": len(stale_recommendations) + len(stale_tasks),
         "wip_limit": max(1, int(wip_limit)),
         "wip_over_limit": over_wip_limit,
     }

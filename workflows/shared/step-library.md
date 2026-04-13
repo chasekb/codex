@@ -59,6 +59,12 @@
 - surface stale items and WIP pressure clearly
 - keep the output focused on backlog health only
 
+## stale_item_review
+- read the backlog review report before making decisions
+- inspect both stale recommendations and stale tasks
+- keep keep/defer/drop decisions explicit and separate by item type
+- avoid expanding into general backlog metrics or runtime flow
+
 ## backlog_review
 - refresh the backlog review cadence and timestamp
 - sort open items by priority and age
