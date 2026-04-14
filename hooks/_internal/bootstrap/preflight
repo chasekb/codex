@@ -78,6 +78,45 @@ bootstrap_file() {
   fi
 }
 
+check_superpowers_submodule() {
+  local configured_path
+  configured_path="$(git -C "$root" config -f "$root/.gitmodules" --get submodule.superpowers.path 2>/dev/null || true)"
+  [[ "$configured_path" == "superpowers" ]] || return 0
+
+  local status_line
+  status_line="$(git -C "$root" submodule status -- superpowers 2>/dev/null | head -n1 || true)"
+  case "$status_line" in
+    " "*) ;;
+    "-"*)
+      echo "missing: superpowers submodule is not initialized; run: git submodule update --init --recursive superpowers"
+      exit 1
+      ;;
+    "+"*)
+      echo "stale: superpowers submodule is checked out at a different commit; run: git submodule update --init --recursive superpowers"
+      exit 1
+      ;;
+    "U"*)
+      echo "broken: superpowers submodule has unresolved conflicts; resolve the submodule and retry"
+      exit 1
+      ;;
+    "")
+      echo "missing: superpowers submodule is not initialized; run: git submodule update --init --recursive superpowers"
+      exit 1
+      ;;
+    *)
+      echo "missing: superpowers submodule is not initialized; run: git submodule update --init --recursive superpowers"
+      exit 1
+      ;;
+  esac
+
+  if [[ ! -f "$root/superpowers/skills/registry.yaml" ]]; then
+    echo "missing: $root/superpowers/skills/registry.yaml (run: git submodule update --init --recursive superpowers)"
+    exit 1
+  fi
+}
+
+check_superpowers_submodule
+
 for rel in "${required_rel[@]}"; do
   f="$root/$rel"
   if [[ ! -f "$f" ]]; then

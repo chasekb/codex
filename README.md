@@ -110,6 +110,7 @@ The runtime now tries to improve the next prompt in this order:
 ## Internal Script Functions
 `hooks/_internal/*` highlights, now grouped by function:
 - `preflight`: validates required runtime files and runs outputs writeability check
+- `preflight`: validates required runtime files, runs outputs writeability check, and fails fast if the Superpowers submodule is not initialized
 - `ensure-outputs-writable`: guarantees `outputs/` exists and is writable
 - `event-logger`: plain-line hook event log (`outputs/hook-events.log`)
 - `file-logger`: file-tool path capture log (`outputs/hook-file-logger.log`)
@@ -265,6 +266,12 @@ Run preflight only:
 
 ```bash
 hooks/_internal/bootstrap/preflight
+```
+
+If `superpowers/` is missing or uninitialized in a fresh clone, initialize it with:
+
+```bash
+git submodule update --init --recursive superpowers
 ```
 
 Repo-local skill registry:

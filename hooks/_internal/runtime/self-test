@@ -23,6 +23,7 @@ pass() { printf 'PASS %s\n' "$1"; }
 fail() { printf 'FAIL %s\n' "$1"; exit 1; }
 
 hooks/_internal/bootstrap/preflight >/dev/null && pass preflight || fail preflight
+git -C "$ROOT" submodule status -- superpowers | head -n1 | grep -q '^ ' && pass superpowers_submodule_initialized || fail superpowers_submodule_initialized
 grep -q 'Prefer core runtime skills for policy, routing, memory, budgets, validation, and output contracts\.' "$ROOT/rules/01-core.md" && pass core_policy_split || fail core_policy_split
 grep -q 'Use core runtime skills for policy-owned decisions; use Superpowers skills for behavior-shaping tasks and authoring patterns\.' "$ROOT/rules/00-index.md" && pass index_policy_split || fail index_policy_split
 grep -q 'Require verification-before-completion and requesting-code-review before any implementation work can be marked complete or used to close a backlog recommendation\.' "$ROOT/rules/01-core.md" && pass completion_gate_rule || fail completion_gate_rule
