@@ -428,27 +428,49 @@
     },
     {
       "created_at": "2026-04-14T22:12:30Z",
-      "details": "create a backlog item for this task including recommendation",
+      "details": "Investigate and fix the slowdown in the daily metrics loop. The most likely regression is repeated metrics-table DDL and the staging-table copy path inherited from the metrics primary-key change. Recommended fix: stop recreating the staging table with INCLUDING ALL, avoid repeated table-creation checks inside save_metrics, and confirm whether profit/TEMA writes need batching or consolidation after the metrics write path is optimized.",
       "id": "REC-20260414-004",
+      "kind": "recommendation",
+      "priority": "high",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "Optimize the daily metrics loop by removing repeated DDL and staging-table index overhead.",
+      "tags": [
+        "backlog",
+        "performance",
+        "project-management",
+        "recommendation",
+        "metrics",
+        "database"
+      ],
+      "title": "Optimize the daily metrics loop to reduce repeated DDL and staging-table overhead",
+      "updated_at": "2026-04-14T22:12:30Z"
+    },
+    {
+      "created_at": "2026-04-14T22:16:17Z",
+      "details": "Ensure the canonical backlog can be read safely within a single project without surfacing items intended for other projects. Prefer one shared backlog store with an explicit project identifier or scope field on each item, and make project-local readers filter by that field. Follow-up steps: define the project_id or scope schema, preserve it through intake/promotion/closeout, and add tests proving project-local reads do not cross-pollinate.",
+      "id": "REC-20260414-005",
       "kind": "recommendation",
       "priority": "medium",
       "source": "user_prompt",
       "status": "open",
-      "summary": "create a backlog item for this task including recommendation",
+      "summary": "Add project-scoped backlog isolation with explicit project identifiers.",
       "tags": [
         "backlog",
         "project-management",
-        "recommendation"
+        "recommendation",
+        "project-scope",
+        "isolation"
       ],
-      "title": "create a backlog item for this task including recommendation",
-      "updated_at": "2026-04-14T22:12:30Z"
+      "title": "Add project-scoped backlog isolation so project reads do not cross-pollinate",
+      "updated_at": "2026-04-14T22:16:42Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 3,
+    "open_recommendations": 4,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-14T22:12:30Z",
+  "updated_at": "2026-04-14T22:17:09Z",
   "version": 1
 }
