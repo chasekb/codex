@@ -325,13 +325,15 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-14T14:20:32Z",
+      "commit_sha": "311a229",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Extend skill-gap handling so repeated reusable gaps can become new skills or external installs, instead of only being recorded as memory.",
       "id": "REC-20260413-024",
       "kind": "recommendation",
       "priority": "medium",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Promote repeated gaps into reusable skills.",
       "tags": [
         "skills",
@@ -339,7 +341,8 @@
         "self-improvement"
       ],
       "title": "Expand skill-gap promotion so reusable gaps become new skills or external installs, not just memory entries",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-14T14:20:32Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -359,13 +362,30 @@
       "updated_at": "2026-04-13T15:45:00Z"
     },
     {
+      "created_at": "2026-04-14T14:17:20Z",
+      "details": "The runtime classified this prompt as a reusable skill gap.\n\nTarget: create_skill\nSource prompt:\nI have a knowledge gap and want to extract skill from this recurring pattern.\n\nPromote the reusable behavior into a skill or install an existing external skill.",
+      "id": "REC-20260414-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "related_id": "FEAT-20260414-DCA",
+      "source": "self-improvement",
+      "status": "open",
+      "summary": "Create reusable skill from a reusable skill gap.",
+      "tags": [
+        "create_skill",
+        "self-improvement",
+        "skill-gap",
+        "skill-promotion"
+      ],
+      "title": "Promote reusable skill gap: I have a knowledge gap and want to extract skill from this recurring pattern.",
+      "updated_at": "2026-04-14T14:17:20Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 3,
+    "open_recommendations": 2,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-14T14:10:50Z",
+  "updated_at": "2026-04-14T14:20:32Z",
   "version": 1
 }
