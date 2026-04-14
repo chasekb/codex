@@ -265,9 +265,9 @@
       "verified": true
     },
     {
-      "created_at": "2026-04-13T15:45:00Z",
       "closed_at": "2026-04-13T21:42:31Z",
       "commit_sha": "a9b5ad3",
+      "created_at": "2026-04-13T15:45:00Z",
       "details": "Add rules that force verification and review before any work can be marked complete or closed out in the backlog.",
       "id": "REC-20260413-021",
       "kind": "recommendation",
@@ -285,13 +285,15 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-14T13:54:54Z",
+      "commit_sha": "a9b5ad3",
       "created_at": "2026-04-13T15:45:00Z",
       "details": "Add rules that keep one canonical backlog, separate recommendations from tasks, and close recommendations only after derived tasks are committed and verified.",
       "id": "REC-20260413-022",
       "kind": "recommendation",
       "priority": "high",
       "source": "conversation",
-      "status": "open",
+      "status": "completed",
       "summary": "Keep backlog data canonical and type-separated.",
       "tags": [
         "rules",
@@ -299,7 +301,8 @@
         "policy"
       ],
       "title": "Add rules for single-source-of-truth backlog management and for separating recommendations from implementation tasks",
-      "updated_at": "2026-04-13T15:45:00Z"
+      "updated_at": "2026-04-14T13:54:54Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-13T15:45:00Z",
@@ -358,6 +361,6 @@
     "open_recommendations": 4,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-13T21:42:31Z",
+  "updated_at": "2026-04-14T13:54:54Z",
   "version": 1
 }
