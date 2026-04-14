@@ -64,7 +64,8 @@ Main behavior by event:
   - Route stale-item prompts into `stale-item-review` when the user wants recommendations and tasks classified as keep, defer, or drop
   - Route backlog-to-GitHub prompts into `issue-writing` when the user wants a backlog item written as a GitHub Issue
   - Route repeated local or CI/test-linked failures into `debug-deep-dive` so `systematic-debugging` runs before patching
-  - Route skill-gap and external-skill prompts into `skill-maintenance` when they need authoring or discovery support
+  - Route create-skill / extract-skill prompts into `skill-promotion`
+  - Route discover/install external-skill prompts into `skill-maintenance`
   - Load memory context (`load-memory`)
   - Load learning and failure-history context (`load-learning-context`, `load-failure-history`)
   - Load compact skill/workflow playbook snippets (`load-playbook-snippet`)
@@ -152,6 +153,7 @@ Current workflow targets:
 - `research`
 - `project-backlog-management`
 - `skill-maintenance`
+- `skill-promotion`
 - `weekly-backlog-review`
 - `backlog-triage`
 - `recommendation-to-task`
@@ -176,6 +178,7 @@ Pipeline files:
 - `workflows/pipelines/research.yaml`
 - `workflows/pipelines/project-backlog-management.yaml`
 - `workflows/pipelines/skill-maintenance.yaml`
+- `workflows/pipelines/skill-promotion.yaml`
 - `workflows/pipelines/weekly-backlog-review.yaml`
 - `workflows/pipelines/backlog-triage.yaml`
 - `workflows/pipelines/recommendation-to-task.yaml`

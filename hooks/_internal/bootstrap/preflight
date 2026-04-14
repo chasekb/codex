@@ -41,6 +41,7 @@ required_rel=(
   "workflows/pipelines/debug-deep-dive.yaml"
   "workflows/pipelines/multi-task-implementation.yaml"
   "workflows/pipelines/skill-maintenance.yaml"
+  "workflows/pipelines/skill-promotion.yaml"
   "workflows/shared/output-handling.yaml"
   "workflows/shared/output-contracts.yaml"
   "hooks/_internal/routing/select-skill"
@@ -67,6 +68,7 @@ required_rel=(
   "hooks/_internal/logging/event-logger"
   "hooks/_internal/bootstrap/ensure-outputs-writable"
   "hooks/_internal/output/compact-outputs"
+  "skills/core/skill-promotion/SKILL.md"
 )
 
 bootstrap_file() {

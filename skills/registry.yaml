@@ -36,6 +36,10 @@ skills:
     file: core/self-improvement/SKILL.md
     tags: [learning, memory, feedback, errors, improvement]
     priority: 2
+  - id: skill-promotion
+    file: core/skill-promotion/SKILL.md
+    tags: [skills, promotion, extraction, authoring, reusable-behavior]
+    priority: 2
   - id: project-backlog-management
     file: core/project-backlog-management/SKILL.md
     tags: [backlog, recommendations, project-management, planning, workflow]

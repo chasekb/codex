@@ -31,7 +31,7 @@ Log learnings and errors to markdown files for continuous improvement. Coding ag
 | Found better approach | Log to `.learnings/LEARNINGS.md` with category `best_practice` |
 | Simplify/Harden recurring patterns | Log/update `.learnings/LEARNINGS.md` with `Source: simplify-and-harden` and a stable `Pattern-Key` |
 | Session is about learning capture or promotion | Select `self-improvement` and route synthesis through `retro` |
-| Reusable skill gap appears | Promote it into a skill-maintenance backlog recommendation before extracting or installing |
+| Reusable skill gap appears | Promote it into a skill-promotion backlog recommendation before extracting or installing |
 | Similar to existing entry | Link with `**See Also**`, consider priority bump |
 | Broadly applicable learning | Promote to `CLAUDE.md`, `AGENTS.md`, and/or `.github/copilot-instructions.md` |
 | Workflow improvements | Promote to `AGENTS.md` (openclaw workspace) |
@@ -476,7 +476,7 @@ A learning qualifies for skill extraction when ANY of these apply:
    ./skills/core/self-improvement/scripts/extract-skill.sh skill-name --dry-run
    ./skills/core/self-improvement/scripts/extract-skill.sh skill-name
    ```
-3. **Promote to backlog**: Codex runtime or maintainers should create a skill-maintenance backlog recommendation for the candidate when it is broadly reusable
+3. **Promote to backlog**: Codex runtime or maintainers should create a skill-promotion backlog recommendation for the candidate when it is broadly reusable
 4. **Customize SKILL.md**: Fill in template with learning content
 5. **Update learning**: Set status to `promoted_to_skill`, add `Skill-Path`
 6. **Verify**: Read skill in fresh session to ensure it's self-contained

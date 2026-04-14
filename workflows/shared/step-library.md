@@ -85,6 +85,13 @@
 - prefer metadata-only skill loads until the target path is clear
 - promote reusable skill gaps into canonical backlog recommendations before extraction or external install
 
+## skill_promotion
+- review backlog candidates and learning context for reusable skill gaps
+- decide whether the right outcome is a new skill draft or an update to an existing skill
+- keep the skill body concise and behavior-shaping
+- hand off external matches to skill maintenance instead of duplicating them
+- write the minimal skill brief needed for later implementation
+
 ## backlog_triage
 - classify items as recommendation, task, or noise
 - prioritize by impact, urgency, and dependency

@@ -84,6 +84,13 @@ intents:
     min_confidence: 0.55
     pre_steps: [skill_select, skill_load, memory_load]
     post_steps: [memory_commit]
+  skill_promotion:
+    primary: local_files
+    fallback: none
+    workflow: skill-promotion
+    min_confidence: 0.55
+    pre_steps: [skill_select, skill_load, memory_load]
+    post_steps: [memory_commit]
   project_backlog:
     primary: local_files
     fallback: none

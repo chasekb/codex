@@ -51,6 +51,9 @@ workflows:
   - id: skill-maintenance
     trigger: skill_maintenance_request
     pipeline: pipelines/skill-maintenance.yaml
+  - id: skill-promotion
+    trigger: skill_promotion_request
+    pipeline: pipelines/skill-promotion.yaml
   - id: weekly-backlog-review
     trigger: weekly_backlog_review_request
     pipeline: pipelines/weekly-backlog-review.yaml

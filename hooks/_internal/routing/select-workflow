@@ -43,7 +43,12 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(weekly backlog review|weekly
   exit 0
 fi
 
-if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(skill maintenance|skill gap|skill gaps|skill candidate|skill candidates|skill authoring|skill discovery|external skill discovery|discover external skills|external skills|reusable skill|skill extraction|extract skill|install skill|update skill|author skill|create skill)([[:space:]]|$)'; then
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(skill promotion|skill gap|skill gaps|skill candidate|skill candidates|skill authoring|skill extraction|extract skill|extract reusable skill|reusable skill|skill draft|promote skill|create skill|write skill|author skill)([[:space:]]|$)'; then
+  echo "skill-promotion"
+  exit 0
+fi
+
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(skill maintenance|skill discovery|external skill discovery|discover external skills|discover external skill|external skills|discover install|install skill|install external skill|update skill|external skill)([[:space:]]|$)'; then
   echo "skill-maintenance"
   exit 0
 fi
