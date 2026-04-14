@@ -18,6 +18,7 @@
 - load metadata-only skill content by default
 - cap loaded skill chars per budget
 - record skill source when the selected skill comes from an overlay library
+- request full skill bodies only when a workflow explicitly needs deeper context
 
 ## memory_load
 - read top relevant memory records first

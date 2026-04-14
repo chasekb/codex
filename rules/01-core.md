@@ -28,6 +28,7 @@ Ask the user only when one of these applies:
 - Skill libraries may be overlaid into the selector, but `~/.codex` remains the authority for when and how skills are used.
 - Prefer core runtime skills for policy, routing, memory, budgets, validation, and output contracts.
 - Prefer Superpowers skills for reusable behavior-shaping content, task guidance, and authoring patterns.
+- Default skill loading to metadata-only; load full skill bodies only when a workflow explicitly needs deeper context.
 - Treat `MCP/backlog/backlog.json` as the single canonical backlog source of truth; recommendations and implementation tasks remain separate records in that store, and derived tasks must be committed, verified, and reviewed before the source recommendation closes.
 - Keep backlog intake, promotion, and closeout in the codex runtime, even if an external project surface like ClawHub is used as a mirror.
 - Require verification-before-completion and requesting-code-review before any implementation work can be marked complete or used to close a backlog recommendation.

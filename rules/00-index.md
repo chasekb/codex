@@ -18,3 +18,4 @@ Composition rules:
 - Use core runtime skills for policy-owned decisions; use Superpowers skills for behavior-shaping tasks and authoring patterns.
 - The backlog store in `MCP/backlog/backlog.json` is the canonical source of truth; mirrors must not become alternate backlog authorities.
 - Separate backlog recommendations from implementation tasks in the canonical store; source recommendations only close after derived tasks are committed, verified, and reviewed.
+- Prefer metadata-only skill loads in default runtime paths; request full skill bodies only in workflows that explicitly need them.
