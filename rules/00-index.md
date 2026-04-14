@@ -16,3 +16,5 @@ Composition rules:
 - Procedural behavior should live in `workflows/*` and `hooks/*`; rules remain policy-first.
 - Shared behavior libraries such as Superpowers may own reusable skill content, but they do not own routing or enforcement policy.
 - Use core runtime skills for policy-owned decisions; use Superpowers skills for behavior-shaping tasks and authoring patterns.
+- The backlog store in `MCP/backlog/backlog.json` is the canonical source of truth; mirrors must not become alternate backlog authorities.
+- Separate backlog recommendations from implementation tasks in the canonical store; source recommendations only close after derived tasks are committed, verified, and reviewed.
