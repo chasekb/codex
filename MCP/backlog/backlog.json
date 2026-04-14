@@ -345,10 +345,10 @@
       "verified": true
     },
     {
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Add a bootstrap check that verifies the Superpowers submodule is present and initialized for fresh clones before any workflow depends on it.",
       "closed_at": "2026-04-14T14:30:54Z",
       "commit_sha": "4469b46",
+      "created_at": "2026-04-13T15:45:00Z",
+      "details": "Add a bootstrap check that verifies the Superpowers submodule is present and initialized for fresh clones before any workflow depends on it.",
       "id": "REC-20260413-025",
       "kind": "recommendation",
       "priority": "medium",
@@ -360,19 +360,21 @@
         "submodule",
         "superpowers"
       ],
-      "verified": true,
       "title": "Add a lightweight bootstrap check for the submodule so fresh clones initialize superpowers cleanly",
-      "updated_at": "2026-04-14T14:30:54Z"
+      "updated_at": "2026-04-14T14:30:54Z",
+      "verified": true
     },
     {
       "created_at": "2026-04-14T14:17:20Z",
       "details": "The runtime classified this prompt as a reusable skill gap.\n\nTarget: create_skill\nSource prompt:\nI have a knowledge gap and want to extract skill from this recurring pattern.\n\nPromote the reusable behavior into a skill or install an existing external skill.",
+      "closed_at": "2026-04-14T14:41:46Z",
       "id": "REC-20260414-002",
       "kind": "recommendation",
       "priority": "medium",
       "related_id": "FEAT-20260414-DCA",
+      "commit_sha": "1b6ee96",
       "source": "self-improvement",
-      "status": "open",
+      "status": "completed",
       "summary": "Create reusable skill from a reusable skill gap.",
       "tags": [
         "create_skill",
@@ -380,8 +382,9 @@
         "skill-gap",
         "skill-promotion"
       ],
+      "verified": true,
       "title": "Promote reusable skill gap: I have a knowledge gap and want to extract skill from this recurring pattern.",
-      "updated_at": "2026-04-14T14:17:20Z"
+      "updated_at": "2026-04-14T14:41:46Z"
     },
     {
       "created_at": "2026-04-14T14:21:37Z",
@@ -399,6 +402,23 @@
       ],
       "title": "implement next open recommendation",
       "updated_at": "2026-04-14T14:21:37Z"
+    },
+    {
+      "created_at": "2026-04-14T14:32:56Z",
+      "details": "implement next open backlog item",
+      "id": "REC-20260414-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "implement next open backlog item",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "implement next open backlog item",
+      "updated_at": "2026-04-14T14:32:56Z"
     }
   ],
   "stats": {
@@ -406,6 +426,6 @@
     "open_recommendations": 3,
     "open_tasks": 0
   },
-  "updated_at": "2026-04-14T14:21:37Z",
+  "updated_at": "2026-04-14T14:32:56Z",
   "version": 1
 }
