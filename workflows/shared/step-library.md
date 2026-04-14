@@ -83,6 +83,7 @@
 - classify the gap as create, update, discover, install, or runtime policy
 - keep reusable behavior in Superpowers and execution policy in Codex
 - prefer metadata-only skill loads until the target path is clear
+- promote reusable skill gaps into canonical backlog recommendations before extraction or external install
 
 ## backlog_triage
 - classify items as recommendation, task, or noise

@@ -1044,8 +1044,10 @@ def log_skill_gap(state, prompt, signal):
         return None
     prompt_excerpt = prompt_text[:220]
     target = classify_skill_gap_target(prompt_text)
+    candidate_id = None
     if target in {"create_skill", "discover_external"}:
-        queue_skill_candidate(state, prompt_excerpt, target)
+        _, candidate_id = queue_skill_candidate(state, prompt_excerpt, target)
+        queue_skill_promotion_backlog(state, prompt_excerpt, target, related_learning_id=candidate_id)
     entry = append_learning_entry(
         "learning",
         "knowledge_gap",
@@ -1102,6 +1104,57 @@ def queue_skill_candidate(state, prompt_excerpt, target):
             f"Skill-Target: {target}",
         ],
     )
+
+
+def queue_skill_promotion_backlog(state, prompt_excerpt, target, related_learning_id=""):
+    if not prompt_excerpt or target not in {"create_skill", "discover_external"}:
+        return None
+    action = "Create reusable skill" if target == "create_skill" else "Discover/install external skill"
+    payload = {
+        "kind": "recommendation",
+        "title": f"Promote reusable skill gap: {prompt_excerpt[:100]}",
+        "summary": f"{action} from a reusable skill gap.",
+        "details": (
+            "The runtime classified this prompt as a reusable skill gap.\n\n"
+            f"Target: {target}\n"
+            f"Source prompt:\n{prompt_excerpt}\n\n"
+            "Promote the reusable behavior into a skill or install an existing external skill."
+        ),
+        "source": "self-improvement",
+        "priority": "medium",
+        "tags": ["self-improvement", "skill-gap", "skill-promotion", target],
+    }
+    if related_learning_id:
+        payload["related_id"] = related_learning_id
+
+    rc, out = run_internal("backlog-manager", ["intake"], stdin_text=json.dumps(payload))
+    state["metrics"]["backlog_intake_runs"] += 1
+    if rc == 0:
+        backlog_metrics = parse_backlog_metrics(out)
+        state["metrics"]["backlog_loaded"] = backlog_metrics["loaded"]
+        state["metrics"]["backlog_open_recommendations"] = backlog_metrics["open_recommendations"]
+        state["metrics"]["backlog_open_tasks"] = backlog_metrics["open_tasks"]
+        state["metrics"]["backlog_completed_tasks"] = backlog_metrics["completed_tasks"]
+        for line in out.splitlines():
+            line = line.strip()
+            if line.startswith("{"):
+                try:
+                    parsed = json.loads(line)
+                    if isinstance(parsed, dict) and text(parsed.get("id", "")):
+                        state["session"]["skill_promotion_backlog_id"] = text(parsed.get("id", ""))
+                        break
+                except Exception:
+                    continue
+        append_event_log(
+            "skill_candidate_backlog",
+            "UserPromptSubmit",
+            workflow=str(state["session"].get("workflow", "unknown")),
+            skill=str(state["session"].get("skill_id", "none")),
+            stage="prompt",
+            status="intaked",
+            details=prompt_excerpt[:120],
+        )
+    return out
 
 
 def classify_skill_gap_target(prompt):

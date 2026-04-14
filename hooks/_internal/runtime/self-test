@@ -509,9 +509,25 @@ echo "$ll" | grep -Fq 'learning:metrics loaded=' && pass load_learning_context |
 echo "$ll" | grep -Fq 'create_or_discover' && pass load_learning_context_skill_gap || fail load_learning_context_skill_gap
 echo "$ll" | grep -Fq 'create_skill' && pass load_learning_context_skill_target || fail load_learning_context_skill_target
 
+skill_backlog="$tmpdir/skill-backlog.json"
 prompt_payload='{"userPromptSubmit":{"prompt":"I have a knowledge gap and want to extract skill from this recurring pattern."}}'
-python3 hooks/_internal/runtime/hook-pipeline UserPromptSubmit <<<"$prompt_payload" >/dev/null
+CODEX_BACKLOG_FILE="$skill_backlog" python3 hooks/_internal/runtime/hook-pipeline UserPromptSubmit <<<"$prompt_payload" >/dev/null
 grep -Fq 'Skill-Target: create_skill' .learnings/LEARNINGS.md && pass prompt_skill_gap_signal || fail prompt_skill_gap_signal
+CODEX_BACKLOG_FILE="$skill_backlog" python3 hooks/_internal/runtime/hook-pipeline UserPromptSubmit <<<"$prompt_payload" >/dev/null
+python3 - <<'PY' "$skill_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+recs = data.get("recommendations", [])
+assert len(recs) == 1
+rec = recs[0]
+assert rec["source"] == "self-improvement"
+assert "skill-promotion" in rec.get("tags", [])
+assert rec["status"] == "open"
+assert "Promote reusable skill gap:" in rec["title"]
+print("skill_gap_backlog:ok")
+PY
+pass prompt_skill_gap_backlog
 
 cm="$(hooks/_internal/memory/compact-memory "$mem")"
 echo "$cm" | grep -Fq 'memory:compact_ok' && pass compact_memory || fail compact_memory
