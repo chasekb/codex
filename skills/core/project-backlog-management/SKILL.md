@@ -16,7 +16,7 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Recommendations and implementation tasks are separate lists in the same canonical store
 - Only `hooks/_internal/backlog/backlog-manager` mutates the store
 - Preserve or set `project_id` on every item; default new items to `CODEX_BACKLOG_PROJECT` when set, otherwise `global`
-- Project-local reads should filter to the active project plus shared `global` items
+- Project-local reads should default to the active project only; use `CODEX_BACKLOG_SCOPE=global` or `CODEX_BACKLOG_SCOPE=all` only when you explicitly need global or full-store views
 
 ## Workflow
 1. Intake the recommendation from a prompt, note, or learning signal.

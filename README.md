@@ -43,7 +43,7 @@ Hook usage records are split across:
 - `MCP/memory/decisions.jsonl`: durable workflow and skill routing decisions
 - `outputs/token-metrics.csv`: normalized run metrics, including hook name, selected workflow, and selected skill
 
-The canonical backlog stays in `MCP/backlog/backlog.json`. When `CODEX_BACKLOG_PROJECT` is set, backlog reads are project-scoped and only show items for that project plus shared `global` items. New items inherit the active project when present.
+The canonical backlog stays in `MCP/backlog/backlog.json`. When `CODEX_BACKLOG_PROJECT` is set, backlog reads default to that project only and calculate project-scoped stats. Use `CODEX_BACKLOG_SCOPE=global` or `CODEX_BACKLOG_SCOPE=all` only when you explicitly want global or full-store backlog views. New items inherit the active project when present.
 
 ## Core Runtime Engine
 `hooks/_internal/runtime/hook-pipeline` is the orchestration engine.

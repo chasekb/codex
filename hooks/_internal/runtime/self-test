@@ -201,11 +201,19 @@ cat > "$project_backlog" <<'JSON'
 }
 JSON
 project_report="$(CODEX_BACKLOG_FILE="$project_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager list)"
-echo "$project_report" | grep -Fq 'open_recommendations=2' && pass backlog_project_scope_count || fail backlog_project_scope_count
+echo "$project_report" | grep -Fq 'open_recommendations=1' && pass backlog_project_scope_count || fail backlog_project_scope_count
+echo "$project_report" | grep -Fq 'open_tasks=1' && pass backlog_project_scope_task_count || fail backlog_project_scope_task_count
 echo "$project_report" | grep -Fq 'Alpha backlog item' && pass backlog_project_scope_alpha_visible || fail backlog_project_scope_alpha_visible
-echo "$project_report" | grep -Fq 'Shared backlog item' && pass backlog_project_scope_global_visible || fail backlog_project_scope_global_visible
+! echo "$project_report" | grep -Fq 'Shared backlog item' && pass backlog_project_scope_global_hidden || fail backlog_project_scope_global_hidden
 ! echo "$project_report" | grep -Fq 'Beta backlog item' && pass backlog_project_scope_beta_hidden || fail backlog_project_scope_beta_hidden
 ! echo "$project_report" | grep -Fq 'Beta task' && pass backlog_project_scope_beta_task_hidden || fail backlog_project_scope_beta_task_hidden
+
+global_report="$(CODEX_BACKLOG_FILE="$project_backlog" CODEX_BACKLOG_PROJECT=alpha CODEX_BACKLOG_SCOPE=global hooks/_internal/backlog/backlog-manager list)"
+echo "$global_report" | grep -Fq 'open_recommendations=1' && pass backlog_global_scope_count || fail backlog_global_scope_count
+echo "$global_report" | grep -Fq 'open_tasks=0' && pass backlog_global_scope_task_count || fail backlog_global_scope_task_count
+echo "$global_report" | grep -Fq 'Shared backlog item' && pass backlog_global_scope_shared_visible || fail backlog_global_scope_shared_visible
+! echo "$global_report" | grep -Fq 'Alpha backlog item' && pass backlog_global_scope_alpha_hidden || fail backlog_global_scope_alpha_hidden
+! echo "$global_report" | grep -Fq 'Beta backlog item' && pass backlog_global_scope_beta_hidden || fail backlog_global_scope_beta_hidden
 
 project_intake_backlog="$tmpdir/project-intake-backlog.json"
 cat > "$project_intake_backlog" <<'JSON'

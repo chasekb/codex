@@ -49,10 +49,35 @@ def is_visible_to_current_project(item):
     return normalized_project_id(item) in {project_id, "global"}
 
 
+def backlog_scope_mode(explicit=None):
+    scope = normalize_text(
+        explicit
+        or os.environ.get("CODEX_BACKLOG_SCOPE")
+    ).lower()
+    if scope in {"project", "global", "all"}:
+        return scope
+    return "project" if current_project_id() else "global"
+
+
+def item_visible_in_scope(item, scope_mode):
+    item_project = normalized_project_id(item)
+    project_id = current_project_id()
+    if scope_mode == "all":
+        return True
+    if scope_mode == "global":
+        return item_project == "global"
+    if scope_mode == "project":
+        if project_id:
+            return item_project == project_id
+        return item_project == "global"
+    return is_visible_to_current_project(item)
+
+
 def default_state():
     return {
         "version": 1,
         "updated_at": "",
+        "stats_scope": "global",
         "meta": {
             "last_weekly_review_at": "",
         },
@@ -80,23 +105,42 @@ def load_state():
             state.setdefault("recommendations", [])
             state.setdefault("implementation_tasks", [])
             state.setdefault("stats", {})
+            state.setdefault("stats_scope", "global")
             return state
     except Exception:
         pass
     return default_state()
 
 
-def save_state(state):
+def scoped_stats(state, scope_mode):
+    recommendations = [
+        item for item in state["recommendations"]
+        if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}
+        and item_visible_in_scope(item, scope_mode)
+    ]
+    tasks = [
+        item for item in state["implementation_tasks"]
+        if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}
+        and item_visible_in_scope(item, scope_mode)
+    ]
+    return {
+        "open_recommendations": len(recommendations),
+        "open_tasks": len(tasks),
+        "completed_tasks": sum(
+            1
+            for item in state["implementation_tasks"]
+            if item.get("status") == "completed" and item_visible_in_scope(item, scope_mode)
+        ),
+    }
+
+
+def save_state(state, scope_mode=None):
     path = backlog_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    scope_mode = backlog_scope_mode(scope_mode)
     state["updated_at"] = now_iso()
-    open_recs = [item for item in state["recommendations"] if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}]
-    open_tasks = [item for item in state["implementation_tasks"] if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}]
-    state["stats"] = {
-        "open_recommendations": len(open_recs),
-        "open_tasks": len(open_tasks),
-        "completed_tasks": sum(1 for item in state["implementation_tasks"] if item.get("status") == "completed"),
-    }
+    state["stats_scope"] = scope_mode
+    state["stats"] = scoped_stats(state, scope_mode)
     with path.open("w", encoding="utf-8") as fh:
         json.dump(state, fh, indent=2, sort_keys=True)
         fh.write("\n")
@@ -187,19 +231,21 @@ def parse_iso_datetime(value):
         return None
 
 
-def active_recommendations(state):
+def active_recommendations(state, scope_mode=None):
+    scope_mode = backlog_scope_mode(scope_mode)
     return [
         item for item in state["recommendations"]
         if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}
-        and is_visible_to_current_project(item)
+        and item_visible_in_scope(item, scope_mode)
     ]
 
 
-def active_tasks(state):
+def active_tasks(state, scope_mode=None):
+    scope_mode = backlog_scope_mode(scope_mode)
     return [
         item for item in state["implementation_tasks"]
         if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}
-        and is_visible_to_current_project(item)
+        and item_visible_in_scope(item, scope_mode)
     ]
 
 
@@ -209,9 +255,10 @@ def sort_key(item):
     return (priority_rank.get(normalize_text(item.get("priority")).lower(), 3), created)
 
 
-def render_backlog_report(state, stale_after_days=7, wip_limit=3):
-    recommendations = active_recommendations(state)
-    tasks = active_tasks(state)
+def render_backlog_report(state, stale_after_days=7, wip_limit=3, scope_mode=None):
+    scope_mode = backlog_scope_mode(scope_mode)
+    recommendations = active_recommendations(state, scope_mode)
+    tasks = active_tasks(state, scope_mode)
     recommendations.sort(key=sort_key)
     tasks.sort(key=sort_key)
     stale_cutoff = datetime.now(timezone.utc) - timedelta(days=max(1, int(stale_after_days)))
@@ -229,12 +276,10 @@ def render_backlog_report(state, stale_after_days=7, wip_limit=3):
     return {
         "status": "ok",
         "backlog_file": str(backlog_path()),
+        "scope": scope_mode,
+        "project_id": current_project_id(),
         "meta": deepcopy(state.get("meta", {})),
-        "stats": {
-            "open_recommendations": len(recommendations),
-            "open_tasks": len(tasks),
-            "completed_tasks": sum(1 for item in state.get("implementation_tasks", []) if item.get("status") == "completed" and is_visible_to_current_project(item)),
-        },
+        "stats": scoped_stats(state, scope_mode),
         "recommendations": recommendations[:20],
         "implementation_tasks": tasks[:20],
         "stale_recommendations": stale_recommendations[:20],
@@ -378,10 +423,11 @@ def review(state, payload):
     stale_after_days = int(payload.get("stale_after_days", 7) or 7)
     wip_limit = int(payload.get("wip_limit", 3) or 3)
     force = bool(payload.get("force", False))
+    scope_mode = backlog_scope_mode(payload.get("scope"))
     last_review = normalize_text(state.get("meta", {}).get("last_weekly_review_at"))
     last_review_dt = parse_iso_datetime(last_review)
     due = force or not last_review_dt or (datetime.now(timezone.utc) - last_review_dt >= timedelta(days=max(1, stale_after_days)))
-    report = render_backlog_report(state, stale_after_days=stale_after_days, wip_limit=wip_limit)
+    report = render_backlog_report(state, stale_after_days=stale_after_days, wip_limit=wip_limit, scope_mode=scope_mode)
     report["review_due"] = due
     report["last_weekly_review_at"] = last_review
 
@@ -426,8 +472,8 @@ def mirror(state, action, payload, result):
     return rc, {"status": "ok" if rc == 0 else "failed", "output": out[:1000]}
 
 
-def list_state(state):
-    report = render_backlog_report(state)
+def list_state(state, scope_mode=None):
+    report = render_backlog_report(state, scope_mode=scope_mode)
     print(json.dumps(report, indent=2, sort_keys=True))
     print(
         "backlog:metrics "
@@ -457,7 +503,7 @@ def main():
     elif command == "review":
         rc, result = review(state, payload)
     elif command in {"list", "status"}:
-        return list_state(state)
+        return list_state(state, payload.get("scope"))
     else:
         print(f"backlog:error unsupported_command={command}")
         return 1
