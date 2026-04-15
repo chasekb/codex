@@ -107,6 +107,134 @@ print("backlog_state:ok")
 PY
 pass backlog_state
 
+project_backlog="$tmpdir/project-backlog.json"
+cat > "$project_backlog" <<'JSON'
+{
+  "version": 1,
+  "updated_at": "",
+  "meta": {
+    "last_weekly_review_at": ""
+  },
+  "recommendations": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Shared backlog item.",
+      "id": "REC-20260401-000",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Shared backlog item.",
+      "tags": ["backlog"],
+      "title": "Shared backlog item",
+      "updated_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Alpha backlog item.",
+      "id": "REC-20260401-001",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "alpha",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Alpha backlog item.",
+      "tags": ["backlog", "alpha"],
+      "title": "Alpha backlog item",
+      "updated_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Beta backlog item.",
+      "id": "REC-20260401-002",
+      "kind": "recommendation",
+      "priority": "low",
+      "project_id": "beta",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Beta backlog item.",
+      "tags": ["backlog", "beta"],
+      "title": "Beta backlog item",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "implementation_tasks": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Alpha task.",
+      "id": "TASK-20260401-001",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "alpha",
+      "recommendation_id": "REC-20260401-001",
+      "related_id": "REC-20260401-001",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Alpha task.",
+      "tags": ["backlog", "alpha"],
+      "title": "Alpha task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Beta task.",
+      "id": "TASK-20260401-002",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "beta",
+      "recommendation_id": "REC-20260401-002",
+      "related_id": "REC-20260401-002",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Beta task.",
+      "tags": ["backlog", "beta"],
+      "title": "Beta task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "stats": {
+    "completed_tasks": 0,
+    "open_recommendations": 3,
+    "open_tasks": 2
+  }
+}
+JSON
+project_report="$(CODEX_BACKLOG_FILE="$project_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager list)"
+echo "$project_report" | grep -Fq 'open_recommendations=2' && pass backlog_project_scope_count || fail backlog_project_scope_count
+echo "$project_report" | grep -Fq 'Alpha backlog item' && pass backlog_project_scope_alpha_visible || fail backlog_project_scope_alpha_visible
+echo "$project_report" | grep -Fq 'Shared backlog item' && pass backlog_project_scope_global_visible || fail backlog_project_scope_global_visible
+! echo "$project_report" | grep -Fq 'Beta backlog item' && pass backlog_project_scope_beta_hidden || fail backlog_project_scope_beta_hidden
+! echo "$project_report" | grep -Fq 'Beta task' && pass backlog_project_scope_beta_task_hidden || fail backlog_project_scope_beta_task_hidden
+
+project_intake_backlog="$tmpdir/project-intake-backlog.json"
+cat > "$project_intake_backlog" <<'JSON'
+{"version":1,"updated_at":"","meta":{"last_weekly_review_at":""},"recommendations":[],"implementation_tasks":[],"stats":{"completed_tasks":0,"open_recommendations":0,"open_tasks":0}}
+JSON
+CODEX_BACKLOG_FILE="$project_intake_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager intake <<<'{"kind":"recommendation","title":"Alpha scoped intake","summary":"Alpha scoped intake","source":"self-test","priority":"medium"}' >/dev/null && pass backlog_project_scope_intake || fail backlog_project_scope_intake
+python3 - <<'PY' "$project_intake_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["recommendations"][0]["project_id"] == "alpha"
+print("backlog_project_scope_intake_state:ok")
+PY
+pass backlog_project_scope_intake_state
+
+project_promote_backlog="$tmpdir/project-promote-backlog.json"
+cat > "$project_promote_backlog" <<'JSON'
+{"version":1,"updated_at":"","meta":{"last_weekly_review_at":""},"recommendations":[{"id":"REC-20260401-010","kind":"recommendation","title":"Alpha promotion","summary":"Alpha promotion","details":"Alpha promotion","source":"self-test","priority":"medium","status":"open","tags":["backlog"],"project_id":"alpha","created_at":"2026-04-01T00:00:00Z","updated_at":"2026-04-01T00:00:00Z"}],"implementation_tasks":[],"stats":{"completed_tasks":0,"open_recommendations":1,"open_tasks":0}}
+JSON
+CODEX_BACKLOG_FILE="$project_promote_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager promote REC-20260401-010 >/dev/null && pass backlog_project_scope_promote || fail backlog_project_scope_promote
+python3 - <<'PY' "$project_promote_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["implementation_tasks"][0]["project_id"] == "alpha"
+print("backlog_project_scope_promote_state:ok")
+PY
+pass backlog_project_scope_promote_state
+
 backlog_rec_only="$tmpdir/backlog-rec-only.json"
 CODEX_BACKLOG_FILE="$backlog_rec_only" hooks/_internal/backlog/backlog-manager intake <<<'{"kind":"recommendation","title":"Close recommendation directly","summary":"Close recommendation without a derived task","source":"self-test","priority":"medium"}' >/dev/null && pass backlog_rec_only_intake || fail backlog_rec_only_intake
 backlog_rec_only_id="$(python3 - <<'PY' "$backlog_rec_only"

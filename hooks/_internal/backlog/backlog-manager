@@ -30,6 +30,25 @@ def backlog_path():
     return Path(os.environ.get("CODEX_BACKLOG_FILE", str(repo_root() / "MCP" / "backlog" / "backlog.json")))
 
 
+def current_project_id():
+    return normalize_text(
+        os.environ.get("CODEX_BACKLOG_PROJECT")
+        or os.environ.get("CODEX_PROJECT_ID")
+        or os.environ.get("CODEX_PROJECT")
+    )
+
+
+def normalized_project_id(item):
+    return normalize_text(item.get("project_id")) or normalize_text(item.get("scope")) or "global"
+
+
+def is_visible_to_current_project(item):
+    project_id = current_project_id()
+    if not project_id:
+        return True
+    return normalized_project_id(item) in {project_id, "global"}
+
+
 def default_state():
     return {
         "version": 1,
@@ -172,6 +191,7 @@ def active_recommendations(state):
     return [
         item for item in state["recommendations"]
         if item.get("status", "open") not in {"completed", "closed", "resolved", "deferred"}
+        and is_visible_to_current_project(item)
     ]
 
 
@@ -179,6 +199,7 @@ def active_tasks(state):
     return [
         item for item in state["implementation_tasks"]
         if item.get("status", "pending") not in {"completed", "closed", "resolved", "cancelled"}
+        and is_visible_to_current_project(item)
     ]
 
 
@@ -209,7 +230,11 @@ def render_backlog_report(state, stale_after_days=7, wip_limit=3):
         "status": "ok",
         "backlog_file": str(backlog_path()),
         "meta": deepcopy(state.get("meta", {})),
-        "stats": deepcopy(state.get("stats", {})),
+        "stats": {
+            "open_recommendations": len(recommendations),
+            "open_tasks": len(tasks),
+            "completed_tasks": sum(1 for item in state.get("implementation_tasks", []) if item.get("status") == "completed" and is_visible_to_current_project(item)),
+        },
         "recommendations": recommendations[:20],
         "implementation_tasks": tasks[:20],
         "stale_recommendations": stale_recommendations[:20],
@@ -233,19 +258,25 @@ def intake(state, payload):
     priority = normalize_text(payload.get("priority")) or "medium"
     tags = normalize_tags(payload.get("tags", []))
     related = normalize_text(payload.get("related_id")) or normalize_text(payload.get("parent_id"))
+    project_id = normalize_text(payload.get("project_id")) or current_project_id() or "global"
 
     if kind not in {"recommendation", "task"}:
         return 1, {"error": f"unsupported_kind={kind}"}
 
     target_list = state["recommendations"] if kind == "recommendation" else state["implementation_tasks"]
     for item in target_list:
-        if item_matches(item, kind, title) and item.get("status") not in {"completed", "closed", "resolved"}:
+        if (
+            item_matches(item, kind, title)
+            and normalized_project_id(item) == project_id
+            and item.get("status") not in {"completed", "closed", "resolved"}
+        ):
             return 0, {"status": "duplicate", "id": item.get("id"), "kind": kind}
 
     ident = recommendation_id(state) if kind == "recommendation" else task_id(state)
     item = {
         "id": ident,
         "kind": kind,
+        "project_id": project_id,
         "title": title,
         "summary": summary or title,
         "details": details,
@@ -269,13 +300,17 @@ def promote(state, recommendation_id_value, payload):
     rec = next((item for item in state["recommendations"] if item.get("id") == recommendation_id_value), None)
     if not rec:
         return 1, {"error": f"missing_recommendation={recommendation_id_value}"}
+    if not is_visible_to_current_project(rec):
+        return 1, {"error": f"wrong_project={normalized_project_id(rec)}"}
     if rec.get("status") in {"completed", "closed", "resolved"}:
         return 0, {"status": "noop", "reason": "already_closed", "id": recommendation_id_value}
 
     title = normalize_text(payload.get("title")) or rec.get("title", "")
+    project_id = normalize_text(payload.get("project_id")) or normalized_project_id(rec)
     task = {
         "id": task_id(state),
         "kind": "task",
+        "project_id": project_id,
         "title": title,
         "summary": normalize_text(payload.get("summary")) or rec.get("summary", title),
         "details": normalize_text(payload.get("details")) or rec.get("details", ""),
@@ -305,6 +340,8 @@ def complete(state, task_id_value, payload):
     task = next((item for item in state["implementation_tasks"] if item.get("id") == task_id_value), None)
     commit_sha = normalize_text(payload.get("commit_sha"))
     if task:
+        if not is_visible_to_current_project(task):
+            return 1, {"error": f"wrong_project={normalized_project_id(task)}"}
         task["status"] = "completed"
         task["updated_at"] = now_iso()
         if commit_sha:
@@ -325,6 +362,8 @@ def complete(state, task_id_value, payload):
     rec = next((item for item in state["recommendations"] if item.get("id") == task_id_value), None)
     if not rec:
         return 1, {"error": f"missing_task_or_recommendation={task_id_value}"}
+    if not is_visible_to_current_project(rec):
+        return 1, {"error": f"wrong_project={normalized_project_id(rec)}"}
     rec["status"] = "completed"
     rec["updated_at"] = now_iso()
     rec["closed_at"] = now_iso()

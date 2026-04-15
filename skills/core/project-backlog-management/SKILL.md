@@ -15,6 +15,8 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Keep backlog state in `MCP/backlog/backlog.json`
 - Recommendations and implementation tasks are separate lists in the same canonical store
 - Only `hooks/_internal/backlog/backlog-manager` mutates the store
+- Preserve or set `project_id` on every item; default new items to `CODEX_BACKLOG_PROJECT` when set, otherwise `global`
+- Project-local reads should filter to the active project plus shared `global` items
 
 ## Workflow
 1. Intake the recommendation from a prompt, note, or learning signal.
@@ -28,6 +30,7 @@ description: Manage a canonical backlog of incomplete project recommendations an
 - Prefer concise, outcome-focused backlog items
 - Use stable titles and explicit success criteria
 - Do not mix strategic recommendations with executable tasks in one item
+- Do not reuse another project's backlog items unless they are explicitly scoped as `global`
 - Treat ClawHub as an optional external mirror if `CODEX_CLAWHUB_BACKLOG_SYNC_CMD` is configured
 - Use `CODEX_CLAWHUB_BACKLOG_DEST` to control where mirror payloads are staged
 - Keep the backlog small enough to review regularly
