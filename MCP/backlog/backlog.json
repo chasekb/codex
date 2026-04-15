@@ -1,5 +1,28 @@
 {
-  "implementation_tasks": [],
+  "implementation_tasks": [
+    {
+      "created_at": "2026-04-15T15:35:12Z",
+      "details": "Add a separate options snapshot path that determines the latest available daily close per underlying symbol, filters out contracts expired on or before that close, values each remaining contract once, and persists the results to a unique snapshot valuation table.",
+      "id": "TASK-20260415-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "global",
+      "recommendation_id": "REC-20260415-004",
+      "related_id": "REC-20260415-004",
+      "source": "conversation",
+      "status": "pending",
+      "summary": "Add a CLI mode that values only contracts still open at the latest available daily close and writes them to a dedicated snapshot table.",
+      "tags": [
+        "cli",
+        "database",
+        "options",
+        "snapshot",
+        "valuation"
+      ],
+      "title": "Implement snapshot options valuation run for unexpired contracts",
+      "updated_at": "2026-04-15T15:35:12Z"
+    }
+  ],
   "meta": {
     "last_weekly_review_at": "2026-04-13T17:16:22Z"
   },
@@ -447,13 +470,15 @@
       "updated_at": "2026-04-14T22:12:30Z"
     },
     {
+      "closed_at": "2026-04-15T15:34:13Z",
+      "commit_sha": "c08631c",
       "created_at": "2026-04-14T22:16:17Z",
       "details": "Ensure the canonical backlog can be read safely within a single project without surfacing items intended for other projects. Prefer one shared backlog store with an explicit project identifier or scope field on each item, and make project-local readers filter by that field. Follow-up steps: define the project_id or scope schema, preserve it through intake/promotion/closeout, and add tests proving project-local reads do not cross-pollinate.",
       "id": "REC-20260414-005",
       "kind": "recommendation",
       "priority": "medium",
       "source": "user_prompt",
-      "status": "open",
+      "status": "completed",
       "summary": "Add project-scoped backlog isolation with explicit project identifiers.",
       "tags": [
         "backlog",
@@ -463,14 +488,88 @@
         "isolation"
       ],
       "title": "Add project-scoped backlog isolation so project reads do not cross-pollinate",
-      "updated_at": "2026-04-14T22:16:42Z"
+      "updated_at": "2026-04-15T15:34:13Z",
+      "verified": true
+    },
+    {
+      "created_at": "2026-04-15T13:14:31Z",
+      "details": "complete this recommendation",
+      "id": "REC-20260415-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete this recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete this recommendation",
+      "updated_at": "2026-04-15T13:14:31Z"
+    },
+    {
+      "created_at": "2026-04-15T15:29:24Z",
+      "details": "add to the project backlog, show the project backlog, and begin implementing",
+      "id": "REC-20260415-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add to the project backlog, show the project backlog, and begin implementing",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add to the project backlog, show the project backlog, and begin implementing",
+      "updated_at": "2026-04-15T15:29:24Z"
+    },
+    {
+      "created_at": "2026-04-15T15:30:34Z",
+      "details": "prioritize the project-scoped backlog isolation and begin implementing",
+      "id": "REC-20260415-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "prioritize the project-scoped backlog isolation and begin implementing",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "prioritize the project-scoped backlog isolation and begin implementing",
+      "updated_at": "2026-04-15T15:30:34Z"
+    },
+    {
+      "created_at": "2026-04-15T15:34:40Z",
+      "details": "Create a separate options run mode that finds the latest daily close available for each underlying symbol, filters out contracts whose expiration date is on or before that close, values each remaining contract once at that close, and writes the results to a dedicated snapshot table instead of the existing daily-history revaluation table.",
+      "id": "REC-20260415-004",
+      "implementation_tasks": [
+        "TASK-20260415-001"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "global",
+      "source": "conversation",
+      "status": "promoted",
+      "summary": "Compute one valuation per unexpired option using the most recent available daily close and persist it to a dedicated snapshot table.",
+      "tags": [
+        "backlog",
+        "options",
+        "snapshot",
+        "valuation"
+      ],
+      "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
+      "updated_at": "2026-04-15T15:35:12Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 4,
-    "open_tasks": 0
+    "open_recommendations": 7,
+    "open_tasks": 1
   },
-  "updated_at": "2026-04-14T22:17:09Z",
+  "updated_at": "2026-04-15T15:35:12Z",
   "version": 1
 }
