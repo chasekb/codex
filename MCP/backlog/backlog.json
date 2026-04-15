@@ -6,7 +6,7 @@
       "id": "TASK-20260415-001",
       "kind": "task",
       "priority": "high",
-      "project_id": "global",
+      "project_id": "transform",
       "recommendation_id": "REC-20260415-004",
       "related_id": "REC-20260415-004",
       "source": "conversation",
@@ -20,7 +20,7 @@
         "valuation"
       ],
       "title": "Implement snapshot options valuation run for unexpired contracts",
-      "updated_at": "2026-04-15T15:35:12Z"
+      "updated_at": "2026-04-15T16:20:00Z"
     }
   ],
   "meta": {
@@ -452,6 +452,8 @@
       "updated_at": "2026-04-14T22:07:32Z"
     },
     {
+      "closed_at": "2026-04-15T16:09:45Z",
+      "commit_sha": "26703e0",
       "created_at": "2026-04-14T22:12:30Z",
       "details": "Investigate and fix the slowdown in the daily metrics loop. The most likely regression is repeated metrics-table DDL and the staging-table copy path inherited from the metrics primary-key change. Recommended fix: stop recreating the staging table with INCLUDING ALL, avoid repeated table-creation checks inside save_metrics, and confirm whether profit/TEMA writes need batching or consolidation after the metrics write path is optimized.",
       "id": "REC-20260414-004",
@@ -459,7 +461,7 @@
       "priority": "high",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "open",
+      "status": "completed",
       "summary": "Optimize the daily metrics loop by removing repeated DDL and staging-table index overhead.",
       "tags": [
         "backlog",
@@ -470,7 +472,8 @@
         "database"
       ],
       "title": "Optimize the daily metrics loop to reduce repeated DDL and staging-table overhead",
-      "updated_at": "2026-04-14T22:12:30Z"
+      "updated_at": "2026-04-15T16:09:45Z",
+      "verified": true
     },
     {
       "closed_at": "2026-04-15T15:34:13Z",
@@ -503,7 +506,7 @@
       ],
       "kind": "recommendation",
       "priority": "high",
-      "project_id": "global",
+      "project_id": "transform",
       "source": "conversation",
       "status": "promoted",
       "summary": "Compute one valuation per unexpired option using the most recent available daily close and persist it to a dedicated snapshot table.",
@@ -514,32 +517,86 @@
         "valuation"
       ],
       "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
-      "updated_at": "2026-04-15T15:35:12Z"
+      "updated_at": "2026-04-15T16:20:00Z"
     },
     {
-      "created_at": "2026-04-15T16:08:03Z",
-      "details": "show project backlog",
+      "created_at": "2026-04-15T16:11:15Z",
+      "details": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this project",
       "id": "REC-20260415-001",
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
       "status": "open",
-      "summary": "show project backlog",
+      "summary": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this project",
       "tags": [
         "backlog",
         "project-management",
         "recommendation"
       ],
-      "title": "show project backlog",
-      "updated_at": "2026-04-15T16:08:03Z"
+      "title": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this pr",
+      "updated_at": "2026-04-15T16:11:15Z"
+    },
+    {
+      "created_at": "2026-04-15T16:14:16Z",
+      "details": "make the repo's backlog commands default to this project so future project operations do not fall back to global",
+      "id": "REC-20260415-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "make the repo's backlog commands default to this project so future project operations do not fall back to global",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "make the repo's backlog commands default to this project so future project operations do not fall ba",
+      "updated_at": "2026-04-15T16:14:16Z"
+    },
+    {
+      "created_at": "2026-04-15T16:15:49Z",
+      "details": "show project backlog items",
+      "id": "REC-20260415-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show project backlog items",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show project backlog items",
+      "updated_at": "2026-04-15T16:15:49Z"
+    },
+    {
+      "created_at": "2026-04-15T16:16:41Z",
+      "details": "continue implementing open backlog items",
+      "id": "REC-20260415-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "continue implementing open backlog items",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "continue implementing open backlog items",
+      "updated_at": "2026-04-15T16:16:41Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 5,
+    "open_recommendations": 7,
     "open_tasks": 1
   },
-  "updated_at": "2026-04-15T16:08:03Z",
+  "updated_at": "2026-04-15T16:16:41Z",
   "version": 1
 }
