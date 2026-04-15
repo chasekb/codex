@@ -520,6 +520,8 @@
       "updated_at": "2026-04-15T16:20:00Z"
     },
     {
+      "closed_at": "2026-04-15T16:37:15Z",
+      "commit_sha": "1aea4ba",
       "created_at": "2026-04-15T16:32:24Z",
       "details": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
       "id": "REC-20260415-001",
@@ -527,7 +529,7 @@
       "priority": "medium",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "open",
+      "status": "completed",
       "summary": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
       "tags": [
         "backlog",
@@ -535,15 +537,16 @@
         "recommendation"
       ],
       "title": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
-      "updated_at": "2026-04-15T16:32:24Z"
+      "updated_at": "2026-04-15T16:37:15Z",
+      "verified": true
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 1,
+    "open_recommendations": 2,
     "open_tasks": 0
   },
-  "stats_scope": "global",
-  "updated_at": "2026-04-15T16:32:24Z",
+  "stats_scope": "project",
+  "updated_at": "2026-04-15T16:37:15Z",
   "version": 1
 }
