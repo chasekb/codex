@@ -201,6 +201,7 @@ def default_state():
             "external_skill_install_attempts": 0,
             "external_skill_install_successes": 0,
             "backlog_loaded": 0,
+            "backlog_scope": "",
             "backlog_open_recommendations": 0,
             "backlog_open_tasks": 0,
             "backlog_completed_tasks": 0,
@@ -764,6 +765,7 @@ def parse_external_skill_discovery(output):
 def parse_backlog_metrics(output):
     report = {
         "loaded": 0,
+        "scope": "",
         "open_recommendations": 0,
         "open_tasks": 0,
         "completed_tasks": 0,
@@ -777,6 +779,7 @@ def parse_backlog_metrics(output):
                 parsed = json.loads(line)
                 if isinstance(parsed, dict):
                     stats = parsed.get("stats") if isinstance(parsed.get("stats"), dict) else {}
+                    report["scope"] = text(parsed.get("scope", report["scope"]))
                     report["open_recommendations"] = to_int(stats.get("open_recommendations", report["open_recommendations"]))
                     report["open_tasks"] = to_int(stats.get("open_tasks", report["open_tasks"]))
                     report["completed_tasks"] = to_int(stats.get("completed_tasks", report["completed_tasks"]))
@@ -784,6 +787,9 @@ def parse_backlog_metrics(output):
                 pass
         if line.startswith("backlog:metrics"):
             report["loaded"] = 1
+            scope_match = re.search(r"\bscope=([^\s]+)", line)
+            if scope_match:
+                report["scope"] = text(scope_match.group(1))
             report["open_recommendations"] = parse_kv_metric(line, "open_recommendations")
             report["open_tasks"] = parse_kv_metric(line, "open_tasks")
             report["completed_tasks"] = parse_kv_metric(line, "completed_tasks")
@@ -793,6 +799,7 @@ def parse_backlog_metrics(output):
 def parse_backlog_review_metrics(output):
     report = {
         "loaded": 0,
+        "scope": "",
         "open_recommendations": 0,
         "open_tasks": 0,
         "completed_tasks": 0,
@@ -810,6 +817,7 @@ def parse_backlog_review_metrics(output):
                 parsed = json.loads(line)
                 if isinstance(parsed, dict):
                     stats = parsed.get("stats") if isinstance(parsed.get("stats"), dict) else {}
+                    report["scope"] = text(parsed.get("scope", report["scope"]))
                     report["open_recommendations"] = to_int(stats.get("open_recommendations", report["open_recommendations"]))
                     report["open_tasks"] = to_int(stats.get("open_tasks", report["open_tasks"]))
                     report["completed_tasks"] = to_int(stats.get("completed_tasks", report["completed_tasks"]))
@@ -821,6 +829,9 @@ def parse_backlog_review_metrics(output):
                 pass
         if line.startswith("backlog:review"):
             report["loaded"] = 1
+            scope_match = re.search(r"\bscope=([^\s]+)", line)
+            if scope_match:
+                report["scope"] = text(scope_match.group(1))
             report["open_recommendations"] = parse_kv_metric(line, "open_recommendations")
             report["open_tasks"] = parse_kv_metric(line, "open_tasks")
             report["completed_tasks"] = parse_kv_metric(line, "completed_tasks")
@@ -1565,6 +1576,7 @@ def main():
             _, backlog_out = run_internal("backlog-manager", ["status"])
             backlog_report = parse_backlog_metrics(backlog_out)
             state["metrics"]["backlog_loaded"] = backlog_report["loaded"]
+            state["metrics"]["backlog_scope"] = backlog_report["scope"]
             state["metrics"]["backlog_open_recommendations"] = backlog_report["open_recommendations"]
             state["metrics"]["backlog_open_tasks"] = backlog_report["open_tasks"]
             state["metrics"]["backlog_completed_tasks"] = backlog_report["completed_tasks"]
@@ -1576,6 +1588,7 @@ def main():
                 stage="preprompt",
                 status="loaded",
                 details=(
+                    f"scope={backlog_report['scope']} "
                     f"open_recommendations={backlog_report['open_recommendations']} "
                     f"open_tasks={backlog_report['open_tasks']}"
                 ),
@@ -1586,6 +1599,7 @@ def main():
         weekly_review_report = parse_backlog_review_metrics(weekly_review_out)
         state["metrics"]["backlog_weekly_review_runs"] += int(bool(weekly_review_report.get("review_due")))
         state["metrics"]["backlog_weekly_review_due"] = bool(weekly_review_report.get("review_due"))
+        state["metrics"]["backlog_scope"] = weekly_review_report.get("scope", state["metrics"].get("backlog_scope", ""))
         state["metrics"]["backlog_weekly_review_stale"] = weekly_review_report.get("stale_count", 0)
         state["metrics"]["backlog_weekly_review_over_wip"] = weekly_review_report.get("wip_over_limit", 0)
         if weekly_review_report.get("review_due"):
@@ -1597,6 +1611,7 @@ def main():
                 stage="preprompt",
                 status="due",
                 details=(
+                    f"scope={weekly_review_report.get('scope', '')} "
                     f"stale_count={weekly_review_report['stale_count']} "
                     f"wip_over_limit={weekly_review_report['wip_over_limit']} "
                     f"last_weekly_review_at={weekly_review_report['last_weekly_review_at']}"

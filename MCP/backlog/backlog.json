@@ -518,13 +518,32 @@
       ],
       "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
       "updated_at": "2026-04-15T16:20:00Z"
+    },
+    {
+      "created_at": "2026-04-15T16:32:24Z",
+      "details": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
+      "id": "REC-20260415-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
+      "updated_at": "2026-04-15T16:32:24Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 2,
-    "open_tasks": 1
+    "open_recommendations": 1,
+    "open_tasks": 0
   },
-  "updated_at": "2026-04-15T16:17:10Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-15T16:32:24Z",
   "version": 1
 }

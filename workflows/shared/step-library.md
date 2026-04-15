@@ -56,6 +56,7 @@
 
 ## project_insights
 - read the backlog report before drafting the summary
+- report the selected scope before commentary
 - report open recommendations, open tasks, and completed tasks first
 - surface stale items and WIP pressure clearly
 - keep the output focused on backlog health only

@@ -16,6 +16,7 @@ description: Report backlog health, aging items, WIP, and completion rates from 
 - `wip_limit`
 
 ## Outputs
+- `scope`
 - `open_recommendations`
 - `open_tasks`
 - `completed_tasks`
@@ -35,6 +36,7 @@ description: Report backlog health, aging items, WIP, and completion rates from 
 
 ## Instructions
 - read the canonical backlog report first
+- report the selected scope before commentary
 - summarize counts before commentary
 - sort and surface the oldest open recommendations first
 - keep the output focused on backlog state only
