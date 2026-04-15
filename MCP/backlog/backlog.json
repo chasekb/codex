@@ -518,85 +518,13 @@
       ],
       "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
       "updated_at": "2026-04-15T16:20:00Z"
-    },
-    {
-      "created_at": "2026-04-15T16:11:15Z",
-      "details": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this project",
-      "id": "REC-20260415-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this project",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "review backlog functionality to appropriately scope REC-20260415-004 and associated tasks to this pr",
-      "updated_at": "2026-04-15T16:11:15Z"
-    },
-    {
-      "created_at": "2026-04-15T16:14:16Z",
-      "details": "make the repo's backlog commands default to this project so future project operations do not fall back to global",
-      "id": "REC-20260415-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "make the repo's backlog commands default to this project so future project operations do not fall back to global",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "make the repo's backlog commands default to this project so future project operations do not fall ba",
-      "updated_at": "2026-04-15T16:14:16Z"
-    },
-    {
-      "created_at": "2026-04-15T16:15:49Z",
-      "details": "show project backlog items",
-      "id": "REC-20260415-003",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show project backlog items",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show project backlog items",
-      "updated_at": "2026-04-15T16:15:49Z"
-    },
-    {
-      "created_at": "2026-04-15T16:16:41Z",
-      "details": "continue implementing open backlog items",
-      "id": "REC-20260415-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "continue implementing open backlog items",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "continue implementing open backlog items",
-      "updated_at": "2026-04-15T16:16:41Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 7,
+    "open_recommendations": 2,
     "open_tasks": 1
   },
-  "updated_at": "2026-04-15T16:16:41Z",
+  "updated_at": "2026-04-15T16:17:10Z",
   "version": 1
 }
