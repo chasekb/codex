@@ -6,6 +6,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+from external_origin_pipeline import (
+    audit_record,
+    normalize_source,
+    provenance_record,
+    sandbox_validate,
+    update_check,
+    validate_manifest,
+    write_intake_outputs,
+)
 from skill_registry import resolve_skill_entry
 
 
@@ -147,6 +156,38 @@ def clawhub_candidates(task_class, confidence, keywords, current_skill, root):
     return results
 
 
+def normalize_candidate(candidate, root, code_home, terms):
+    candidate = dict(candidate)
+    candidate["name"] = first_text(candidate.get("name"), candidate.get("id"))
+    candidate.setdefault("source", "github")
+    candidate.setdefault("ref", "main")
+    candidate.setdefault("artifact_type", "skill")
+    normalized = normalize_source(candidate, candidate["artifact_type"])
+    validation = validate_manifest(normalized)
+    normalized["manifest_state"] = validation["state"]
+    normalized["manifest_notes"] = validation["notes"]
+    normalized["validation_state"] = validation["state"]
+    sandbox = sandbox_validate(normalized)
+    drift = update_check(normalized, lambda current: dict(current))
+    normalized["sandbox_state"] = sandbox["state"]
+    normalized["sandbox_notes"] = sandbox["notes"]
+    normalized["drift_state"] = drift["state"]
+    normalized["drift_notes"] = drift["notes"]
+    if sandbox["state"] != "approved":
+        normalized["validation_state"] = sandbox["state"]
+    normalized["validation_notes"] = validation["notes"] + sandbox["notes"] + drift["notes"]
+    resolved = resolve_skill_entry(normalized["name"], root=root, code_home=code_home) if normalized["name"] else None
+    if resolved:
+        normalized["installed"] = True
+        normalized["registry"] = resolved.get("registry", "")
+        normalized["registry_label"] = resolved.get("registry_label", "")
+    normalized["score"] = round(score_candidate(normalized, terms), 4)
+    normalized["provenance"] = provenance_record(normalized)
+    normalized["audit"] = audit_record("intake", normalized, normalized["validation_notes"])
+    normalized["drift_audit"] = audit_record("drift", normalized, drift["notes"])
+    return normalized
+
+
 def score_candidate(candidate, terms):
     tokens = set(tokenize(" ".join(
         [
@@ -271,19 +312,10 @@ def main():
     for candidate in candidates:
         if not isinstance(candidate, dict):
             continue
-        candidate = dict(candidate)
-        candidate["name"] = first_text(candidate.get("name"), candidate.get("id"))
-        if not candidate["name"]:
+        normalized = normalize_candidate(candidate, root, code_home, terms)
+        if not normalized:
             continue
-        candidate.setdefault("source", "github")
-        candidate.setdefault("ref", "main")
-        resolved = resolve_skill_entry(candidate["name"], root=root, code_home=code_home)
-        if resolved:
-            candidate["installed"] = True
-            candidate["registry"] = resolved.get("registry", "")
-            candidate["registry_label"] = resolved.get("registry_label", "")
-        candidate["score"] = round(score_candidate(candidate, terms), 4)
-        ranked.append(candidate)
+        ranked.append(normalized)
     ranked.sort(key=lambda item: (item.get("score", 0.0), item.get("installed", False)), reverse=True)
     selected = ranked[0] if ranked else {}
 
@@ -291,7 +323,7 @@ def main():
     install_rc = -1
     install_output = ""
     auto_install = mode in {"install", "auto"} or os.environ.get("CODEX_EXTERNAL_SKILL_AUTO_INSTALL", "").strip().lower() in {"1", "true", "yes", "on"}
-    attempted_install = bool(selected and auto_install and selected.get("score", 0.0) > 0 and not selected.get("installed", False))
+    attempted_install = bool(selected and auto_install and selected.get("score", 0.0) > 0 and selected.get("validation_state") == "approved" and not selected.get("installed", False))
     if attempted_install:
         install_rc, install_output = install_candidate(selected, code_home)
         installed = install_rc == 0
@@ -315,16 +347,25 @@ def main():
         "keywords": keywords,
         "current_skill": current_skill,
         "candidate_count": len(ranked),
-        "selected": {k: v for k, v in selected.items() if k in {"source", "name", "repo", "path", "ref", "score", "installed"}},
+        "selected": {k: v for k, v in selected.items() if k in {"source", "source_type", "artifact_type", "name", "repo", "path", "ref", "score", "installed", "validation_state"}},
         "attempted_install": attempted_install,
         "installed": installed,
         "install_rc": install_rc,
         "install_output": install_output[:2000],
         "candidates": [
-            {k: v for k, v in candidate.items() if k in {"source", "name", "repo", "path", "ref", "description", "score", "installed"}}
+            {
+                k: v
+                for k, v in candidate.items()
+                if k in {"source", "source_type", "artifact_type", "name", "repo", "path", "ref", "description", "score", "installed", "validation_state"}
+            }
             for candidate in ranked[:8]
         ],
+        "provenance": [candidate.get("provenance", {}) for candidate in ranked],
+        "validation": [candidate.get("audit", {}) for candidate in ranked],
+        "drift": [candidate.get("drift_audit", {}) for candidate in ranked],
     }
+
+    write_intake_outputs(root, report)
 
     os.makedirs(root / "outputs", exist_ok=True)
     json_path = root / "outputs" / "external-skill-discovery.json"

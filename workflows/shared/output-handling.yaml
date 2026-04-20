@@ -32,6 +32,11 @@ compaction:
     - budget-summary.json
     - external-skill-discovery.md
     - external-skill-discovery.json
+    - external-origin-intake.md
+    - external-origin-intake.json
+    - external-origin-provenance.jsonl
+    - external-origin-validation.jsonl
+    - external-origin-drift.jsonl
     - canary-report.json
     - canary-token-budgets.yaml
   line_limits:

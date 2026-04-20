@@ -522,6 +522,55 @@ catalog_skill="$(CODEX_HOME="$codex_home" hooks/_internal/routing/select-skill-c
 [[ "$catalog_skill" == "external-debugger" ]] && pass select_skill_catalog_external || fail select_skill_catalog_external
 hooks/_internal/routing/load-skill external-debugger metadata 200 "$codex_home/external-skills/registry.yaml" >/dev/null && pass load_skill_external_registry || fail load_skill_external_registry
 
+python3 - "$ROOT" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / "hooks" / "_internal" / "routing"))
+from external_origin_pipeline import normalize_source, validate_manifest, provenance_record, audit_record, sandbox_validate, detect_drift, update_check
+
+payload = {
+    "source": "github",
+    "name": "github-debug-helper",
+    "repo": "openai/skills",
+    "path": "skills/.curated/github-debug-helper",
+    "ref": "main",
+    "artifact_type": "skill",
+}
+
+record = normalize_source(payload, "skill")
+assert record["origin_ref"] == "openai/skills@main:skills/.curated/github-debug-helper"
+manifest = validate_manifest(record)
+assert manifest["state"] == "approved"
+record["validation_state"] = manifest["state"]
+assert provenance_record(record)["content_hash"] == record["content_hash"]
+assert audit_record("intake", record)["stage"] == "intake"
+assert sandbox_validate(record)["state"] == "approved"
+assert detect_drift(record, None)["state"] == "baseline_missing"
+assert update_check(record, lambda current: dict(current))["state"] == "baseline_missing"
+PY
+pass external_origin_helper || fail external_origin_helper
+
+grep -Fq 'external-origin-intake.json' "$ROOT/hooks/_internal/bootstrap/ensure-outputs-writable" && pass external_origin_outputs_allowlist || fail external_origin_outputs_allowlist
+grep -Fq 'external-origin-intake.json' "$ROOT/workflows/shared/output-handling.yaml" && pass external_origin_outputs_contract || fail external_origin_outputs_contract
+
+external_origin_fixture='[
+  {"source":"github","name":"github-debug-helper","repo":"openai/skills","path":"skills/.curated/github-debug-helper","ref":"main","artifact_type":"skill","description":"debug helper"},
+  {"source":"github","repo":"openai/skills","path":"skills/.curated/missing-name","ref":"main","artifact_type":"skill"}
+]'
+CODEX_EXTERNAL_SKILL_DISCOVERY=discover CODEX_EXTERNAL_SKILL_DISCOVERY_JSON="$external_origin_fixture" hooks/_internal/routing/discover-external-skills general 0.9 "debug helper" tool-minimization "$ROOT" >/dev/null && pass external_origin_discovery || fail external_origin_discovery
+grep -Fq '"validation_state":"approved"' "$ROOT/outputs/external-origin-intake.json" && pass external_origin_intake_approved || fail external_origin_intake_approved
+grep -Fq '"validation_state":"blocked"' "$ROOT/outputs/external-origin-intake.json" && pass external_origin_intake_blocked || fail external_origin_intake_blocked
+grep -Fq '"stage":"intake"' "$ROOT/outputs/external-origin-validation.jsonl" && pass external_origin_validation_record || fail external_origin_validation_record
+grep -Fq '"name":"github-debug-helper"' "$ROOT/outputs/external-origin-provenance.jsonl" && pass external_origin_provenance_record || fail external_origin_provenance_record
+grep -Fq '"stage":"drift"' "$ROOT/outputs/external-origin-drift.jsonl" && pass external_origin_drift_record || fail external_origin_drift_record
+
+external_origin_json="$tmpdir/external-origin-intake.json"
+external_origin_md="$tmpdir/external-origin-intake.md"
+: > "$external_origin_json"
+: > "$external_origin_md"
+
 external_source="$tmpdir/external-source"
 mkdir -p "$external_source"
 cat > "$external_source/SKILL.md" <<'MD'
@@ -780,7 +829,7 @@ JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
 hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 600 false 1 1 1 1 3800 11800 12 534 134 0.0353 3666 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
-tail -n1 outputs/token-metrics.csv | grep -Fq '1,1,1,1,3800,11800,12,534,134,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
+tail -n1 outputs/token-metrics.csv | grep -Fq '600,false,3800,11800,12,534,134,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
 head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
