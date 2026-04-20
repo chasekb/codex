@@ -381,6 +381,17 @@ def promote(state, recommendation_id_value, payload):
     return 0, {"status": "promoted", "recommendation_id": recommendation_id_value, "task_id": task["id"]}
 
 
+def recommendation_tasks_completed(state, recommendation):
+    task_ids = recommendation.get("implementation_tasks", [])
+    if not task_ids:
+        return False
+    for task_id_value in task_ids:
+        task = next((item for item in state["implementation_tasks"] if item.get("id") == task_id_value), None)
+        if not task or task.get("status") != "completed":
+            return False
+    return True
+
+
 def complete(state, task_id_value, payload):
     task = next((item for item in state["implementation_tasks"] if item.get("id") == task_id_value), None)
     commit_sha = normalize_text(payload.get("commit_sha"))
@@ -399,9 +410,10 @@ def complete(state, task_id_value, payload):
         if rec_id:
             rec = next((item for item in state["recommendations"] if item.get("id") == rec_id), None)
             if rec:
-                rec["status"] = "completed"
                 rec["updated_at"] = now_iso()
-                rec["closed_at"] = now_iso()
+                if recommendation_tasks_completed(state, rec):
+                    rec["status"] = "completed"
+                    rec["closed_at"] = now_iso()
         return 0, {"status": "completed", "task_id": task_id_value, "commit_sha": commit_sha}
 
     rec = next((item for item in state["recommendations"] if item.get("id") == task_id_value), None)

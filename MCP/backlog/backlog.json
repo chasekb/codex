@@ -99,6 +99,8 @@
         "The concept map is written in a reviewable form.",
         "The task is committed, verified, and linked back to REC-20260414-003."
       ],
+      "commit_sha": "c197489",
+      "completed_at": "2026-04-20T17:21:18Z",
       "created_at": "2026-04-20T16:57:08Z",
       "details": "Inventory Nelson workflows, hooks, skills, rules, and plugin-boundary behavior so the conversion work starts from a concrete concept map.",
       "id": "TASK-20260420-004",
@@ -108,7 +110,7 @@
       "recommendation_id": "REC-20260414-003",
       "related_id": "REC-20260414-003",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Identify the Nelson plugin concepts that need to be mapped into Codex primitives.",
       "tags": [
         "codex",
@@ -117,7 +119,8 @@
         "plugin"
       ],
       "title": "Inventory Nelson plugin concepts and orchestration",
-      "updated_at": "2026-04-20T16:57:08Z"
+      "updated_at": "2026-04-20T17:21:18Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -125,7 +128,8 @@
         "The plugin package boundary is defined clearly enough to implement.",
         "The task is committed, verified, and linked back to REC-20260414-003."
       ],
-      "commit_sha": "",
+      "commit_sha": "e0e1e08",
+      "completed_at": "2026-04-20T17:21:31Z",
       "created_at": "2026-04-20T16:57:25Z",
       "details": "Map Nelson concepts to Codex workflows, hooks, skills, and rules, and specify how the plugin package should be structured.",
       "id": "TASK-20260420-005",
@@ -134,7 +138,7 @@
       "project_id": "codex",
       "related_id": "REC-20260414-003",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Define the Codex-native equivalents for Nelson concepts and the plugin boundary.",
       "tags": [
         "codex",
@@ -143,8 +147,8 @@
         "plugin"
       ],
       "title": "Map Nelson concepts to Codex primitives and package boundary",
-      "updated_at": "2026-04-20T16:57:25Z",
-      "verified": false
+      "updated_at": "2026-04-20T17:21:31Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -152,7 +156,8 @@
         "Representative mission scenarios are validated end to end.",
         "The task is committed, verified, and linked back to REC-20260414-003."
       ],
-      "commit_sha": "",
+      "commit_sha": "8818996",
+      "completed_at": "2026-04-20T17:21:39Z",
       "created_at": "2026-04-20T16:57:37Z",
       "details": "Create the plugin package boundary, wire the mapped Codex assets, and validate representative mission scenarios end to end.",
       "id": "TASK-20260420-006",
@@ -161,7 +166,7 @@
       "project_id": "codex",
       "related_id": "REC-20260414-003",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Assemble the Codex-native plugin package and verify mission-level behavior.",
       "tags": [
         "codex",
@@ -170,12 +175,12 @@
         "validation"
       ],
       "title": "Package Nelson conversion and validate mission scenarios",
-      "updated_at": "2026-04-20T16:57:37Z",
-      "verified": false
+      "updated_at": "2026-04-20T17:21:39Z",
+      "verified": true
     }
   ],
   "meta": {
-    "last_weekly_review_at": "2026-04-13T17:16:22Z"
+    "last_weekly_review_at": "2026-04-20T17:20:55Z"
   },
   "recommendations": [
     {
@@ -586,6 +591,7 @@
       "updated_at": "2026-04-20T16:47:23Z"
     },
     {
+      "closed_at": "2026-04-20T17:21:39Z",
       "closeout_criteria": [
         "All derived tasks for the Nelson conversion are completed and verified.",
         "The Codex-native plugin package exists with mapped workflows, hooks, skills, and rules.",
@@ -603,7 +609,7 @@
       "priority": "medium",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "promoted",
+      "status": "completed",
       "summary": "Convert the Nelson plugin into a Codex-native plugin package.",
       "tags": [
         "backlog",
@@ -614,7 +620,7 @@
         "conversion"
       ],
       "title": "Convert the Nelson plugin for use with Codex",
-      "updated_at": "2026-04-20T16:57:08Z"
+      "updated_at": "2026-04-20T17:21:39Z"
     },
     {
       "closed_at": "2026-04-15T16:09:45Z",
@@ -1133,11 +1139,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 2,
-    "open_recommendations": 3,
-    "open_tasks": 3
+    "completed_tasks": 5,
+    "open_recommendations": 2,
+    "open_tasks": 0
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-20T17:01:48Z",
+  "updated_at": "2026-04-20T17:21:39Z",
   "version": 1
 }

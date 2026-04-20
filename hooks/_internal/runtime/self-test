@@ -88,6 +88,7 @@ print(data["recommendations"][0]["id"])
 PY
 )"
 CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager promote "$backlog_rec_id" <<<"{}" >/dev/null && pass backlog_promote || fail backlog_promote
+CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager promote "$backlog_rec_id" <<<'{"title":"Add backlog integration tests follow-up","summary":"Second task for backlog completion behavior","details":"Ensure the recommendation remains open until both linked tasks are complete.","priority":"high","tags":["backlog","test"]}' >/dev/null && pass backlog_promote_followup || fail backlog_promote_followup
 backlog_task_id="$(python3 - <<'PY' "$backlog_file"
 import json, sys
 with open(sys.argv[1], "r", encoding="utf-8") as fh:
@@ -96,13 +97,24 @@ print(data["implementation_tasks"][0]["id"])
 PY
 )"
 CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager complete "$backlog_task_id" <<<'{"commit_sha":"abc123","verified":true}' >/dev/null && pass backlog_complete || fail backlog_complete
+backlog_followup_task_id="$(python3 - <<'PY' "$backlog_file"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+print(data["implementation_tasks"][1]["id"])
+PY
+)"
+CODEX_BACKLOG_FILE="$backlog_file" hooks/_internal/backlog/backlog-manager complete "$backlog_followup_task_id" <<<'{"commit_sha":"abc124","verified":true}' >/dev/null && pass backlog_complete_followup || fail backlog_complete_followup
 python3 - <<'PY' "$backlog_file"
 import json, sys
 with open(sys.argv[1], "r", encoding="utf-8") as fh:
     data = json.load(fh)
 assert data["recommendations"][0]["status"] == "completed"
+assert data["recommendations"][0]["implementation_tasks"] == [data["implementation_tasks"][0]["id"], data["implementation_tasks"][1]["id"]]
 assert data["implementation_tasks"][0]["status"] == "completed"
 assert data["implementation_tasks"][0]["commit_sha"] == "abc123"
+assert data["implementation_tasks"][1]["status"] == "completed"
+assert data["implementation_tasks"][1]["commit_sha"] == "abc124"
 print("backlog_state:ok")
 PY
 pass backlog_state
