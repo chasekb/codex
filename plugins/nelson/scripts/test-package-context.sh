@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+output="$(bash "$root/scripts/package-context.sh")"
+
+printf '%s\n' "$output" | grep -q '"additionalContext"'
+printf '%s\n' "$output" | grep -q '"name": "nelson"'
+printf '%s\n' "$output" | grep -q '"mission_scenarios": 5'

@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cat <<'JSON'
-{
-  "additionalContext": "Nelson conversion package loaded. Use the mapped workflow, rule, skill, and validation scripts under plugins/nelson/."
-}
-JSON
+exec "$(cd -- "$(dirname "$0")" && pwd)/../scripts/package-context.sh"
