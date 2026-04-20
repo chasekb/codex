@@ -21,3 +21,5 @@ log/
 version.json
 MCP/memory/
 plugins/cache/
+**/__pycache__/
+*.pyc

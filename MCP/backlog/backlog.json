@@ -66,6 +66,32 @@
       "title": "Persist prompt-budget fields in normalized token history",
       "updated_at": "2026-04-20T14:25:08Z",
       "verified": true
+    },
+    {
+      "commit_sha": "d7065f7",
+      "completed_at": "2026-04-20T16:47:23Z",
+      "created_at": "2026-04-20T14:34:31Z",
+      "details": "Build an external-origin uplift pipeline for hooks, rules, skills, and workflows imported from GitHub, ClawHub, or other third-party sources. Include provenance tracking, static manifest checks, sandboxed behavioral validation for executable assets, and regular update checking against upstream sources. Follow-up steps: add source provenance records, define promotion tiers, and add drift detection for updates.",
+      "id": "TASK-20260420-003",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260414-001",
+      "related_id": "REC-20260414-001",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Create an external-origin uplift pipeline with security screening and regular update checks.",
+      "tags": [
+        "backlog",
+        "external-origin",
+        "project-management",
+        "recommendation",
+        "security",
+        "update-checking"
+      ],
+      "title": "Add an external-origin uplift pipeline with security screening and update checking",
+      "updated_at": "2026-04-20T16:47:23Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -455,14 +481,18 @@
       "verified": true
     },
     {
+      "closed_at": "2026-04-20T16:47:23Z",
       "created_at": "2026-04-14T22:03:29Z",
       "details": "Build an external-origin uplift pipeline for hooks, rules, skills, and workflows imported from GitHub, ClawHub, or other third-party sources. Include provenance tracking, static manifest checks, sandboxed behavioral validation for executable assets, and regular update checking against upstream sources. Follow-up steps: add source provenance records, define promotion tiers, and add drift detection for updates.",
       "id": "REC-20260414-001",
+      "implementation_tasks": [
+        "TASK-20260420-003"
+      ],
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "open",
+      "status": "completed",
       "summary": "Create an external-origin uplift pipeline with security screening and regular update checks.",
       "tags": [
         "backlog",
@@ -473,7 +503,7 @@
         "update-checking"
       ],
       "title": "Add an external-origin uplift pipeline with security screening and update checking",
-      "updated_at": "2026-04-14T22:03:29Z"
+      "updated_at": "2026-04-20T16:47:23Z"
     },
     {
       "created_at": "2026-04-14T22:07:32Z",
@@ -829,14 +859,86 @@
       ],
       "title": "create the concrete closeout checklist for the task and the recommendation. close the task. close th",
       "updated_at": "2026-04-20T14:24:15Z"
+    },
+    {
+      "created_at": "2026-04-20T14:28:07Z",
+      "details": "show current project backlog",
+      "id": "REC-20260420-013",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show current project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show current project backlog",
+      "updated_at": "2026-04-20T14:28:07Z"
+    },
+    {
+      "created_at": "2026-04-20T14:34:26Z",
+      "details": "promote the highest priority codex recommendation into tasks",
+      "id": "REC-20260420-014",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "promote the highest priority codex recommendation into tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "promote the highest priority codex recommendation into tasks",
+      "updated_at": "2026-04-20T14:34:26Z"
+    },
+    {
+      "created_at": "2026-04-20T14:35:17Z",
+      "details": "implement and close the open task and source recommendation",
+      "id": "REC-20260420-015",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "implement and close the open task and source recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "implement and close the open task and source recommendation",
+      "updated_at": "2026-04-20T14:35:17Z"
+    },
+    {
+      "created_at": "2026-04-20T16:43:40Z",
+      "details": "don't finish the backlog closeout until all task items are completed. continue completing incomplete task items",
+      "id": "REC-20260420-016",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "don't finish the backlog closeout until all task items are completed. continue completing incomplete task items",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "don't finish the backlog closeout until all task items are completed. continue completing incomplete",
+      "updated_at": "2026-04-20T16:43:40Z"
     }
   ],
   "stats": {
-    "completed_tasks": 0,
-    "open_recommendations": 10,
+    "completed_tasks": 2,
+    "open_recommendations": 3,
     "open_tasks": 0
   },
-  "stats_scope": "global",
-  "updated_at": "2026-04-20T14:25:08Z",
+  "stats_scope": "project",
+  "updated_at": "2026-04-20T16:47:23Z",
   "version": 1
 }
