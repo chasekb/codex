@@ -15,6 +15,8 @@ test -d "$root/assets"
 test -f "$root/validation/mission-scenarios.md"
 test -f "$root/workflows/pipelines/conversion.yaml"
 test -f "$root/rules/conversion.rules"
+test -f "$root/skills/nelson-conversion/SKILL.md"
+test -f "$root/hooks/session-start"
 
 grep -q '"name": "nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"displayName": "Nelson"' "$root/.codex-plugin/plugin.json"
