@@ -20,4 +20,6 @@ grep -q '"name": "nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"displayName": "Nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"skills": "./skills/"' "$root/.codex-plugin/plugin.json"
 
+bash "$root/scripts/validate-mission-scenarios.sh" >/dev/null
+
 printf 'nelson-package:ok\n'
