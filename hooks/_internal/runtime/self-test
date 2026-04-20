@@ -780,6 +780,7 @@ JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
 hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 600 false 1 1 1 1 3800 11800 12 534 134 0.0353 3666 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
+tail -n1 outputs/token-metrics.csv | grep -Fq '1,1,1,1,3800,11800,12,534,134,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
 head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"

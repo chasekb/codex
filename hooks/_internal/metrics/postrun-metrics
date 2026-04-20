@@ -92,7 +92,7 @@ fi
 total_tokens=$(( input_tokens + output_tokens ))
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+python3 - "$metrics_file" "$desired_header" \
   "$timestamp" "$task_class" "$workflow" "$confidence" "$input_tokens" "$output_tokens" "$total_tokens" \
   "$retries" "$fallbacks" "$tools" "$elapsed_ms" "$status" "$contract_valid" \
   "$memory_loaded" "$memory_chars" "$learning_loaded" "$learning_chars" "$failure_history_loaded" "$failure_history_chars" "$playbook_loaded" "$playbook_chars" "$search_hints_loaded" "$search_hints_chars" "$memory_write_count" "$memory_dedup_count" "$memory_compact_kept" \
@@ -102,6 +102,21 @@ printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
   "$pre_prompt_budget_soft" "$pre_prompt_budget_hard" "$pre_prompt_objective_chars" "$pre_prompt_context_chars" \
   "$pre_prompt_est_tokens" "$pre_prompt_utilization" "$pre_prompt_margin_tokens" "$pre_prompt_adjustment_warranted" \
   "$external_skill_discovery_runs" "$external_skill_install_attempts" "$external_skill_install_successes" \
-  "$external_skill_id" "$external_skill_source" >> "$metrics_file"
+  "$external_skill_id" "$external_skill_source" <<'PY'
+import csv
+import sys
+from pathlib import Path
+
+metrics_file = Path(sys.argv[1])
+desired_header = sys.argv[2].split(",")
+row = sys.argv[3:]
+
+if len(row) != len(desired_header):
+    raise SystemExit(f"row_length_mismatch:{len(row)}!={len(desired_header)}")
+
+with metrics_file.open("a", encoding="utf-8", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(row)
+PY
 
 echo "metrics:ok file=$metrics_file"
