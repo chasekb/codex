@@ -1,0 +1,47 @@
+{
+  "package_boundary": {
+    "assets": "assets/",
+    "hooks": "hooks/",
+    "manifest": ".codex-plugin/plugin.json",
+    "rules": "rules/",
+    "skills": "skills/",
+    "workflows": "workflows/"
+  },
+  "concepts": [
+    {
+      "codex_primitive": "workflows/pipelines/*.yaml",
+      "concept": "Workflow orchestration",
+      "handling": "Convert Nelson orchestration steps into explicit Codex pipelines with named stages."
+    },
+    {
+      "codex_primitive": "hooks/_internal/*",
+      "concept": "Hook behavior",
+      "handling": "Convert interception, routing, and validation behavior into internal hooks."
+    },
+    {
+      "codex_primitive": "skills/*",
+      "concept": "Skill behavior",
+      "handling": "Convert reusable user-facing actions into skills."
+    },
+    {
+      "codex_primitive": "rules/*",
+      "concept": "Rule behavior",
+      "handling": "Convert policy and guardrail logic into rules."
+    },
+    {
+      "codex_primitive": ".codex-plugin/plugin.json + package layout",
+      "concept": "Plugin boundary",
+      "handling": "Convert the Nelson package boundary into a Codex plugin manifest plus stable folder structure."
+    },
+    {
+      "codex_primitive": "assets/ + scripts/",
+      "concept": "Static assets",
+      "handling": "Preserve assets and helper scripts as companion files under the plugin root."
+    },
+    {
+      "codex_primitive": "tests and validation cases",
+      "concept": "Mission scenarios",
+      "handling": "Convert Nelson-level scenarios into explicit validation and test cases."
+    }
+  ]
+}

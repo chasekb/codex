@@ -4,9 +4,11 @@ set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/.codex-plugin/plugin.json"
 scenario_file="$root/validation/mission-scenarios.md"
+mapping_file="$root/validation/nelson-mapping.json"
 
 test -f "$manifest"
 test -f "$scenario_file"
+test -f "$mapping_file"
 
 python3 - "$root" <<'PY'
 import json
@@ -20,12 +22,14 @@ scenario_lines = [
     for line in (root / "validation" / "mission-scenarios.md").read_text(encoding="utf-8").splitlines()
     if line.strip().startswith(tuple(str(i) + "." for i in range(1, 10)))
 ]
+mapping = json.loads((root / "validation" / "nelson-mapping.json").read_text(encoding="utf-8"))
 
 component_counts = {
     "skills": sum(1 for _ in (root / "skills").rglob("SKILL.md")),
     "hooks": sum(1 for _ in (root / "hooks").rglob("*") if _.is_file()),
     "rules": sum(1 for _ in (root / "rules").rglob("*.rules")),
     "workflows": sum(1 for _ in (root / "workflows").rglob("*.yaml")),
+    "mapped_concepts": len(mapping.get("concepts", [])),
 }
 
 summary = (
@@ -45,6 +49,7 @@ payload = {
         "displayName": manifest.get("interface", {}).get("displayName"),
         "components": component_counts,
         "mission_scenarios": len(scenario_lines),
+        "mapped_concepts": len(mapping.get("concepts", [])),
     },
 }
 
