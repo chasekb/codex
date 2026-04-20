@@ -177,7 +177,7 @@
       "title": "Package Nelson conversion and validate mission scenarios",
       "updated_at": "2026-04-20T17:21:39Z",
       "verified": true
-    }
+    },
   ],
   "meta": {
     "last_weekly_review_at": "2026-04-20T17:20:55Z"
@@ -713,24 +713,6 @@
       "verified": true
     },
     {
-      "created_at": "2026-04-16T16:13:37Z",
-      "details": "add to project backlog to update the podman-compose commands in the README.md to reflect actual available commands, then capture tmux pane 0:8.0 since last podman-compose run --rm app --mode recent and troubleshoot errors.",
-      "id": "REC-20260416-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add to project backlog to update the podman-compose commands in the README.md to reflect actual available commands, then capture tmux pane 0:8.0 since last podman-compose run --rm app --mode recent and troubleshoot error",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add to project backlog to update the podman-compose commands in the README.md to reflect actual avai",
-      "updated_at": "2026-04-16T16:13:37Z"
-    },
-    {
       "closed_at": "2026-04-20T14:25:08Z",
       "created_at": "2026-04-20T14:03:50Z",
       "details": "On TaskComplete, persist the live pre_prompt_* values from hook-runtime-state.json into the normalized run row. This keeps utilization, margin, and estimated-token metrics available for trend analysis, budget tuning, and regression review.",
@@ -1136,14 +1118,50 @@
       ],
       "title": "Add closeout criteria checklists to new backlog items",
       "updated_at": "2026-04-20T17:01:48Z"
+    },
+    {
+      "created_at": "2026-04-20T17:22:50Z",
+      "details": "push then show project backlog",
+      "id": "REC-20260420-023",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "push then show project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "push then show project backlog",
+      "updated_at": "2026-04-20T17:22:50Z"
+    },
+    {
+      "created_at": "2026-04-20T17:26:39Z",
+      "details": "remove the task and its source recommendation",
+      "id": "REC-20260420-024",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "remove the task and its source recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "remove the task and its source recommendation",
+      "updated_at": "2026-04-20T17:26:39Z"
     }
   ],
   "stats": {
-    "completed_tasks": 5,
-    "open_recommendations": 2,
+    "completed_tasks": 0,
+    "open_recommendations": 22,
     "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-20T17:21:39Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-20T17:26:39Z",
   "version": 1
 }
