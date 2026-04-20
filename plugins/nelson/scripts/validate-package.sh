@@ -13,6 +13,8 @@ test -d "$root/skills"
 test -d "$root/scripts"
 test -d "$root/assets"
 test -f "$root/validation/mission-scenarios.md"
+test -f "$root/workflows/pipelines/conversion.yaml"
+test -f "$root/rules/conversion.rules"
 
 grep -q '"name": "nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"displayName": "Nelson"' "$root/.codex-plugin/plugin.json"

@@ -1,0 +1,17 @@
+# Nelson conversion guardrails.
+
+# Avoid destructive bulk deletion in the package scaffold.
+prefix_rule(
+  pattern = ["rm", "-rf"],
+  decision = "forbidden",
+  justification = "Nelson conversion artifacts should be removed surgically.",
+  match = ["rm -rf plugins/nelson"],
+)
+
+# Require confirmation before publishing conversion artifacts.
+prefix_rule(
+  pattern = ["git", "push"],
+  decision = "prompt",
+  justification = "Conversion package publication should be explicit.",
+  match = ["git push origin main"],
+)
