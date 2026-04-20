@@ -21,6 +21,51 @@
       ],
       "title": "Implement snapshot options valuation run for unexpired contracts",
       "updated_at": "2026-04-15T16:20:00Z"
+    },
+    {
+      "created_at": "2026-04-20T14:05:03Z",
+      "details": "Create a separate options run mode that finds the latest daily close available for each underlying symbol, filters out contracts whose expiration date is on or before that close, values each remaining contract once at that close, and writes the results to a dedicated snapshot table instead of the existing daily-history revaluation table.",
+      "id": "TASK-20260420-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "transform",
+      "recommendation_id": "REC-20260415-004",
+      "related_id": "REC-20260415-004",
+      "source": "conversation",
+      "status": "pending",
+      "summary": "Compute one valuation per unexpired option using the most recent available daily close and persist it to a dedicated snapshot table.",
+      "tags": [
+        "backlog",
+        "options",
+        "snapshot",
+        "valuation"
+      ],
+      "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
+      "updated_at": "2026-04-20T14:05:03Z"
+    },
+    {
+      "commit_sha": "279b18e",
+      "completed_at": "2026-04-20T14:25:08Z",
+      "created_at": "2026-04-20T14:07:55Z",
+      "details": "On TaskComplete, persist the live pre_prompt_* values from hook-runtime-state.json into the normalized run row. This keeps utilization, margin, and estimated-token metrics available for trend analysis, budget tuning, and regression review.",
+      "id": "TASK-20260420-002",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260420-002",
+      "related_id": "REC-20260420-002",
+      "source": "metrics_review",
+      "status": "completed",
+      "summary": "Copy pre-prompt budget and utilization fields into token-metrics.csv so historical analysis can use them.",
+      "tags": [
+        "backlog",
+        "metrics",
+        "telemetry",
+        "token-budgeting"
+      ],
+      "title": "Persist prompt-budget fields in normalized token history",
+      "updated_at": "2026-04-20T14:25:08Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -502,7 +547,8 @@
       "details": "Create a separate options run mode that finds the latest daily close available for each underlying symbol, filters out contracts whose expiration date is on or before that close, values each remaining contract once at that close, and writes the results to a dedicated snapshot table instead of the existing daily-history revaluation table.",
       "id": "REC-20260415-004",
       "implementation_tasks": [
-        "TASK-20260415-001"
+        "TASK-20260415-001",
+        "TASK-20260420-001"
       ],
       "kind": "recommendation",
       "priority": "high",
@@ -517,7 +563,7 @@
         "valuation"
       ],
       "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
-      "updated_at": "2026-04-15T16:20:00Z"
+      "updated_at": "2026-04-20T14:05:03Z"
     },
     {
       "closed_at": "2026-04-15T16:37:15Z",
@@ -539,14 +585,258 @@
       "title": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
       "updated_at": "2026-04-15T16:37:15Z",
       "verified": true
+    },
+    {
+      "created_at": "2026-04-16T16:13:37Z",
+      "details": "add to project backlog to update the podman-compose commands in the README.md to reflect actual available commands, then capture tmux pane 0:8.0 since last podman-compose run --rm app --mode recent and troubleshoot errors.",
+      "id": "REC-20260416-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add to project backlog to update the podman-compose commands in the README.md to reflect actual available commands, then capture tmux pane 0:8.0 since last podman-compose run --rm app --mode recent and troubleshoot error",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add to project backlog to update the podman-compose commands in the README.md to reflect actual avai",
+      "updated_at": "2026-04-16T16:13:37Z"
+    },
+    {
+      "created_at": "2026-04-20T14:02:54Z",
+      "details": "add recommendations to project backlog for implementation",
+      "id": "REC-20260420-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add recommendations to project backlog for implementation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add recommendations to project backlog for implementation",
+      "updated_at": "2026-04-20T14:02:54Z"
+    },
+    {
+      "closed_at": "2026-04-20T14:25:08Z",
+      "created_at": "2026-04-20T14:03:50Z",
+      "details": "On TaskComplete, persist the live pre_prompt_* values from hook-runtime-state.json into the normalized run row. This keeps utilization, margin, and estimated-token metrics available for trend analysis, budget tuning, and regression review.",
+      "id": "REC-20260420-002",
+      "implementation_tasks": [
+        "TASK-20260420-002"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "related_id": "REC-20260420-001",
+      "source": "metrics_review",
+      "status": "completed",
+      "summary": "Copy pre-prompt budget and utilization fields into token-metrics.csv so historical analysis can use them.",
+      "tags": [
+        "backlog",
+        "metrics",
+        "telemetry",
+        "token-budgeting"
+      ],
+      "title": "Persist prompt-budget fields in normalized token history",
+      "updated_at": "2026-04-20T14:25:08Z"
+    },
+    {
+      "created_at": "2026-04-20T14:03:57Z",
+      "details": "Extend hook telemetry so each tool call records the tool name, duration, status, retry/fallback usage, and error category when present. The current event stream is mostly invocation counts, which is not enough to identify slow or unreliable tools.",
+      "id": "REC-20260420-003",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "global",
+      "related_id": "REC-20260420-001",
+      "source": "metrics_review",
+      "status": "open",
+      "summary": "Capture tool-level latency, success, failure, and retry signals for each invocation.",
+      "tags": [
+        "backlog",
+        "metrics",
+        "observability",
+        "tools"
+      ],
+      "title": "Record per-tool latency and outcome telemetry",
+      "updated_at": "2026-04-20T14:03:57Z"
+    },
+    {
+      "created_at": "2026-04-20T14:04:01Z",
+      "details": "Emit a small set of outcome-oriented signals for task completion, user-visible success, and error conditions. Without those fields, the current telemetry only supports internal runtime tuning and cannot clearly justify changes to existing functionality.",
+      "id": "REC-20260420-004",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "related_id": "REC-20260420-001",
+      "source": "metrics_review",
+      "status": "open",
+      "summary": "Add explicit outcome fields so metrics can support product decisions, not just budget tuning.",
+      "tags": [
+        "backlog",
+        "metrics",
+        "outcomes",
+        "product-analytics"
+      ],
+      "title": "Track user-outcome signals alongside runtime metrics",
+      "updated_at": "2026-04-20T14:04:01Z"
+    },
+    {
+      "created_at": "2026-04-20T14:04:52Z",
+      "details": "promote next available recommendation into taks",
+      "id": "REC-20260420-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "promote next available recommendation into taks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "promote next available recommendation into taks",
+      "updated_at": "2026-04-20T14:04:52Z"
+    },
+    {
+      "created_at": "2026-04-20T14:10:11Z",
+      "details": "show me the project backlog",
+      "id": "REC-20260420-006",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show me the project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show me the project backlog",
+      "updated_at": "2026-04-20T14:10:11Z"
+    },
+    {
+      "created_at": "2026-04-20T14:11:18Z",
+      "details": "give me the backlog sorted by priority for the project codex",
+      "id": "REC-20260420-007",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "give me the backlog sorted by priority for the project codex",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "give me the backlog sorted by priority for the project codex",
+      "updated_at": "2026-04-20T14:11:18Z"
+    },
+    {
+      "created_at": "2026-04-20T14:12:07Z",
+      "details": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
+      "id": "REC-20260420-008",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
+      "updated_at": "2026-04-20T14:12:07Z"
+    },
+    {
+      "created_at": "2026-04-20T14:14:23Z",
+      "details": "what about implementation_tasks? did you show that in the view of the project backlog?",
+      "id": "REC-20260420-009",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "what about implementation_tasks? did you show that in the view of the project backlog?",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "what about implementation_tasks? did you show that in the view of the project backlog?",
+      "updated_at": "2026-04-20T14:14:23Z"
+    },
+    {
+      "created_at": "2026-04-20T14:19:54Z",
+      "details": "move the source recommendation to the codex project also",
+      "id": "REC-20260420-010",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "move the source recommendation to the codex project also",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "move the source recommendation to the codex project also",
+      "updated_at": "2026-04-20T14:19:54Z"
+    },
+    {
+      "created_at": "2026-04-20T14:21:41Z",
+      "details": "show the open recommendations and tasks for this project",
+      "id": "REC-20260420-011",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show the open recommendations and tasks for this project",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show the open recommendations and tasks for this project",
+      "updated_at": "2026-04-20T14:21:41Z"
+    },
+    {
+      "created_at": "2026-04-20T14:24:15Z",
+      "details": "create the concrete closeout checklist for the task and the recommendation. close the task. close the recommendation",
+      "id": "REC-20260420-012",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "create the concrete closeout checklist for the task and the recommendation. close the task. close the recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "create the concrete closeout checklist for the task and the recommendation. close the task. close th",
+      "updated_at": "2026-04-20T14:24:15Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 2,
+    "open_recommendations": 10,
     "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-15T16:37:15Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-20T14:25:08Z",
   "version": 1
 }
