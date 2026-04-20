@@ -92,6 +92,86 @@
       "title": "Add an external-origin uplift pipeline with security screening and update checking",
       "updated_at": "2026-04-20T16:47:23Z",
       "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Nelson workflows, hooks, skills, rules, and plugin-boundary behavior are inventoried.",
+        "The concept map is written in a reviewable form.",
+        "The task is committed, verified, and linked back to REC-20260414-003."
+      ],
+      "created_at": "2026-04-20T16:57:08Z",
+      "details": "Inventory Nelson workflows, hooks, skills, rules, and plugin-boundary behavior so the conversion work starts from a concrete concept map.",
+      "id": "TASK-20260420-004",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260414-003",
+      "related_id": "REC-20260414-003",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Identify the Nelson plugin concepts that need to be mapped into Codex primitives.",
+      "tags": [
+        "codex",
+        "inventory",
+        "nelson",
+        "plugin"
+      ],
+      "title": "Inventory Nelson plugin concepts and orchestration",
+      "updated_at": "2026-04-20T16:57:08Z"
+    },
+    {
+      "closeout_criteria": [
+        "Each Nelson concept has a Codex primitive mapping or an explicit rejection reason.",
+        "The plugin package boundary is defined clearly enough to implement.",
+        "The task is committed, verified, and linked back to REC-20260414-003."
+      ],
+      "commit_sha": "",
+      "created_at": "2026-04-20T16:57:25Z",
+      "details": "Map Nelson concepts to Codex workflows, hooks, skills, and rules, and specify how the plugin package should be structured.",
+      "id": "TASK-20260420-005",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "related_id": "REC-20260414-003",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Define the Codex-native equivalents for Nelson concepts and the plugin boundary.",
+      "tags": [
+        "codex",
+        "mapping",
+        "nelson",
+        "plugin"
+      ],
+      "title": "Map Nelson concepts to Codex primitives and package boundary",
+      "updated_at": "2026-04-20T16:57:25Z",
+      "verified": false
+    },
+    {
+      "closeout_criteria": [
+        "The Codex-native plugin package is assembled from the mapped assets.",
+        "Representative mission scenarios are validated end to end.",
+        "The task is committed, verified, and linked back to REC-20260414-003."
+      ],
+      "commit_sha": "",
+      "created_at": "2026-04-20T16:57:37Z",
+      "details": "Create the plugin package boundary, wire the mapped Codex assets, and validate representative mission scenarios end to end.",
+      "id": "TASK-20260420-006",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "related_id": "REC-20260414-003",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Assemble the Codex-native plugin package and verify mission-level behavior.",
+      "tags": [
+        "codex",
+        "nelson",
+        "package",
+        "validation"
+      ],
+      "title": "Package Nelson conversion and validate mission scenarios",
+      "updated_at": "2026-04-20T16:57:37Z",
+      "verified": false
     }
   ],
   "meta": {
@@ -506,14 +586,24 @@
       "updated_at": "2026-04-20T16:47:23Z"
     },
     {
+      "closeout_criteria": [
+        "All derived tasks for the Nelson conversion are completed and verified.",
+        "The Codex-native plugin package exists with mapped workflows, hooks, skills, and rules.",
+        "The recommendation is closed only after the linked tasks are committed and verified."
+      ],
       "created_at": "2026-04-14T22:07:32Z",
       "details": "Convert the Nelson plugin into a Codex-native plugin package with Codex workflows, hooks, skills, and rules mapped from Nelson's orchestration model. Follow-up steps: inventory Nelson concepts, map them to Codex primitives, package the plugin boundary, and validate mission-level scenarios.",
       "id": "REC-20260414-003",
+      "implementation_tasks": [
+        "TASK-20260420-004",
+        "TASK-20260420-005",
+        "TASK-20260420-006"
+      ],
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "open",
+      "status": "promoted",
       "summary": "Convert the Nelson plugin into a Codex-native plugin package.",
       "tags": [
         "backlog",
@@ -524,7 +614,7 @@
         "conversion"
       ],
       "title": "Convert the Nelson plugin for use with Codex",
-      "updated_at": "2026-04-14T22:07:32Z"
+      "updated_at": "2026-04-20T16:57:08Z"
     },
     {
       "closed_at": "2026-04-15T16:09:45Z",
@@ -633,24 +723,6 @@
       ],
       "title": "add to project backlog to update the podman-compose commands in the README.md to reflect actual avai",
       "updated_at": "2026-04-16T16:13:37Z"
-    },
-    {
-      "created_at": "2026-04-20T14:02:54Z",
-      "details": "add recommendations to project backlog for implementation",
-      "id": "REC-20260420-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add recommendations to project backlog for implementation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add recommendations to project backlog for implementation",
-      "updated_at": "2026-04-20T14:02:54Z"
     },
     {
       "closed_at": "2026-04-20T14:25:08Z",
@@ -931,14 +1003,141 @@
       ],
       "title": "don't finish the backlog closeout until all task items are completed. continue completing incomplete",
       "updated_at": "2026-04-20T16:43:40Z"
+    },
+    {
+      "created_at": "2026-04-20T16:52:23Z",
+      "details": "why are open tasks belonging to a different project showing in the project backlog",
+      "id": "REC-20260420-017",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "why are open tasks belonging to a different project showing in the project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "why are open tasks belonging to a different project showing in the project backlog",
+      "updated_at": "2026-04-20T16:52:23Z"
+    },
+    {
+      "created_at": "2026-04-20T16:52:51Z",
+      "details": "re-list the codex backlog",
+      "id": "REC-20260420-018",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "re-list the codex backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "re-list the codex backlog",
+      "updated_at": "2026-04-20T16:52:51Z"
+    },
+    {
+      "created_at": "2026-04-20T16:53:39Z",
+      "details": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be deleted",
+      "id": "REC-20260420-019",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be deleted",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be d",
+      "updated_at": "2026-04-20T16:53:39Z"
+    },
+    {
+      "created_at": "2026-04-20T16:56:09Z",
+      "details": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
+      "id": "REC-20260420-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
+      "updated_at": "2026-04-20T16:56:09Z"
+    },
+    {
+      "created_at": "2026-04-20T16:59:33Z",
+      "details": "ensure each task and the source recommendation have closeout checklist criteria",
+      "id": "REC-20260420-020",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "ensure each task and the source recommendation have closeout checklist criteria",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "ensure each task and the source recommendation have closeout checklist criteria",
+      "updated_at": "2026-04-20T16:59:33Z"
+    },
+    {
+      "created_at": "2026-04-20T17:01:25Z",
+      "details": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendations",
+      "id": "REC-20260420-021",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendations",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendati",
+      "updated_at": "2026-04-20T17:01:25Z"
+    },
+    {
+      "created_at": "2026-04-20T17:01:48Z",
+      "details": "When creating new backlog tasks or recommendations, include a closeout checklist section with completion criteria, verification evidence, and linkage back to the source item so future closeout is unambiguous.",
+      "id": "REC-20260420-022",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "Require explicit closeout criteria on newly created tasks and recommendations.",
+      "tags": [
+        "backlog",
+        "checklist",
+        "closeout",
+        "project-management"
+      ],
+      "title": "Add closeout criteria checklists to new backlog items",
+      "updated_at": "2026-04-20T17:01:48Z"
     }
   ],
   "stats": {
     "completed_tasks": 2,
     "open_recommendations": 3,
-    "open_tasks": 0
+    "open_tasks": 3
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-20T16:47:23Z",
+  "updated_at": "2026-04-20T17:01:48Z",
   "version": 1
 }

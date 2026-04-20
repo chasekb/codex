@@ -1,0 +1,45 @@
+{
+  "name": "nelson",
+  "version": "0.1.0",
+  "description": "Codex-native package scaffold for converting the Nelson plugin into Codex primitives.",
+  "author": {
+    "name": "Codex",
+    "email": "codex@example.com",
+    "url": "https://github.com/chasekb/codex"
+  },
+  "homepage": "https://github.com/chasekb/codex",
+  "repository": "https://github.com/chasekb/codex",
+  "license": "MIT",
+  "keywords": [
+    "nelson",
+    "codex",
+    "plugin"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/",
+  "mcpServers": "./.mcp.json",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Nelson",
+    "shortDescription": "Codex conversion package scaffold for Nelson.",
+    "longDescription": "This plugin package is the Codex-native boundary for the Nelson conversion effort. It groups workflows, hooks, skills, rules, and assets so the source plugin can be mapped into Codex primitives and validated mission by mission.",
+    "developerName": "Codex",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/chasekb/codex",
+    "privacyPolicyURL": "https://openai.com/policies/row-privacy-policy/",
+    "termsOfServiceURL": "https://openai.com/policies/row-terms-of-use/",
+    "defaultPrompt": [
+      "Inventory Nelson workflows and map them into Codex primitives.",
+      "Package the Nelson conversion boundary for Codex.",
+      "Validate mission scenarios for the converted plugin."
+    ],
+    "brandColor": "#1F4E79",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/logo.svg",
+    "screenshots": []
+  }
+}
