@@ -69,6 +69,11 @@ required_rel=(
   "hooks/_internal/bootstrap/ensure-outputs-writable"
   "hooks/_internal/output/compact-outputs"
   "skills/core/skill-promotion/SKILL.md"
+  "plugins/registry.yaml"
+  "plugins/nelson/.codex-plugin/plugin.json"
+  "plugins/nelson/skills/registry.yaml"
+  "plugins/nelson/rules/registry.yaml"
+  "plugins/nelson/workflows/registry.yaml"
 )
 
 bootstrap_file() {

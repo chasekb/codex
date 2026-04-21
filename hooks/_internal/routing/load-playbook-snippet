@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from skill_registry import plugin_registry_candidates, registry_label
+
 
 def text(value):
     if isinstance(value, str):
@@ -48,25 +50,47 @@ def find_repo_root(start: str) -> str:
         cur = parent
 
 
-def registry_lookup(registry_file, skill_id):
+def registry_lookup(registry_file, entry_id, section="skills"):
     if not registry_file or not os.path.isfile(registry_file):
         return ""
-    skill_file = ""
+    entry_file = ""
     found = False
+    section = section.strip() if isinstance(section, str) and section.strip() else "skills"
     with open(registry_file, "r", encoding="utf-8") as f:
         for raw in f:
             line = raw.rstrip("\n")
-            if re.match(rf"^\s*-\s*id:\s*{re.escape(skill_id)}\s*$", line):
+            if re.match(rf"^\s*{re.escape(section)}:\s*$", line):
+                found = True
+                continue
+            if found and re.match(r"^\s*[A-Za-z0-9_\-]+:\s*$", line) and not line.lstrip().startswith("-"):
+                break
+            if found and re.match(rf"^\s*-\s*id:\s*{re.escape(entry_id)}\s*$", line):
                 found = True
                 continue
             if found and re.match(r"^\s*file:\s*", line):
-                skill_file = re.sub(r"^\s*file:\s*", "", line).strip()
+                entry_file = re.sub(r"^\s*file:\s*", "", line).strip()
                 break
-    if not skill_file:
+    if not entry_file:
         return ""
-    if not os.path.isabs(skill_file):
-        skill_file = os.path.join(os.path.dirname(registry_file), skill_file)
-    return skill_file if os.path.isfile(skill_file) else ""
+    if not os.path.isabs(entry_file):
+        entry_file = os.path.join(os.path.dirname(registry_file), entry_file)
+    return entry_file if os.path.isfile(entry_file) else ""
+
+
+def resolve_registry_entry(root, entry_id, registry_file, section="skills"):
+    registry_candidates = []
+    if registry_file:
+        registry_candidates.append(registry_file)
+    if section == "skills":
+        registry_candidates.append(os.path.join(root, "superpowers", "skills", "registry.yaml"))
+    for plugin_registry in plugin_registry_candidates(root=root, section=section):
+        registry_candidates.append(str(plugin_registry))
+
+    for candidate_registry in registry_candidates:
+        entry_file = registry_lookup(candidate_registry, entry_id, section=section)
+        if entry_file:
+            return entry_file, candidate_registry, registry_label(candidate_registry, root=root)
+    return "", "", ""
 
 
 def skill_excerpt(skill_file):
@@ -150,10 +174,7 @@ def step_library_excerpt(step_library_file, step_names):
 
 
 def load_skill_snippet(root, skill_id, registry_file, max_chars):
-    skill_file = registry_lookup(registry_file, skill_id)
-    if not skill_file:
-        overlay_registry = os.path.join(root, "superpowers", "skills", "registry.yaml")
-        skill_file = registry_lookup(overlay_registry, skill_id)
+    skill_file, skill_registry, skill_registry_label = resolve_registry_entry(root, skill_id, registry_file, section="skills")
     if not skill_file:
         return {}
     excerpt = skill_excerpt(skill_file)
@@ -163,13 +184,22 @@ def load_skill_snippet(root, skill_id, registry_file, max_chars):
         "kind": "skill",
         "id": skill_id,
         "source_file": skill_file,
+        "registry": skill_registry,
+        "registry_label": skill_registry_label,
         "snippet": excerpt,
         "snippet_chars": len(excerpt),
     }
 
 
 def load_workflow_snippet(root, workflow_id, max_chars):
-    workflow_file = os.path.join(root, "workflows", "pipelines", f"{workflow_id}.yaml")
+    workflow_file, workflow_registry, workflow_registry_label = resolve_registry_entry(
+        root,
+        workflow_id,
+        os.path.join(root, "workflows", "registry.yaml"),
+        section="workflows",
+    )
+    if not workflow_file:
+        workflow_file = os.path.join(root, "workflows", "pipelines", f"{workflow_id}.yaml")
     if not os.path.isfile(workflow_file):
         return {}
     step_library_file = os.path.join(root, "workflows", "shared", "step-library.md")
@@ -190,6 +220,8 @@ def load_workflow_snippet(root, workflow_id, max_chars):
         "kind": "workflow",
         "id": workflow_id,
         "source_file": workflow_file,
+        "registry": workflow_registry,
+        "registry_label": workflow_registry_label,
         "snippet": snippet,
         "snippet_chars": len(snippet),
         "steps": steps,

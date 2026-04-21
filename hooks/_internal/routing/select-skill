@@ -78,7 +78,7 @@ else
     esac
 
     if [[ "$skill" == "tool-minimization" || "$skill" == "plan-verify-execute" ]]; then
-      catalog_skill="$("$script_dir/select-skill-catalog" "$task_class" "$confidence" "$keywords" "$workspace_root")"
+      catalog_skill="$("$script_dir/select-skill-catalog" "$task_class" "$confidence" "$keywords" "$workspace_root" | tail -n1)"
       if [[ -n "$catalog_skill" ]]; then
         skill="$catalog_skill"
       fi

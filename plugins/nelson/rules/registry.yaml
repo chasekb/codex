@@ -1,0 +1,6 @@
+version: 1
+rules:
+  - id: nelson-conversion
+    file: conversion.rules
+    tags: [nelson, dynamic, integration, plugin]
+    priority: 1

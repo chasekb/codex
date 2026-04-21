@@ -1,0 +1,6 @@
+version: 1
+workflows:
+  - id: nelson-conversion
+    file: pipelines/conversion.yaml
+    tags: [nelson, dynamic, integration, plugin]
+    priority: 1

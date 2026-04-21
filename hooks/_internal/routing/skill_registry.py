@@ -35,6 +35,98 @@ def _dedupe_paths(paths):
     return ordered
 
 
+def plugin_catalog_path(root=None):
+    root = Path(root or find_repo_root(Path.cwd()))
+    return root / "plugins" / "registry.yaml"
+
+
+def parse_plugin_catalog(path):
+    entries = []
+    path = Path(path)
+    if not path.is_file():
+        return entries
+
+    current = None
+    in_plugins = False
+    with path.open("r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            stripped = line.strip()
+            if stripped == "plugins:":
+                in_plugins = True
+                continue
+            if not in_plugins:
+                continue
+            if stripped.startswith("- id:"):
+                if current:
+                    entries.append(current)
+                current = {
+                    "id": stripped.split(":", 1)[1].strip(),
+                    "path": "",
+                    "manifest": "",
+                    "skills_registry": "",
+                    "rules_registry": "",
+                    "workflows_registry": "",
+                    "skill_id": "",
+                    "workflow_id": "",
+                    "priority": 99,
+                    "catalog": str(path),
+                }
+                continue
+            if current is None:
+                continue
+            if stripped.startswith("path:"):
+                current["path"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("manifest:"):
+                current["manifest"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("skills_registry:"):
+                current["skills_registry"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("rules_registry:"):
+                current["rules_registry"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("workflows_registry:"):
+                current["workflows_registry"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("skill_id:"):
+                current["skill_id"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("workflow_id:"):
+                current["workflow_id"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("priority:"):
+                try:
+                    current["priority"] = int(float(stripped.split(":", 1)[1].strip()))
+                except Exception:
+                    pass
+        if current:
+            entries.append(current)
+    return entries
+
+
+def plugin_entries(root=None, code_home=None):
+    root = Path(root or find_repo_root(Path.cwd()))
+    catalog = plugin_catalog_path(root)
+    entries = []
+    for entry in parse_plugin_catalog(catalog):
+        plugin_root = root / entry.get("path", "")
+        if not plugin_root.is_dir():
+            continue
+        normalized = dict(entry)
+        normalized["root"] = str(plugin_root)
+        normalized["manifest"] = str(root / normalized["manifest"]) if normalized.get("manifest") else ""
+        for key in ("skills_registry", "rules_registry", "workflows_registry"):
+            registry = normalized.get(key, "")
+            normalized[key] = str(root / registry) if registry else ""
+        entries.append(normalized)
+    return entries
+
+
+def plugin_registry_candidates(root=None, code_home=None, section="skills"):
+    section = section.strip().lower() if isinstance(section, str) else "skills"
+    candidates = []
+    for entry in plugin_entries(root=root, code_home=code_home):
+        registry = entry.get(f"{section}_registry", "")
+        if registry and Path(registry).is_file():
+            candidates.append(Path(registry))
+    return [path for path in _dedupe_paths(candidates) if path.is_file()]
+
+
 def registry_candidates(root=None, code_home=None, preferred=None):
     root = Path(root or find_repo_root(Path.cwd()))
     code_home = Path(code_home or os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
@@ -50,6 +142,7 @@ def registry_candidates(root=None, code_home=None, preferred=None):
     candidates.extend(
         [
             root / "skills" / "registry.yaml",
+            *plugin_registry_candidates(root=root, code_home=code_home, section="skills"),
             root / "superpowers" / "skills" / "registry.yaml",
             Path(os.environ.get("CODEX_EXTERNAL_SKILLS_REGISTRY", str(code_home / "external-skills" / "registry.yaml"))),
             Path.home() / ".agents" / "skills" / "registry.yaml",
@@ -110,6 +203,14 @@ def registry_label(path, root=None, code_home=None):
     code_home = Path(code_home or os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
     if path == root / "skills" / "registry.yaml":
         return "core"
+    for entry in plugin_entries(root=root, code_home=code_home):
+        for key in ("skills_registry", "rules_registry", "workflows_registry"):
+            registry = entry.get(key, "")
+            if registry and path == Path(registry):
+                return f"plugin:{entry.get('id', 'unknown')}"
+        plugin_root = Path(entry.get("root", ""))
+        if plugin_root and plugin_root in path.parents:
+            return f"plugin:{entry.get('id', 'unknown')}"
     if path == root / "superpowers" / "skills" / "registry.yaml":
         return "overlay"
     external = Path(os.environ.get("CODEX_EXTERNAL_SKILLS_REGISTRY", str(code_home / "external-skills" / "registry.yaml")))

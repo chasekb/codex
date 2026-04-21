@@ -1,0 +1,11 @@
+version: 1
+plugins:
+  - id: nelson
+    path: plugins/nelson
+    manifest: plugins/nelson/.codex-plugin/plugin.json
+    skills_registry: plugins/nelson/skills/registry.yaml
+    rules_registry: plugins/nelson/rules/registry.yaml
+    workflows_registry: plugins/nelson/workflows/registry.yaml
+    skill_id: nelson-conversion
+    workflow_id: nelson-conversion
+    priority: 1

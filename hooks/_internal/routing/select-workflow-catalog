@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+import os
+import re
+import sys
+from pathlib import Path
+
+from skill_registry import plugin_entries, tokenize
+
+
+def find_repo_root(start):
+    cur = Path(start).resolve()
+    while True:
+        if (cur / "hooks.json").is_file() and (cur / "skills").is_dir() and (cur / "rules").is_dir():
+            return cur
+        if cur.parent == cur:
+            raise RuntimeError("repository root not found")
+        cur = cur.parent
+
+
+def parse_workflow_registry(path):
+    entries = []
+    path = Path(path)
+    if not path.is_file():
+        return entries
+
+    current = None
+    in_workflows = False
+    with path.open("r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            stripped = line.strip()
+            if stripped == "workflows:":
+                in_workflows = True
+                continue
+            if not in_workflows:
+                continue
+            if stripped.startswith("- id:"):
+                if current:
+                    entries.append(current)
+                current = {
+                    "id": stripped.split(":", 1)[1].strip(),
+                    "file": "",
+                    "tags": [],
+                    "priority": 99,
+                    "registry": str(path),
+                }
+                continue
+            if current is None:
+                continue
+            if stripped.startswith("file:"):
+                current["file"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("priority:"):
+                try:
+                    current["priority"] = int(float(stripped.split(":", 1)[1].strip()))
+                except Exception:
+                    pass
+            elif stripped.startswith("tags:"):
+                value = stripped.split(":", 1)[1].strip()
+                if value.startswith("[") and value.endswith("]"):
+                    current["tags"] = [part.strip().strip("'\"") for part in value[1:-1].split(",") if part.strip()]
+        if current:
+            entries.append(current)
+    return entries
+
+
+def score_entry(entry, task_class, terms):
+    workflow_id = entry.get("id", "")
+    haystack = " ".join([workflow_id, entry.get("file", ""), " ".join(entry.get("tags", []) or [])]).lower()
+    tokens = set(tokenize(haystack))
+    score = 0.0
+
+    def token_matches(term, token):
+        return token == term or token.startswith(term) or term.startswith(token)
+
+    if task_class and any(token_matches(task_class.lower(), token) for token in tokens):
+        score += 3.0
+    if terms:
+        score += sum(1.0 for term in terms if any(token_matches(term, token) for token in tokens))
+
+    if score <= 0:
+        return None
+
+    try:
+        score += max(0.0, 1.0 - (float(entry.get("priority", 99)) * 0.05))
+    except Exception:
+        pass
+
+    return score
+
+
+def main():
+    task_class = sys.argv[1] if len(sys.argv) > 1 else "general"
+    keywords = sys.argv[3] if len(sys.argv) > 3 else ""
+    workspace_root = Path(sys.argv[4]) if len(sys.argv) > 4 else Path.cwd()
+    terms = [term for term in tokenize(f"{task_class} {keywords}") if term]
+    code_home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+
+    best = None
+    best_score = -1.0
+    best_index = 10**6
+    best_source = ""
+
+    for index, entry in enumerate(plugin_entries(root=workspace_root, code_home=code_home)):
+        registry_path = entry.get("workflows_registry", "")
+        if not registry_path:
+            continue
+        for wf in parse_workflow_registry(registry_path):
+            score = score_entry(wf, task_class, terms)
+            if score is None:
+                continue
+            if score > best_score or (score == best_score and index < best_index):
+                best = wf.get("id", "")
+                best_score = score
+                best_index = index
+                best_source = f"plugin:{entry.get('id', 'unknown')}"
+
+    if best:
+        print(f"workflow:selected id={best} source={best_source}")
+        print(best)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

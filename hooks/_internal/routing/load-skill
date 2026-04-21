@@ -57,10 +57,12 @@ import sys
 data = json.loads(sys.argv[1])
 print(data.get("file", ""))
 print(data.get("registry", ""))
+print(data.get("registry_label", ""))
 PY
 )"
 skill_file="$(printf '%s\n' "$resolved_fields" | sed -n '1p')"
 registry_file="$(printf '%s\n' "$resolved_fields" | sed -n '2p')"
+registry_label="$(printf '%s\n' "$resolved_fields" | sed -n '3p')"
 
 [[ -n "$skill_file" && -f "$skill_file" ]] || { echo "skill:error missing_file_for_id=$skill_id"; exit 1; }
 
@@ -81,6 +83,21 @@ extract_metadata() {
 }
 
 if [[ "$mode" == "metadata" ]]; then
+  python3 - "$skill_id" "$registry_file" "$registry_label" "$skill_file" <<'PY'
+import json
+import sys
+
+print(json.dumps(
+    {
+        "kind": "skill",
+        "id": sys.argv[1],
+        "registry": sys.argv[2],
+        "registry_label": sys.argv[3],
+        "source_file": sys.argv[4],
+    },
+    separators=(",", ":"),
+))
+PY
   extract_metadata | awk -v m="$max_chars" '
     { out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } }
     END { if (length(out) < m) print out }

@@ -146,8 +146,13 @@ def default_state():
             "workflow": "unknown",
             "output_contract": "",
             "skill_id": "none",
+            "skill_registry_label": "",
             "external_skill_id": "",
             "external_skill_source": "",
+            "plugin_id": "",
+            "plugin_source": "",
+            "plugin_context": "",
+            "plugin_package": {},
             "confidence": 0.0,
             "objective": "",
             "pending_searches": [],
@@ -229,6 +234,8 @@ def deep_fill_defaults(value, defaults):
     if isinstance(defaults, dict):
         if not isinstance(value, dict):
             value = {}
+        if not defaults:
+            return value
         merged = {}
         for k, dv in defaults.items():
             merged[k] = deep_fill_defaults(value.get(k), dv)
@@ -741,6 +748,51 @@ def parse_skill_loaded_chars(output):
         if line.startswith("skill:metrics"):
             return parse_kv_metric(line, "loaded_chars")
     return 0
+
+
+def parse_first_json_object(output):
+    text_output = (output or "").strip()
+    if text_output.startswith("{"):
+        try:
+            parsed = json.loads(text_output)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+    buffer = []
+    started = False
+    depth = 0
+    for raw_line in output.splitlines():
+        line = raw_line.rstrip("\n")
+        if not started and "{" not in line:
+            continue
+        if not started:
+            started = True
+        buffer.append(line)
+        depth += line.count("{")
+        depth -= line.count("}")
+        if started and depth <= 0:
+            candidate = "\n".join(buffer).strip()
+            if candidate.startswith("{"):
+                try:
+                    parsed = json.loads(candidate)
+                    if isinstance(parsed, dict):
+                        return parsed
+                except Exception:
+                    pass
+            buffer = []
+            started = False
+            depth = 0
+    return {}
+
+
+def parse_skill_load_report(output):
+    report = parse_first_json_object(output)
+    if not report:
+        return {}
+    if "skill_id" not in report and "id" in report:
+        report["skill_id"] = report.get("id", "")
+    return report
 
 
 def parse_external_skill_discovery(output):
@@ -1620,6 +1672,18 @@ def main():
 
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
+        skill_load_report = parse_skill_load_report(load_skill_out)
+        skill_registry_label = text(skill_load_report.get("registry_label", ""))
+        plugin_id = ""
+        plugin_source = ""
+        plugin_context = {}
+        plugin_context_text = ""
+        if skill_registry_label.startswith("plugin:"):
+            plugin_id = skill_registry_label.split(":", 1)[1]
+            plugin_source = skill_registry_label
+            _, plugin_context_out = run_internal(os.path.join("plugins", plugin_id, "scripts", "package-context.sh"))
+            plugin_context = parse_first_json_object(plugin_context_out)
+            plugin_context_text = text(plugin_context.get("additionalContext", "")) if plugin_context else ""
 
         _, controller_out = run_internal(
             "load-budget-controller",
@@ -1629,7 +1693,7 @@ def main():
 
         token_defaults = load_token_defaults()
         prompt_budget_chars = max(1, (token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"]) * 4)
-        remaining_prompt_chars = max(0, prompt_budget_chars - len(objective) - skill_loaded_chars)
+        remaining_prompt_chars = max(0, prompt_budget_chars - len(objective) - skill_loaded_chars - len(plugin_context_text))
 
         memory_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["memory_scale"]), int(180 * budget_controller["memory_scale"]), 0.24 * budget_controller["memory_scale"])
         memory_max_results = prompt_stage_result_cap(remaining_prompt_chars)
@@ -1640,6 +1704,8 @@ def main():
         mem_loaded, mem_chars, mem_results = parse_memory_load_metrics(load_mem_out)
 
         context_keywords_parts = [keywords]
+        if plugin_context_text:
+            context_keywords_parts.append(plugin_context_text)
         if mem_results and isinstance(mem_results[0], dict) and mem_results[0].get("type") == "session":
             session_focus = []
             for key in ("objective", "constraints", "active_files", "latest_decisions", "blockers"):
@@ -1714,8 +1780,13 @@ def main():
                 "workflow": workflow,
                 "output_contract": output_contract,
                 "skill_id": skill_id,
+                "skill_registry_label": skill_registry_label,
                 "external_skill_id": text(external_skill_report.get("selected", {}).get("name", "")),
                 "external_skill_source": text(external_skill_report.get("selected", {}).get("source", "")),
+                "plugin_id": plugin_id,
+                "plugin_source": plugin_source,
+                "plugin_context": text(plugin_context.get("additionalContext", "")),
+                "plugin_package": plugin_context.get("package", {}),
                 "confidence": confidence,
                 "objective": objective,
             }

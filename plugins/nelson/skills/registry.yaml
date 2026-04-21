@@ -1,0 +1,10 @@
+version: 1
+selection:
+  low_confidence_skill: nelson-conversion
+  max_skill_chars: 700
+  metadata_only_default: true
+skills:
+  - id: nelson-conversion
+    file: nelson-conversion/SKILL.md
+    tags: [nelson, dynamic, integration, plugin]
+    priority: 1

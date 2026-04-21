@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-from skill_registry import parse_registry, registry_candidates as resolve_registry_candidates, tokenize
+from skill_registry import parse_registry, registry_candidates as resolve_registry_candidates, registry_label, tokenize
 
 
 def score_entry(entry, task_class, terms):
@@ -56,17 +56,24 @@ def main():
     best = None
     best_score = -1.0
     best_index = 10**6
+    best_registry = ""
     for index, registry_path in enumerate(registry_paths):
+        source = registry_label(registry_path, root=workspace_root, code_home=code_home)
         for entry in parse_registry(registry_path):
             score = score_entry(entry, task_class, terms)
             if score is None:
                 continue
+            if source.startswith("plugin:"):
+                score += 2.5
             if score > best_score or (score == best_score and index < best_index):
                 best = entry.get("id", "")
                 best_score = score
                 best_index = index
+                best_registry = str(registry_path)
 
     if best:
+        source = registry_label(best_registry, root=workspace_root, code_home=code_home) if best_registry else "core"
+        print(f"skill:selected id={best} source={source}")
         print(best)
     return 0
 
