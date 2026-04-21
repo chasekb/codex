@@ -1,1167 +1,227 @@
 {
   "implementation_tasks": [
     {
-      "created_at": "2026-04-15T15:35:12Z",
-      "details": "Add a separate options snapshot path that determines the latest available daily close per underlying symbol, filters out contracts expired on or before that close, values each remaining contract once, and persists the results to a unique snapshot valuation table.",
-      "id": "TASK-20260415-001",
-      "kind": "task",
-      "priority": "high",
-      "project_id": "transform",
-      "recommendation_id": "REC-20260415-004",
-      "related_id": "REC-20260415-004",
-      "source": "conversation",
-      "status": "pending",
-      "summary": "Add a CLI mode that values only contracts still open at the latest available daily close and writes them to a dedicated snapshot table.",
-      "tags": [
-        "cli",
-        "database",
-        "options",
-        "snapshot",
-        "valuation"
-      ],
-      "title": "Implement snapshot options valuation run for unexpired contracts",
-      "updated_at": "2026-04-15T16:20:00Z"
-    },
-    {
-      "created_at": "2026-04-20T14:05:03Z",
-      "details": "Create a separate options run mode that finds the latest daily close available for each underlying symbol, filters out contracts whose expiration date is on or before that close, values each remaining contract once at that close, and writes the results to a dedicated snapshot table instead of the existing daily-history revaluation table.",
-      "id": "TASK-20260420-001",
-      "kind": "task",
-      "priority": "high",
-      "project_id": "transform",
-      "recommendation_id": "REC-20260415-004",
-      "related_id": "REC-20260415-004",
-      "source": "conversation",
-      "status": "pending",
-      "summary": "Compute one valuation per unexpired option using the most recent available daily close and persist it to a dedicated snapshot table.",
-      "tags": [
-        "backlog",
-        "options",
-        "snapshot",
-        "valuation"
-      ],
-      "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
-      "updated_at": "2026-04-20T14:05:03Z"
-    },
-    {
-      "commit_sha": "279b18e",
-      "completed_at": "2026-04-20T14:25:08Z",
-      "created_at": "2026-04-20T14:07:55Z",
-      "details": "On TaskComplete, persist the live pre_prompt_* values from hook-runtime-state.json into the normalized run row. This keeps utilization, margin, and estimated-token metrics available for trend analysis, budget tuning, and regression review.",
-      "id": "TASK-20260420-002",
+      "commit_sha": "db13ab6",
+      "completed_at": "2026-04-21T16:10:59Z",
+      "created_at": "2026-04-21T15:53:31Z",
+      "details": "Create a runtime plugin catalog and per-package registries so Nelson packages can be discovered and identified alongside core, overlay, and external skill sources. This is the first commit-ready slice of the Nelson dynamic integration plan.",
+      "id": "TASK-20260421-001",
       "kind": "task",
       "priority": "high",
       "project_id": "codex",
-      "recommendation_id": "REC-20260420-002",
-      "related_id": "REC-20260420-002",
-      "source": "metrics_review",
+      "recommendation_id": "REC-20260421-002",
+      "related_id": "REC-20260421-002",
+      "source": "plan",
       "status": "completed",
-      "summary": "Copy pre-prompt budget and utilization fields into token-metrics.csv so historical analysis can use them.",
+      "summary": "Discover Nelson packages from a runtime plugin catalog and label their sources in selection state",
       "tags": [
-        "backlog",
-        "metrics",
-        "telemetry",
-        "token-budgeting"
+        "catalog",
+        "codex",
+        "dynamic-integration",
+        "nelson",
+        "runtime"
       ],
-      "title": "Persist prompt-budget fields in normalized token history",
-      "updated_at": "2026-04-20T14:25:08Z",
+      "title": "Add Nelson plugin catalog discovery and source labels",
+      "updated_at": "2026-04-21T16:10:59Z",
       "verified": true
     },
     {
-      "commit_sha": "d7065f7",
-      "completed_at": "2026-04-20T16:47:23Z",
-      "created_at": "2026-04-20T14:34:31Z",
-      "details": "Build an external-origin uplift pipeline for hooks, rules, skills, and workflows imported from GitHub, ClawHub, or other third-party sources. Include provenance tracking, static manifest checks, sandboxed behavioral validation for executable assets, and regular update checking against upstream sources. Follow-up steps: add source provenance records, define promotion tiers, and add drift detection for updates.",
-      "id": "TASK-20260420-003",
+      "commit_sha": "db13ab6",
+      "completed_at": "2026-04-21T16:11:03Z",
+      "created_at": "2026-04-21T15:54:46Z",
+      "details": "Teach skill selection to consult Nelson package registries after core skills and before fallback. Selected skills should carry source labels so logs explain why a Nelson or core skill was chosen.",
+      "id": "TASK-20260421-002",
       "kind": "task",
-      "priority": "medium",
+      "priority": "high",
       "project_id": "codex",
-      "recommendation_id": "REC-20260414-001",
-      "related_id": "REC-20260414-001",
-      "source": "user_prompt",
+      "source": "plan",
       "status": "completed",
-      "summary": "Create an external-origin uplift pipeline with security screening and regular update checks.",
-      "tags": [
-        "backlog",
-        "external-origin",
-        "project-management",
-        "recommendation",
-        "security",
-        "update-checking"
-      ],
-      "title": "Add an external-origin uplift pipeline with security screening and update checking",
-      "updated_at": "2026-04-20T16:47:23Z",
-      "verified": true
-    },
-    {
-      "closeout_criteria": [
-        "Nelson workflows, hooks, skills, rules, and plugin-boundary behavior are inventoried.",
-        "The concept map is written in a reviewable form.",
-        "The task is committed, verified, and linked back to REC-20260414-003."
-      ],
-      "commit_sha": "c197489",
-      "completed_at": "2026-04-20T17:21:18Z",
-      "created_at": "2026-04-20T16:57:08Z",
-      "details": "Inventory Nelson workflows, hooks, skills, rules, and plugin-boundary behavior so the conversion work starts from a concrete concept map.",
-      "id": "TASK-20260420-004",
-      "kind": "task",
-      "priority": "medium",
-      "project_id": "codex",
-      "recommendation_id": "REC-20260414-003",
-      "related_id": "REC-20260414-003",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "Identify the Nelson plugin concepts that need to be mapped into Codex primitives.",
+      "summary": "Route Nelson-related tasks to package-local skills while preserving core skill precedence for runtime policy",
       "tags": [
         "codex",
-        "inventory",
+        "dynamic-integration",
         "nelson",
-        "plugin"
+        "selection",
+        "skills"
       ],
-      "title": "Inventory Nelson plugin concepts and orchestration",
-      "updated_at": "2026-04-20T17:21:18Z",
+      "title": "Make Nelson skill selection source-aware",
+      "updated_at": "2026-04-21T16:11:03Z",
       "verified": true
     },
     {
-      "closeout_criteria": [
-        "Each Nelson concept has a Codex primitive mapping or an explicit rejection reason.",
-        "The plugin package boundary is defined clearly enough to implement.",
-        "The task is committed, verified, and linked back to REC-20260414-003."
-      ],
-      "commit_sha": "e0e1e08",
-      "completed_at": "2026-04-20T17:21:31Z",
-      "created_at": "2026-04-20T16:57:25Z",
-      "details": "Map Nelson concepts to Codex workflows, hooks, skills, and rules, and specify how the plugin package should be structured.",
-      "id": "TASK-20260420-005",
+      "commit_sha": "db13ab6",
+      "completed_at": "2026-04-21T16:11:06Z",
+      "created_at": "2026-04-21T15:54:46Z",
+      "details": "Add Nelson relevance checks and package activation logic so package-local hooks, rules, and workflows load when Nelson is relevant or explicitly requested, while core runtime order remains authoritative.",
+      "id": "TASK-20260421-003",
       "kind": "task",
-      "priority": "medium",
+      "priority": "high",
       "project_id": "codex",
-      "related_id": "REC-20260414-003",
-      "source": "user_prompt",
+      "source": "plan",
       "status": "completed",
-      "summary": "Define the Codex-native equivalents for Nelson concepts and the plugin boundary.",
+      "summary": "Activate Nelson package-local hooks, rules, and workflows only when relevant",
       "tags": [
         "codex",
-        "mapping",
+        "dynamic-integration",
+        "hooks",
         "nelson",
-        "plugin"
+        "rules",
+        "workflows"
       ],
-      "title": "Map Nelson concepts to Codex primitives and package boundary",
-      "updated_at": "2026-04-20T17:21:31Z",
+      "title": "Load Nelson hooks rules and workflows dynamically",
+      "updated_at": "2026-04-21T16:11:06Z",
       "verified": true
     },
     {
-      "closeout_criteria": [
-        "The Codex-native plugin package is assembled from the mapped assets.",
-        "Representative mission scenarios are validated end to end.",
-        "The task is committed, verified, and linked back to REC-20260414-003."
-      ],
-      "commit_sha": "8818996",
-      "completed_at": "2026-04-20T17:21:39Z",
-      "created_at": "2026-04-20T16:57:37Z",
-      "details": "Create the plugin package boundary, wire the mapped Codex assets, and validate representative mission scenarios end to end.",
-      "id": "TASK-20260420-006",
+      "commit_sha": "db13ab6",
+      "completed_at": "2026-04-21T16:11:09Z",
+      "created_at": "2026-04-21T15:54:46Z",
+      "details": "Extend runtime self-tests to cover Nelson relevance, package-local loading, and non-Nelson fallback behavior, then update the Nelson integration docs and Superpowers Codex docs to explain the shared overlay model.",
+      "id": "TASK-20260421-004",
       "kind": "task",
       "priority": "medium",
       "project_id": "codex",
-      "related_id": "REC-20260414-003",
-      "source": "user_prompt",
+      "source": "plan",
       "status": "completed",
-      "summary": "Assemble the Codex-native plugin package and verify mission-level behavior.",
+      "summary": "Add runtime regression coverage and documentation for Nelson dynamic integration",
       "tags": [
         "codex",
+        "docs",
+        "dynamic-integration",
         "nelson",
-        "package",
-        "validation"
+        "tests"
       ],
-      "title": "Package Nelson conversion and validate mission scenarios",
-      "updated_at": "2026-04-20T17:21:39Z",
+      "title": "Add Nelson end-to-end tests and docs",
+      "updated_at": "2026-04-21T16:11:09Z",
       "verified": true
-    },
+    }
   ],
   "meta": {
-    "last_weekly_review_at": "2026-04-20T17:20:55Z"
+    "last_weekly_review_at": "2026-04-21T16:04:27Z"
   },
   "recommendations": [
     {
-      "closed_at": "2026-04-13T16:05:00Z",
-      "commit_sha": "7ee8669",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a workflow that classifies new backlog items, prioritizes them, and promotes only accepted recommendations into implementation work.",
-      "id": "REC-20260413-008",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Classify backlog intake and keep the queue ordered by urgency and dependency.",
-      "tags": [
-        "backlog",
-        "workflow",
-        "triage"
-      ],
-      "title": "Add a backlog-triage workflow to classify and prioritize new items",
-      "updated_at": "2026-04-13T16:12:00Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T16:05:00Z",
-      "commit_sha": "7ee8669",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a workflow that converts accepted recommendations into implementation tasks with explicit success criteria, keeping the recommendation open until derived work closes.",
-      "id": "REC-20260413-009",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Turn accepted backlog recommendations into executable tasks.",
-      "tags": [
-        "backlog",
-        "workflow",
-        "promotion"
-      ],
-      "title": "Add a recommendation-to-task workflow to promote accepted recommendations into implementation tasks",
-      "updated_at": "2026-04-13T16:12:00Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T16:20:00Z",
-      "commit_sha": "bfc0e7a",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a workflow for executing implementation tasks end to end, including status updates, commit capture, verification, and closeout evidence.",
-      "id": "REC-20260413-010",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Track implementation through commit and verification evidence.",
-      "tags": [
-        "backlog",
-        "workflow",
-        "implementation"
-      ],
-      "title": "Add an implementation-execution workflow that updates task status, captures commit SHAs, and verifies completion",
-      "updated_at": "2026-04-13T16:20:00Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T17:17:30Z",
-      "commit_sha": "52ef190",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a weekly workflow that re-sorts priorities, flags stale items, and enforces work-in-progress limits on active backlog items.",
-      "id": "REC-20260413-011",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Review backlog health on a regular cadence.",
-      "tags": [
-        "backlog",
-        "workflow",
-        "review"
-      ],
-      "title": "Add a weekly-backlog-review workflow to refresh priority, identify stale items, and enforce WIP limits",
-      "updated_at": "2026-04-13T17:17:30Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T17:28:29Z",
-      "commit_sha": "24d3cbe",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a workflow that promotes reusable skill gaps into new or updated skills, or discovers and installs external skills when they are a better fit.",
-      "id": "REC-20260413-012",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Turn repeated gaps into skill updates or installs.",
-      "tags": [
-        "skills",
-        "workflow",
-        "self-improvement"
-      ],
-      "title": "Add a skill-maintenance workflow for reusable skill gaps and external skill discovery",
-      "updated_at": "2026-04-13T17:28:29Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T17:36:22Z",
-      "commit_sha": "d61f834",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a workflow that routes recurring failures into the systematic-debugging skill before any patching, so root causes are understood before mutation.",
-      "id": "REC-20260413-013",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Make repeated failures go through a deeper debug path.",
-      "tags": [
-        "debugging",
-        "workflow",
-        "systematic-debugging"
-      ],
-      "title": "Add a debug-deep-dive workflow that invokes systematic debugging before patching repeated failures",
-      "updated_at": "2026-04-13T17:36:22Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T16:05:00Z",
-      "commit_sha": "7ee8669",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a skill that reviews new backlog items and classifies them as recommendations, implementation tasks, or noise before they enter the active queue.",
-      "id": "REC-20260413-014",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Classify incoming backlog items consistently.",
-      "tags": [
-        "skills",
-        "backlog",
-        "triage"
-      ],
-      "title": "Add a backlog-triage skill to classify new items as recommendation, task, or noise",
-      "updated_at": "2026-04-13T15:45:00Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T16:05:00Z",
-      "commit_sha": "7ee8669",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a skill that decomposes accepted recommendations into implementation-ready tasks with clear acceptance criteria and manageable scope.",
-      "id": "REC-20260413-015",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Break recommendations into executable units.",
-      "tags": [
-        "skills",
-        "backlog",
-        "planning"
-      ],
-      "title": "Add a task-decomposition skill to convert recommendations into implementation-ready tasks",
-      "updated_at": "2026-04-13T15:45:00Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T17:55:48Z",
-      "commit_sha": "9c7d53d",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a skill that reports backlog aging, active work, completion rates, and other project-health signals for regular review.",
-      "id": "REC-20260413-016",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Summarize backlog health and flow metrics.",
-      "tags": [
-        "skills",
-        "backlog",
-        "metrics"
-      ],
-      "title": "Add a project-insights skill to report backlog health, aging items, WIP, and completion rates",
-      "updated_at": "2026-04-13T17:55:48Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T18:32:42Z",
-      "commit_sha": "5bb4eaf",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a skill that reviews overdue backlog items and decides whether to keep them active, defer them, or drop them from the canonical queue.",
-      "id": "REC-20260413-017",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Prune or defer stale backlog items consistently.",
-      "tags": [
-        "skills",
-        "backlog",
-        "review"
-      ],
-      "title": "Add a stale-item-review skill to review overdue backlog items and decide whether to keep, defer, or drop them",
-      "updated_at": "2026-04-13T18:32:42Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T18:42:56Z",
-      "commit_sha": "6b4df7c",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Create a skill that translates backlog items into GitHub Issues or GitHub Projects entries with clean titles, summaries, and acceptance criteria.",
-      "id": "REC-20260413-018",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Write backlog items into GitHub issue/project surfaces.",
-      "tags": [
-        "skills",
-        "backlog",
-        "github"
-      ],
-      "title": "Add an issue-writing skill to turn backlog items into GitHub Issues or GitHub Projects entries cleanly",
-      "updated_at": "2026-04-13T18:42:56Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T21:07:55Z",
-      "commit_sha": "2390396",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Trim the session-start guidance so the Superpowers overlay primes behavior without becoming a heavy always-on context payload.",
-      "id": "REC-20260413-019",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Reduce startup overhead and keep the primer lean.",
-      "tags": [
-        "hooks",
-        "startup",
-        "superpowers"
-      ],
-      "title": "Keep the Superpowers startup hook minimal so it primes behavior without loading a large always-on payload",
-      "updated_at": "2026-04-13T21:07:55Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T21:13:43Z",
-      "commit_sha": "45a12c2",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Add rules that keep runtime policy in core Codex and reserve Superpowers skills for behavior-shaping content, not execution control.",
-      "id": "REC-20260413-020",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Clarify which layer owns policy versus behavior.",
-      "tags": [
-        "rules",
-        "policy",
-        "skills"
-      ],
-      "title": "Add rules that prefer core runtime skills for policy and Superpowers skills for behavior-shaping work",
-      "updated_at": "2026-04-13T21:13:43Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-13T21:42:31Z",
-      "commit_sha": "a9b5ad3",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Add rules that force verification and review before any work can be marked complete or closed out in the backlog.",
-      "id": "REC-20260413-021",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Make review and verification mandatory before completion.",
-      "tags": [
-        "rules",
-        "verification",
-        "review"
-      ],
-      "title": "Add rules that require verification and review before marking work complete",
-      "updated_at": "2026-04-13T21:42:31Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-14T13:54:54Z",
-      "commit_sha": "a9b5ad3",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Add rules that keep one canonical backlog, separate recommendations from tasks, and close recommendations only after derived tasks are committed and verified.",
-      "id": "REC-20260413-022",
-      "kind": "recommendation",
-      "priority": "high",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Keep backlog data canonical and type-separated.",
-      "tags": [
-        "rules",
-        "backlog",
-        "policy"
-      ],
-      "title": "Add rules for single-source-of-truth backlog management and for separating recommendations from implementation tasks",
-      "updated_at": "2026-04-14T13:54:54Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-14T14:10:50Z",
-      "commit_sha": "f20f20c",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Keep skill loading metadata-only by default so workflows only pull full skill bodies when they explicitly need more context.",
-      "id": "REC-20260413-023",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Minimize loaded skill context by default.",
-      "tags": [
-        "skills",
-        "loading",
-        "token-efficiency"
-      ],
-      "title": "Keep metadata-only skill loading as the default unless a workflow explicitly needs more context",
-      "updated_at": "2026-04-14T14:10:50Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-14T14:20:32Z",
-      "commit_sha": "311a229",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Extend skill-gap handling so repeated reusable gaps can become new skills or external installs, instead of only being recorded as memory.",
-      "id": "REC-20260413-024",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Promote repeated gaps into reusable skills.",
-      "tags": [
-        "skills",
-        "learning",
-        "self-improvement"
-      ],
-      "title": "Expand skill-gap promotion so reusable gaps become new skills or external installs, not just memory entries",
-      "updated_at": "2026-04-14T14:20:32Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-14T14:30:54Z",
-      "commit_sha": "4469b46",
-      "created_at": "2026-04-13T15:45:00Z",
-      "details": "Add a bootstrap check that verifies the Superpowers submodule is present and initialized for fresh clones before any workflow depends on it.",
-      "id": "REC-20260413-025",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "conversation",
-      "status": "completed",
-      "summary": "Fail fast if the Superpowers submodule is missing or uninitialized.",
-      "tags": [
-        "bootstrap",
-        "submodule",
-        "superpowers"
-      ],
-      "title": "Add a lightweight bootstrap check for the submodule so fresh clones initialize superpowers cleanly",
-      "updated_at": "2026-04-14T14:30:54Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-14T14:41:46Z",
-      "commit_sha": "1b6ee96",
-      "created_at": "2026-04-14T14:17:20Z",
-      "details": "The runtime classified this prompt as a reusable skill gap.\n\nTarget: create_skill\nSource prompt:\nI have a knowledge gap and want to extract skill from this recurring pattern.\n\nPromote the reusable behavior into a skill or install an existing external skill.",
-      "id": "REC-20260414-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "related_id": "FEAT-20260414-DCA",
-      "source": "self-improvement",
-      "status": "completed",
-      "summary": "Create reusable skill from a reusable skill gap.",
-      "tags": [
-        "create_skill",
-        "self-improvement",
-        "skill-gap",
-        "skill-promotion"
-      ],
-      "title": "Promote reusable skill gap: I have a knowledge gap and want to extract skill from this recurring pattern.",
-      "updated_at": "2026-04-14T14:41:46Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-20T16:47:23Z",
-      "created_at": "2026-04-14T22:03:29Z",
-      "details": "Build an external-origin uplift pipeline for hooks, rules, skills, and workflows imported from GitHub, ClawHub, or other third-party sources. Include provenance tracking, static manifest checks, sandboxed behavioral validation for executable assets, and regular update checking against upstream sources. Follow-up steps: add source provenance records, define promotion tiers, and add drift detection for updates.",
-      "id": "REC-20260414-001",
-      "implementation_tasks": [
-        "TASK-20260420-003"
-      ],
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "Create an external-origin uplift pipeline with security screening and regular update checks.",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation",
-        "external-origin",
-        "security",
-        "update-checking"
-      ],
-      "title": "Add an external-origin uplift pipeline with security screening and update checking",
-      "updated_at": "2026-04-20T16:47:23Z"
-    },
-    {
-      "closed_at": "2026-04-20T17:21:39Z",
-      "closeout_criteria": [
-        "All derived tasks for the Nelson conversion are completed and verified.",
-        "The Codex-native plugin package exists with mapped workflows, hooks, skills, and rules.",
-        "The recommendation is closed only after the linked tasks are committed and verified."
-      ],
-      "created_at": "2026-04-14T22:07:32Z",
-      "details": "Convert the Nelson plugin into a Codex-native plugin package with Codex workflows, hooks, skills, and rules mapped from Nelson's orchestration model. Follow-up steps: inventory Nelson concepts, map them to Codex primitives, package the plugin boundary, and validate mission-level scenarios.",
-      "id": "REC-20260414-003",
-      "implementation_tasks": [
-        "TASK-20260420-004",
-        "TASK-20260420-005",
-        "TASK-20260420-006"
-      ],
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "Convert the Nelson plugin into a Codex-native plugin package.",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation",
-        "nelson",
-        "plugin",
-        "conversion"
-      ],
-      "title": "Convert the Nelson plugin for use with Codex",
-      "updated_at": "2026-04-20T17:21:39Z"
-    },
-    {
-      "closed_at": "2026-04-15T16:09:45Z",
-      "commit_sha": "26703e0",
-      "created_at": "2026-04-14T22:12:30Z",
-      "details": "Investigate and fix the slowdown in the daily metrics loop. The most likely regression is repeated metrics-table DDL and the staging-table copy path inherited from the metrics primary-key change. Recommended fix: stop recreating the staging table with INCLUDING ALL, avoid repeated table-creation checks inside save_metrics, and confirm whether profit/TEMA writes need batching or consolidation after the metrics write path is optimized.",
-      "id": "REC-20260414-004",
-      "kind": "recommendation",
-      "priority": "high",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "Optimize the daily metrics loop by removing repeated DDL and staging-table index overhead.",
-      "tags": [
-        "backlog",
-        "performance",
-        "project-management",
-        "recommendation",
-        "metrics",
-        "database"
-      ],
-      "title": "Optimize the daily metrics loop to reduce repeated DDL and staging-table overhead",
-      "updated_at": "2026-04-15T16:09:45Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-15T15:34:13Z",
-      "commit_sha": "c08631c",
-      "created_at": "2026-04-14T22:16:17Z",
-      "details": "Ensure the canonical backlog can be read safely within a single project without surfacing items intended for other projects. Prefer one shared backlog store with an explicit project identifier or scope field on each item, and make project-local readers filter by that field. Follow-up steps: define the project_id or scope schema, preserve it through intake/promotion/closeout, and add tests proving project-local reads do not cross-pollinate.",
-      "id": "REC-20260414-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "Add project-scoped backlog isolation with explicit project identifiers.",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation",
-        "project-scope",
-        "isolation"
-      ],
-      "title": "Add project-scoped backlog isolation so project reads do not cross-pollinate",
-      "updated_at": "2026-04-15T15:34:13Z",
-      "verified": true
-    },
-    {
-      "created_at": "2026-04-15T15:34:40Z",
-      "details": "Create a separate options run mode that finds the latest daily close available for each underlying symbol, filters out contracts whose expiration date is on or before that close, values each remaining contract once at that close, and writes the results to a dedicated snapshot table instead of the existing daily-history revaluation table.",
-      "id": "REC-20260415-004",
-      "implementation_tasks": [
-        "TASK-20260415-001",
-        "TASK-20260420-001"
-      ],
-      "kind": "recommendation",
-      "priority": "high",
-      "project_id": "transform",
-      "source": "conversation",
-      "status": "promoted",
-      "summary": "Compute one valuation per unexpired option using the most recent available daily close and persist it to a dedicated snapshot table.",
-      "tags": [
-        "backlog",
-        "options",
-        "snapshot",
-        "valuation"
-      ],
-      "title": "Add a snapshot options valuation run for unexpired contracts at the latest daily close",
-      "updated_at": "2026-04-20T14:05:03Z"
-    },
-    {
-      "closed_at": "2026-04-15T16:37:15Z",
-      "commit_sha": "1aea4ba",
-      "created_at": "2026-04-15T16:32:24Z",
-      "details": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
-      "id": "REC-20260415-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "completed",
-      "summary": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add the project-insights explicitly reporting selected scope update to the backlog and implement",
-      "updated_at": "2026-04-15T16:37:15Z",
-      "verified": true
-    },
-    {
-      "closed_at": "2026-04-20T14:25:08Z",
-      "created_at": "2026-04-20T14:03:50Z",
-      "details": "On TaskComplete, persist the live pre_prompt_* values from hook-runtime-state.json into the normalized run row. This keeps utilization, margin, and estimated-token metrics available for trend analysis, budget tuning, and regression review.",
-      "id": "REC-20260420-002",
-      "implementation_tasks": [
-        "TASK-20260420-002"
-      ],
-      "kind": "recommendation",
-      "priority": "high",
-      "project_id": "codex",
-      "related_id": "REC-20260420-001",
-      "source": "metrics_review",
-      "status": "completed",
-      "summary": "Copy pre-prompt budget and utilization fields into token-metrics.csv so historical analysis can use them.",
-      "tags": [
-        "backlog",
-        "metrics",
-        "telemetry",
-        "token-budgeting"
-      ],
-      "title": "Persist prompt-budget fields in normalized token history",
-      "updated_at": "2026-04-20T14:25:08Z"
-    },
-    {
-      "created_at": "2026-04-20T14:03:57Z",
-      "details": "Extend hook telemetry so each tool call records the tool name, duration, status, retry/fallback usage, and error category when present. The current event stream is mostly invocation counts, which is not enough to identify slow or unreliable tools.",
-      "id": "REC-20260420-003",
-      "kind": "recommendation",
-      "priority": "high",
-      "project_id": "global",
-      "related_id": "REC-20260420-001",
-      "source": "metrics_review",
-      "status": "open",
-      "summary": "Capture tool-level latency, success, failure, and retry signals for each invocation.",
-      "tags": [
-        "backlog",
-        "metrics",
-        "observability",
-        "tools"
-      ],
-      "title": "Record per-tool latency and outcome telemetry",
-      "updated_at": "2026-04-20T14:03:57Z"
-    },
-    {
-      "created_at": "2026-04-20T14:04:01Z",
-      "details": "Emit a small set of outcome-oriented signals for task completion, user-visible success, and error conditions. Without those fields, the current telemetry only supports internal runtime tuning and cannot clearly justify changes to existing functionality.",
-      "id": "REC-20260420-004",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "related_id": "REC-20260420-001",
-      "source": "metrics_review",
-      "status": "open",
-      "summary": "Add explicit outcome fields so metrics can support product decisions, not just budget tuning.",
-      "tags": [
-        "backlog",
-        "metrics",
-        "outcomes",
-        "product-analytics"
-      ],
-      "title": "Track user-outcome signals alongside runtime metrics",
-      "updated_at": "2026-04-20T14:04:01Z"
-    },
-    {
-      "created_at": "2026-04-20T14:04:52Z",
-      "details": "promote next available recommendation into taks",
-      "id": "REC-20260420-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "promote next available recommendation into taks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "promote next available recommendation into taks",
-      "updated_at": "2026-04-20T14:04:52Z"
-    },
-    {
-      "created_at": "2026-04-20T14:10:11Z",
-      "details": "show me the project backlog",
-      "id": "REC-20260420-006",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show me the project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show me the project backlog",
-      "updated_at": "2026-04-20T14:10:11Z"
-    },
-    {
-      "created_at": "2026-04-20T14:11:18Z",
-      "details": "give me the backlog sorted by priority for the project codex",
-      "id": "REC-20260420-007",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "give me the backlog sorted by priority for the project codex",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "give me the backlog sorted by priority for the project codex",
-      "updated_at": "2026-04-20T14:11:18Z"
-    },
-    {
-      "created_at": "2026-04-20T14:12:07Z",
-      "details": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
-      "id": "REC-20260420-008",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "this only shows the recommendations in the backlog. where are the tasks in the backlog",
-      "updated_at": "2026-04-20T14:12:07Z"
-    },
-    {
-      "created_at": "2026-04-20T14:14:23Z",
-      "details": "what about implementation_tasks? did you show that in the view of the project backlog?",
-      "id": "REC-20260420-009",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "what about implementation_tasks? did you show that in the view of the project backlog?",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "what about implementation_tasks? did you show that in the view of the project backlog?",
-      "updated_at": "2026-04-20T14:14:23Z"
-    },
-    {
-      "created_at": "2026-04-20T14:19:54Z",
-      "details": "move the source recommendation to the codex project also",
-      "id": "REC-20260420-010",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "move the source recommendation to the codex project also",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "move the source recommendation to the codex project also",
-      "updated_at": "2026-04-20T14:19:54Z"
-    },
-    {
-      "created_at": "2026-04-20T14:21:41Z",
-      "details": "show the open recommendations and tasks for this project",
-      "id": "REC-20260420-011",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show the open recommendations and tasks for this project",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show the open recommendations and tasks for this project",
-      "updated_at": "2026-04-20T14:21:41Z"
-    },
-    {
-      "created_at": "2026-04-20T14:24:15Z",
-      "details": "create the concrete closeout checklist for the task and the recommendation. close the task. close the recommendation",
-      "id": "REC-20260420-012",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "create the concrete closeout checklist for the task and the recommendation. close the task. close the recommendation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "create the concrete closeout checklist for the task and the recommendation. close the task. close th",
-      "updated_at": "2026-04-20T14:24:15Z"
-    },
-    {
-      "created_at": "2026-04-20T14:28:07Z",
-      "details": "show current project backlog",
-      "id": "REC-20260420-013",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show current project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show current project backlog",
-      "updated_at": "2026-04-20T14:28:07Z"
-    },
-    {
-      "created_at": "2026-04-20T14:34:26Z",
-      "details": "promote the highest priority codex recommendation into tasks",
-      "id": "REC-20260420-014",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "promote the highest priority codex recommendation into tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "promote the highest priority codex recommendation into tasks",
-      "updated_at": "2026-04-20T14:34:26Z"
-    },
-    {
-      "created_at": "2026-04-20T14:35:17Z",
-      "details": "implement and close the open task and source recommendation",
-      "id": "REC-20260420-015",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "implement and close the open task and source recommendation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "implement and close the open task and source recommendation",
-      "updated_at": "2026-04-20T14:35:17Z"
-    },
-    {
-      "created_at": "2026-04-20T16:43:40Z",
-      "details": "don't finish the backlog closeout until all task items are completed. continue completing incomplete task items",
-      "id": "REC-20260420-016",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "don't finish the backlog closeout until all task items are completed. continue completing incomplete task items",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "don't finish the backlog closeout until all task items are completed. continue completing incomplete",
-      "updated_at": "2026-04-20T16:43:40Z"
-    },
-    {
-      "created_at": "2026-04-20T16:52:23Z",
-      "details": "why are open tasks belonging to a different project showing in the project backlog",
-      "id": "REC-20260420-017",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "why are open tasks belonging to a different project showing in the project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "why are open tasks belonging to a different project showing in the project backlog",
-      "updated_at": "2026-04-20T16:52:23Z"
-    },
-    {
-      "created_at": "2026-04-20T16:52:51Z",
-      "details": "re-list the codex backlog",
-      "id": "REC-20260420-018",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "re-list the codex backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "re-list the codex backlog",
-      "updated_at": "2026-04-20T16:52:51Z"
-    },
-    {
-      "created_at": "2026-04-20T16:53:39Z",
-      "details": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be deleted",
-      "id": "REC-20260420-019",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be deleted",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "review the codex backlog open recommendations. are any of these prompt noise artifacts that can be d",
-      "updated_at": "2026-04-20T16:53:39Z"
-    },
-    {
-      "created_at": "2026-04-20T16:56:09Z",
-      "details": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
+      "created_at": "2026-04-20T17:28:10Z",
+      "details": "add to open recommendations project backlog to implement the backlog delete operation",
       "id": "REC-20260420-001",
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
       "status": "open",
-      "summary": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
+      "summary": "add to open recommendations project backlog to implement the backlog delete operation",
       "tags": [
         "backlog",
         "project-management",
         "recommendation"
       ],
-      "title": "promote the next highest priority project backlog open recommendation to itemized commitable tasks",
-      "updated_at": "2026-04-20T16:56:09Z"
+      "title": "add to open recommendations project backlog to implement the backlog delete operation",
+      "updated_at": "2026-04-20T17:28:10Z"
     },
     {
-      "created_at": "2026-04-20T16:59:33Z",
-      "details": "ensure each task and the source recommendation have closeout checklist criteria",
-      "id": "REC-20260420-020",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "ensure each task and the source recommendation have closeout checklist criteria",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "ensure each task and the source recommendation have closeout checklist criteria",
-      "updated_at": "2026-04-20T16:59:33Z"
-    },
-    {
-      "created_at": "2026-04-20T17:01:25Z",
-      "details": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendations",
-      "id": "REC-20260420-021",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendations",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "create a new backlog item to add closeout criteria checklist to newly created tasks and recommendati",
-      "updated_at": "2026-04-20T17:01:25Z"
-    },
-    {
-      "created_at": "2026-04-20T17:01:48Z",
-      "details": "When creating new backlog tasks or recommendations, include a closeout checklist section with completion criteria, verification evidence, and linkage back to the source item so future closeout is unambiguous.",
-      "id": "REC-20260420-022",
+      "created_at": "2026-04-20T17:28:24Z",
+      "details": "Extend the backlog manager with an explicit delete operation so prompt-noise items can be removed through the canonical store instead of hand-editing JSON. The delete path should require project scope checks, preserve auditability, and keep backlog stats consistent after removal.",
+      "id": "REC-20260420-002",
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "codex",
       "source": "user_prompt",
       "status": "open",
-      "summary": "Require explicit closeout criteria on newly created tasks and recommendations.",
+      "summary": "Add a supported delete path for removing prompt-noise or obsolete backlog items",
       "tags": [
         "backlog",
-        "checklist",
-        "closeout",
+        "deletion",
+        "maintenance",
         "project-management"
       ],
-      "title": "Add closeout criteria checklists to new backlog items",
-      "updated_at": "2026-04-20T17:01:48Z"
+      "title": "Implement backlog delete operation",
+      "updated_at": "2026-04-20T17:28:24Z"
     },
     {
-      "created_at": "2026-04-20T17:22:50Z",
-      "details": "push then show project backlog",
-      "id": "REC-20260420-023",
+      "created_at": "2026-04-21T15:50:18Z",
+      "details": "add the nelson dynamic integration to the project backlog and reprioritize the existing project backlog",
+      "id": "REC-20260421-001",
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
       "status": "open",
-      "summary": "push then show project backlog",
+      "summary": "add the nelson dynamic integration to the project backlog and reprioritize the existing project backlog",
       "tags": [
         "backlog",
         "project-management",
         "recommendation"
       ],
-      "title": "push then show project backlog",
-      "updated_at": "2026-04-20T17:22:50Z"
+      "title": "add the nelson dynamic integration to the project backlog and reprioritize the existing project back",
+      "updated_at": "2026-04-21T15:50:18Z"
     },
     {
-      "created_at": "2026-04-20T17:26:39Z",
-      "details": "remove the task and its source recommendation",
-      "id": "REC-20260420-024",
+      "closed_at": "2026-04-21T16:10:59Z",
+      "created_at": "2026-04-21T15:51:10Z",
+      "details": "Implement the Nelson dynamic integration plan so Nelson packages are discovered, scored for relevance, and loaded only when relevant or explicitly requested. Reuse the same runtime-owned overlay model already used for reusable skills: keep Codex authoritative for routing, memory, budgets, and output contracts; add package-level registries for Nelson skills, hooks, rules, and workflows; and label selected sources in runtime state and logs. Execution plan: superpowers/docs/plans/2026-04-21-nelson-dynamic-integration.md.",
+      "id": "REC-20260421-002",
+      "implementation_tasks": [
+        "TASK-20260421-001"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "plan",
+      "status": "completed",
+      "summary": "Make Nelson packages load dynamically when task context makes them relevant, using runtime-owned selection and package-local registries",
+      "tags": [
+        "codex",
+        "dynamic-integration",
+        "nelson",
+        "plugin",
+        "runtime"
+      ],
+      "title": "Implement Nelson dynamic integration",
+      "updated_at": "2026-04-21T16:10:59Z"
+    },
+    {
+      "created_at": "2026-04-21T15:53:02Z",
+      "details": "promote the next open project backlog recommendation into a completion checklist built of individual commitable tasks",
+      "id": "REC-20260421-003",
       "kind": "recommendation",
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
       "status": "open",
-      "summary": "remove the task and its source recommendation",
+      "summary": "promote the next open project backlog recommendation into a completion checklist built of individual commitable tasks",
       "tags": [
         "backlog",
         "project-management",
         "recommendation"
       ],
-      "title": "remove the task and its source recommendation",
-      "updated_at": "2026-04-20T17:26:39Z"
+      "title": "promote the next open project backlog recommendation into a completion checklist built of individual",
+      "updated_at": "2026-04-21T15:53:02Z"
+    },
+    {
+      "created_at": "2026-04-21T15:55:48Z",
+      "details": "complete implementation of open project backlog tasks",
+      "id": "REC-20260421-004",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete implementation of open project backlog tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete implementation of open project backlog tasks",
+      "updated_at": "2026-04-21T15:55:48Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 22,
+    "open_recommendations": 4,
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-04-20T17:26:39Z",
+  "updated_at": "2026-04-21T16:11:09Z",
   "version": 1
 }
