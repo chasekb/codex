@@ -61,6 +61,7 @@ nelson_workflow_out="$(hooks/_internal/routing/select-workflow implement 0.9 "ne
 echo "$nelson_workflow_out" | tail -n1 | grep -qx 'nelson-conversion' && pass select_workflow_nelson || fail select_workflow_nelson
 nelson_inventory_workflow_out="$(hooks/_internal/routing/select-workflow implement 0.9 "nelson package inventory mission" "$ROOT")"
 echo "$nelson_inventory_workflow_out" | tail -n1 | grep -qx 'nelson-inventory' && pass select_workflow_nelson_inventory || fail select_workflow_nelson_inventory
+bash "$ROOT/plugins/nelson/scripts/test-selection-state.sh" >/dev/null && pass hook_pipeline_nelson_selection_state || fail hook_pipeline_nelson_selection_state
 nelson_workflow_playbook="$(hooks/_internal/routing/load-playbook-snippet workflow nelson-conversion 700 "$ROOT")"
 echo "$nelson_workflow_playbook" | grep -Fq '"registry_label":"plugin:nelson"' && pass load_playbook_nelson_workflow_registry || fail load_playbook_nelson_workflow_registry
 echo "$nelson_workflow_playbook" | grep -Fq "\"source_file\":\"$ROOT/plugins/nelson/workflows/pipelines/conversion.yaml\"" && pass load_playbook_nelson_workflow_source || fail load_playbook_nelson_workflow_source
