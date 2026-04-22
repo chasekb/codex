@@ -193,6 +193,61 @@ def normalize_tags(value):
     return sorted(set(tags))
 
 
+def delete_contract_spec():
+    return {
+        "status": "ok",
+        "target_kinds": ["recommendation", "task"],
+        "allowed_statuses": {
+            "recommendation": ["open"],
+            "task": ["pending"],
+        },
+        "scope_modes": ["project", "global", "all"],
+        "scope_rule": (
+            "Delete targets must be visible in the active scope. "
+            "Project scope can delete only items in the current project. "
+            "Global scope can delete only global items. "
+            "All scope is explicit and may target any item."
+        ),
+        "audit_fields": [
+            "actor",
+            "project_scope",
+            "scope_mode",
+            "target_id",
+            "target_kind",
+            "target_title",
+            "target_project_id",
+            "target_status",
+            "requested_at",
+            "reason",
+            "result",
+        ],
+        "stats_invariants": [
+            "Deleting a recommendation decrements open_recommendations by one.",
+            "Deleting a task decrements open_tasks by one.",
+            "Deleting an item never changes completed_tasks.",
+            "Counts never drop below zero.",
+        ],
+        "failure_cases": [
+            "missing_target_id",
+            "missing_target",
+            "kind_mismatch",
+            "wrong_project",
+            "unsupported_status",
+        ],
+    }
+
+
+def find_item_by_id(state, target_id):
+    for kind, items in (
+        ("recommendation", state["recommendations"]),
+        ("task", state["implementation_tasks"]),
+    ):
+        for item in items:
+            if item.get("id") == target_id:
+                return kind, item
+    return None, None
+
+
 def item_matches(item, kind, title):
     return item.get("kind") == kind and normalize_text(item.get("title")).lower() == normalize_text(title).lower()
 
@@ -452,6 +507,66 @@ def review(state, payload):
     return 0, report
 
 
+def delete_contract(state, target_id, payload):
+    target_id = normalize_text(target_id)
+    if not target_id:
+        return 1, {"error": "missing_target_id"}
+
+    scope_mode = backlog_scope_mode(payload.get("scope"))
+    payload_kind = normalize_text(payload.get("kind") or payload.get("target_kind")).lower()
+    found_kind, item = find_item_by_id(state, target_id)
+    if not item:
+        return 1, {"error": f"missing_target={target_id}"}
+    if payload_kind and payload_kind not in {found_kind, item.get("kind")}:
+        return 1, {"error": f"kind_mismatch expected={found_kind} actual={payload_kind}"}
+
+    if not item_visible_in_scope(item, scope_mode):
+        return 1, {"error": f"wrong_project={normalized_project_id(item)}"}
+
+    allowed_statuses = delete_contract_spec()["allowed_statuses"].get(found_kind, [])
+    item_status = normalize_text(item.get("status"))
+    if item_status not in allowed_statuses:
+        return 1, {
+            "error": (
+                f"unsupported_status kind={found_kind} "
+                f"status={item_status or 'missing'}"
+            )
+        }
+
+    stats_before = deepcopy(state.get("stats", {}))
+    projected_stats = deepcopy(stats_before)
+    if found_kind == "recommendation":
+        projected_stats["open_recommendations"] = max(0, int(projected_stats.get("open_recommendations", 0)) - 1)
+    else:
+        projected_stats["open_tasks"] = max(0, int(projected_stats.get("open_tasks", 0)) - 1)
+
+    requested_at = now_iso()
+    audit = {
+        "actor": normalize_text(payload.get("actor")) or "codex",
+        "project_scope": current_project_id() or "global",
+        "scope_mode": scope_mode,
+        "target_id": item.get("id"),
+        "target_kind": found_kind,
+        "target_title": item.get("title", ""),
+        "target_project_id": normalized_project_id(item),
+        "target_status": item_status,
+        "requested_at": requested_at,
+        "reason": normalize_text(payload.get("reason")),
+        "result": "preview",
+    }
+
+    return 0, {
+        "status": "ok",
+        "contract": delete_contract_spec(),
+        "target": deepcopy(item),
+        "scope_allowed": True,
+        "scope_mode": scope_mode,
+        "audit": audit,
+        "stats_before": stats_before,
+        "projected_stats_after_delete": projected_stats,
+    }
+
+
 def mirror(state, action, payload, result):
     sync_template = os.environ.get("CODEX_CLAWHUB_BACKLOG_SYNC_CMD", "").strip()
     if not sync_template:
@@ -515,13 +630,16 @@ def main():
         rc, result = complete(state, task_id_value, payload)
     elif command == "review":
         rc, result = review(state, payload)
+    elif command in {"delete-contract", "delete-preview"}:
+        target_id = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("target_id"))
+        rc, result = delete_contract(state, target_id, payload)
     elif command in {"list", "status"}:
         return list_state(state, payload.get("scope"))
     else:
         print(f"backlog:error unsupported_command={command}")
         return 1
 
-    if rc == 0 and command != "review":
+    if rc == 0 and command not in {"review", "delete-contract", "delete-preview"}:
         save_state(state)
         mirror_rc, mirror_result = mirror(state, command, payload, result)
         if mirror_rc == 0:
@@ -547,6 +665,17 @@ def main():
             f"stale_count={int(result.get('stale_count', 0))} "
             f"wip_over_limit={int(result.get('wip_over_limit', 0))} "
             f"last_weekly_review_at={normalize_text(result.get('last_weekly_review_at', ''))}"
+        )
+    elif command in {"delete-contract", "delete-preview"}:
+        print(
+            "backlog:delete-contract "
+            f"allowed={int(bool(result.get('scope_allowed', False)))} "
+            f"scope={result.get('scope_mode', backlog_scope_mode(payload.get('scope')))} "
+            f"target_kind={normalize_text(result.get('target', {}).get('kind', ''))} "
+            f"target_project={normalize_text(result.get('target', {}).get('project_id', ''))} "
+            f"projected_open_recommendations={result.get('projected_stats_after_delete', {}).get('open_recommendations', state['stats'].get('open_recommendations', 0))} "
+            f"projected_open_tasks={result.get('projected_stats_after_delete', {}).get('open_tasks', state['stats'].get('open_tasks', 0))} "
+            f"completed_tasks={state['stats'].get('completed_tasks', 0)}"
         )
     else:
         print(

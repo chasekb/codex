@@ -306,8 +306,18 @@
       "verified": true
     },
     {
+      "closeout_criteria": [
+        "The deletion regression suite covers happy path, scope rejection, and stats consistency.",
+        "The tests are stable against the current canonical store layout.",
+        "The task is verified with evidence after implementation."
+      ],
       "created_at": "2026-04-22T16:08:31Z",
       "details": "Add regression coverage for supported deletions, project scoping, and post-delete stats consistency.",
+      "execution_checklist": [
+        "Define the delete smoke test and expected outcomes.",
+        "Add a wrong-project rejection test.",
+        "Add a stats-consistency assertion after deletion."
+      ],
       "id": "TASK-20260422-007",
       "kind": "task",
       "priority": "medium",
@@ -324,21 +334,21 @@
         "tests"
       ],
       "title": "Add backlog delete regression tests",
-      "updated_at": "2026-04-22T16:08:53Z",
-      "execution_checklist": [
-        "Define the delete smoke test and expected outcomes.",
-        "Add a wrong-project rejection test.",
-        "Add a stats-consistency assertion after deletion."
-      ],
-      "closeout_criteria": [
-        "The deletion regression suite covers happy path, scope rejection, and stats consistency.",
-        "The tests are stable against the current canonical store layout.",
-        "The task is verified with evidence after implementation."
-      ]
+      "updated_at": "2026-04-22T16:08:53Z"
     },
     {
+      "closeout_criteria": [
+        "The delete contract is documented and reviewable.",
+        "Scope and audit requirements are explicit.",
+        "The follow-up implementation task can be built directly from the contract."
+      ],
       "created_at": "2026-04-22T16:08:35Z",
       "details": "Specify delete inputs, project scope enforcement, audit metadata, and the post-delete backlog accounting rules.",
+      "execution_checklist": [
+        "Define supported target types and scope checks.",
+        "Specify audit fields and stats invariants.",
+        "Document failure cases and permission errors."
+      ],
       "id": "TASK-20260422-008",
       "kind": "task",
       "priority": "high",
@@ -355,21 +365,21 @@
         "project-management"
       ],
       "title": "Define backlog delete contract and scope checks",
-      "updated_at": "2026-04-22T16:08:53Z",
-      "execution_checklist": [
-        "Define supported target types and scope checks.",
-        "Specify audit fields and stats invariants.",
-        "Document failure cases and permission errors."
-      ],
-      "closeout_criteria": [
-        "The delete contract is documented and reviewable.",
-        "Scope and audit requirements are explicit.",
-        "The follow-up implementation task can be built directly from the contract."
-      ]
+      "updated_at": "2026-04-22T16:08:53Z"
     },
     {
+      "closeout_criteria": [
+        "The canonical delete path is implemented in the backlog manager.",
+        "Deletes preserve auditability and keep stats accurate.",
+        "The implementation is covered by regression tests and review evidence."
+      ],
       "created_at": "2026-04-22T16:08:35Z",
       "details": "Add deletion support to hooks/_internal/backlog/backlog-manager with project-scope enforcement, auditability, and stats consistency.",
+      "execution_checklist": [
+        "Implement delete support in hooks/_internal/backlog/backlog-manager.",
+        "Preserve auditability and project scope checks.",
+        "Verify the stats update path after deletion."
+      ],
       "id": "TASK-20260422-009",
       "kind": "task",
       "priority": "high",
@@ -386,17 +396,7 @@
         "project-management"
       ],
       "title": "Implement backlog delete persistence and audit",
-      "updated_at": "2026-04-22T16:08:53Z",
-      "execution_checklist": [
-        "Implement delete support in hooks/_internal/backlog/backlog-manager.",
-        "Preserve auditability and project scope checks.",
-        "Verify the stats update path after deletion."
-      ],
-      "closeout_criteria": [
-        "The canonical delete path is implemented in the backlog manager.",
-        "Deletes preserve auditability and keep stats accurate.",
-        "The implementation is covered by regression tests and review evidence."
-      ]
+      "updated_at": "2026-04-22T16:08:53Z"
     }
   ],
   "meta": {
@@ -422,6 +422,11 @@
       "updated_at": "2026-04-20T17:28:10Z"
     },
     {
+      "closeout_criteria": [
+        "The delete contract, implementation, and regression coverage are all completed and verified.",
+        "The delete path enforces project scope checks and preserves auditability.",
+        "Backlog stats remain consistent after supported removals."
+      ],
       "created_at": "2026-04-20T17:28:24Z",
       "details": "Extend the backlog manager with an explicit delete operation so prompt-noise items can be removed through the canonical store instead of hand-editing JSON. The delete path should require project scope checks, preserve auditability, and keep backlog stats consistent after removal.",
       "id": "REC-20260420-002",
@@ -443,12 +448,7 @@
         "project-management"
       ],
       "title": "Implement backlog delete operation",
-      "updated_at": "2026-04-22T16:08:53Z",
-      "closeout_criteria": [
-        "The delete contract, implementation, and regression coverage are all completed and verified.",
-        "The delete path enforces project scope checks and preserves auditability.",
-        "Backlog stats remain consistent after supported removals."
-      ]
+      "updated_at": "2026-04-22T16:08:53Z"
     },
     {
       "created_at": "2026-04-21T15:50:18Z",
@@ -746,11 +746,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 10,
-    "open_recommendations": 4,
-    "open_tasks": 3
+    "completed_tasks": 0,
+    "open_recommendations": 11,
+    "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-22T16:08:35Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-22T16:13:49Z",
   "version": 1
 }

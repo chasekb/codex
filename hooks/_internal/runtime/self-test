@@ -154,6 +154,136 @@ print("backlog_state:ok")
 PY
 pass backlog_state
 
+delete_backlog="$tmpdir/delete-backlog.json"
+cat > "$delete_backlog" <<'JSON'
+{
+  "version": 1,
+  "updated_at": "",
+  "meta": {
+    "last_weekly_review_at": ""
+  },
+  "recommendations": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Global recommendation.",
+      "id": "REC-20260401-000",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Global recommendation.",
+      "tags": ["backlog"],
+      "title": "Global recommendation",
+      "updated_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Alpha recommendation.",
+      "id": "REC-20260401-001",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "alpha",
+      "source": "self-test",
+      "status": "open",
+      "summary": "Alpha recommendation.",
+      "tags": ["backlog", "alpha"],
+      "title": "Alpha recommendation",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "implementation_tasks": [
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Alpha task.",
+      "id": "TASK-20260401-001",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "alpha",
+      "recommendation_id": "REC-20260401-001",
+      "related_id": "REC-20260401-001",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Alpha task.",
+      "tags": ["backlog", "alpha"],
+      "title": "Alpha task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "created_at": "2026-04-01T00:00:00Z",
+      "details": "Global task.",
+      "id": "TASK-20260401-002",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "global",
+      "recommendation_id": "REC-20260401-000",
+      "related_id": "REC-20260401-000",
+      "source": "self-test",
+      "status": "pending",
+      "summary": "Global task.",
+      "tags": ["backlog"],
+      "title": "Global task",
+      "updated_at": "2026-04-01T00:00:00Z"
+    }
+  ],
+  "stats": {
+    "completed_tasks": 0,
+    "open_recommendations": 2,
+    "open_tasks": 2
+  }
+}
+JSON
+
+delete_backlog_before="$(sha256sum "$delete_backlog" | cut -d' ' -f1)"
+delete_preview="$tmpdir/delete-preview.txt"
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager delete-contract REC-20260401-001 > "$delete_preview" && pass backlog_delete_contract_preview || fail backlog_delete_contract_preview
+python3 - <<'PY' "$delete_preview"
+import json, pathlib, sys
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+payload = json.loads(text.split("\nbacklog:delete-contract", 1)[0])
+assert payload["status"] == "ok"
+assert payload["contract"]["target_kinds"] == ["recommendation", "task"]
+assert payload["scope_allowed"] is True
+assert payload["target"]["id"] == "REC-20260401-001"
+assert payload["target"]["kind"] == "recommendation"
+assert payload["projected_stats_after_delete"]["open_recommendations"] == 1
+assert payload["projected_stats_after_delete"]["open_tasks"] == 2
+print("backlog_delete_contract_preview:ok")
+PY
+pass backlog_delete_contract_payload
+
+set +e
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager delete-contract REC-20260401-000 >"$tmpdir/delete-wrong-project.txt"
+rc=$?
+set -e
+[[ $rc -eq 1 ]] && pass backlog_delete_contract_wrong_project || fail backlog_delete_contract_wrong_project
+grep -Fq 'wrong_project=global' "$tmpdir/delete-wrong-project.txt" && pass backlog_delete_contract_wrong_project_error || fail backlog_delete_contract_wrong_project_error
+
+delete_preview_task="$tmpdir/delete-preview-task.txt"
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_PROJECT=alpha hooks/_internal/backlog/backlog-manager delete-preview TASK-20260401-001 > "$delete_preview_task" && pass backlog_delete_contract_task_preview || fail backlog_delete_contract_task_preview
+python3 - <<'PY' "$delete_preview_task"
+import json, pathlib, sys
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+payload = json.loads(text.split("\nbacklog:delete-contract", 1)[0])
+assert payload["target"]["id"] == "TASK-20260401-001"
+assert payload["projected_stats_after_delete"]["open_tasks"] == 1
+print("backlog_delete_contract_task_preview:ok")
+PY
+pass backlog_delete_contract_task_payload
+
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_SCOPE=global hooks/_internal/backlog/backlog-manager delete-contract REC-20260401-000 > "$tmpdir/delete-global-preview.txt" && pass backlog_delete_contract_global_scope || fail backlog_delete_contract_global_scope
+python3 - <<'PY' "$tmpdir/delete-global-preview.txt"
+import json, pathlib, sys
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+payload = json.loads(text.split("\nbacklog:delete-contract", 1)[0])
+assert payload["target"]["project_id"] == "global"
+assert payload["scope_mode"] == "global"
+print("backlog_delete_contract_global_scope:ok")
+PY
+pass backlog_delete_contract_global_payload
+delete_backlog_after="$(sha256sum "$delete_backlog" | cut -d' ' -f1)"
+[[ "$delete_backlog_before" == "$delete_backlog_after" ]] && pass backlog_delete_contract_read_only || fail backlog_delete_contract_read_only
+
 project_backlog="$tmpdir/project-backlog.json"
 cat > "$project_backlog" <<'JSON'
 {
