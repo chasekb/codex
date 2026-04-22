@@ -97,6 +97,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "Define the Nelson command names and selector inputs.",
+        "Implement the routing hook or handler that dispatches those commands.",
+        "Add a focused regression test for selection and execution."
+      ],
       "closeout_criteria": [
         "Commands are discoverable from the Nelson context and route to Nelson-aware handlers.",
         "A regression test proves the command surface loads and executes end to end.",
@@ -124,6 +129,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "Define the Nelson orchestration entrypoint shape and report format.",
+        "Implement the agent or subagent selector for Nelson-specific flows.",
+        "Add a regression test that proves the orchestration path runs and reports status."
+      ],
       "closeout_criteria": [
         "Nelson-specific orchestration paths exist and are selectable.",
         "The selected agent or subagent reports status in a verifiable way.",
@@ -151,6 +161,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "List the Nelson integrations that need MCP or app hooks.",
+        "Implement the minimal registration or discovery wiring for those hooks.",
+        "Add validation that proves the integrations are dynamically discoverable."
+      ],
       "closeout_criteria": [
         "The required MCP servers or app hooks are registered under the Nelson package.",
         "The integrations load dynamically and preserve source labeling.",
@@ -178,6 +193,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "Choose a storage shape for Nelson coordination events.",
+        "Implement append-only writes for coordination milestones and actions.",
+        "Add a repeatable readback or inspection path for the ledger."
+      ],
       "closeout_criteria": [
         "The ledger persists meaningful Nelson coordination events.",
         "The action-state history can be inspected repeatably.",
@@ -205,6 +225,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "Select one reusable non-conversion Nelson mission flow to add.",
+        "Implement the flow using the existing package-local registries.",
+        "Document and validate the new flow with a runnable check."
+      ],
       "closeout_criteria": [
         "At least one non-conversion Nelson mission flow is implemented.",
         "The flow is documented with a runnable validation path.",
@@ -232,6 +257,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "execution_checklist": [
+        "Define the smoke-test prompt and expected Nelson selectors.",
+        "Implement the regression harness that exercises selection and state capture.",
+        "Add assertions for command, context, and coordination state coverage."
+      ],
       "closeout_criteria": [
         "Selection, context loading, commands, and coordination state are covered in one regression path.",
         "The test suite demonstrates Nelson can run without manual inspection.",
