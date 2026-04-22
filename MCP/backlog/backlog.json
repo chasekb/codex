@@ -97,6 +97,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "Commands are discoverable from the Nelson context and route to Nelson-aware handlers.",
+        "A regression test proves the command surface loads and executes end to end.",
+        "The task remains linked to REC-20260421-006."
+      ],
       "details": "Create the command surface for the most common Nelson coordination operations, wire the selectors so they resolve by Nelson context, and keep the surface narrow enough to be commit-sized. Acceptance criteria: commands are discoverable, route to Nelson-aware handlers, and are covered by a regression test.",
       "id": "TASK-20260422-001",
       "kind": "task",
@@ -119,6 +124,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "Nelson-specific orchestration paths exist and are selectable.",
+        "The selected agent or subagent reports status in a verifiable way.",
+        "A focused regression test covers the orchestration entrypoint."
+      ],
       "details": "Define the Nelson agent model or subagent entrypoints needed for orchestration and background tasks, including how they are selected and how they report status. Acceptance criteria: Nelson-specific orchestration paths exist, are selectable, and are exercised by a focused test.",
       "id": "TASK-20260422-002",
       "kind": "task",
@@ -141,6 +151,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "The required MCP servers or app hooks are registered under the Nelson package.",
+        "The integrations load dynamically and preserve source labeling.",
+        "Package validation can prove the integrations are discoverable."
+      ],
       "details": "Introduce any MCP servers or app-level hooks required for Nelson coordination flows, with explicit source labels and safe defaults. Acceptance criteria: integrations are registered, load dynamically, and the package validation step can prove they are discoverable.",
       "id": "TASK-20260422-003",
       "kind": "task",
@@ -163,6 +178,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "The ledger persists meaningful Nelson coordination events.",
+        "The action-state history can be inspected repeatably.",
+        "The log is separate from the generic runtime snapshot."
+      ],
       "details": "Create a Nelson-native coordination log or action-state ledger that records command invocations, orchestration state, and milestone transitions separately from the generic runtime state. Acceptance criteria: the ledger persists meaningful Nelson events and can be inspected in a repeatable way.",
       "id": "TASK-20260422-004",
       "kind": "task",
@@ -185,6 +205,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "At least one non-conversion Nelson mission flow is implemented.",
+        "The flow is documented with a runnable validation path.",
+        "The package still preserves the existing conversion workflow."
+      ],
       "details": "Generalize the Nelson package from the conversion workflow into reusable coordination flows that cover the most common public Nelson use cases. Acceptance criteria: at least one non-conversion mission flow is implemented and documented with a runnable validation path.",
       "id": "TASK-20260422-005",
       "kind": "task",
@@ -207,6 +232,11 @@
     },
     {
       "created_at": "2026-04-22T14:41:39Z",
+      "closeout_criteria": [
+        "Selection, context loading, commands, and coordination state are covered in one regression path.",
+        "The test suite demonstrates Nelson can run without manual inspection.",
+        "The test remains stable against the current package-local registries."
+      ],
       "details": "Add regression tests that prove Nelson can be selected, can load package context, can execute the command and orchestration surfaces, and can preserve coordination state through a full run. Acceptance criteria: the test suite covers selection, context, commands, and state capture without relying on manual inspection.",
       "id": "TASK-20260422-006",
       "kind": "task",
@@ -367,6 +397,11 @@
     },
     {
       "created_at": "2026-04-21T16:43:59Z",
+      "closeout_criteria": [
+        "All six linked Nelson parity-gap tasks are completed and verified.",
+        "The Codex runtime can select, load, and preserve Nelson plugin state end to end.",
+        "The recommendation is only closed after review evidence and task completion evidence are present."
+      ],
       "details": "Gap matrix:\n- Commands: missing. The public Claude Code Nelson plugin exposes user-facing command surfaces; the Codex Nelson package currently relies on runtime selection and package-local loading only.\n- Agent/subagent orchestration: missing. The public plugin behavior implies coordinated agent workflows; the Codex Nelson package does not yet define Nelson-specific agents or managed background jobs.\n- MCP/tool integrations: missing. The public plugin model supports MCP servers and app integrations; the Codex Nelson package currently has no Nelson-specific MCP or app wiring.\n- Coordination log/state: partial. Codex records plugin_id, plugin_source, plugin_context, and plugin_package, but it does not yet provide a Nelson-native captain's log / action-state ledger.\n- Workflow breadth: partial. Codex has one conversion workflow and package-local registries; the public Nelson plugin appears to be a general coordination framework for recurring task orchestration.\n\nRemediation plan:\n1. Define Nelson command surfaces for the most common coordination operations.\n2. Add Nelson-specific agents or subagent entrypoints for orchestration and background tasks.\n3. Introduce MCP/app integrations where needed to support external coordination steps.\n4. Add a Nelson coordination log and action-state ledger separate from the generic runtime state snapshot.\n5. Expand mission coverage beyond the conversion workflow into reusable coordination flows.\n6. Add tests that prove Nelson can be selected, load its package context, execute its commands, and preserve coordination state end to end.\n\nPriority rationale: high. This is a functional parity gap versus the public plugin behavior, not a minor enhancement.",
       "id": "REC-20260421-006",
       "implementation_tasks": [
@@ -430,14 +465,32 @@
       ],
       "title": "promote the next highest project backlog open recommendation into closeout checklist of itemized, in",
       "updated_at": "2026-04-22T14:40:46Z"
+    },
+    {
+      "created_at": "2026-04-22T14:46:47Z",
+      "details": "prioritize project backlog open tasks",
+      "id": "REC-20260422-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "prioritize project backlog open tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "prioritize project backlog open tasks",
+      "updated_at": "2026-04-22T14:46:47Z"
     }
   ],
   "stats": {
-    "completed_tasks": 4,
+    "completed_tasks": 0,
     "open_recommendations": 5,
-    "open_tasks": 6
+    "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-22T14:41:39Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-22T14:46:47Z",
   "version": 1
 }
