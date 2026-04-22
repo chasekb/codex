@@ -413,24 +413,6 @@
   },
   "recommendations": [
     {
-      "created_at": "2026-04-20T17:28:10Z",
-      "details": "add to open recommendations project backlog to implement the backlog delete operation",
-      "id": "REC-20260420-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add to open recommendations project backlog to implement the backlog delete operation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add to open recommendations project backlog to implement the backlog delete operation",
-      "updated_at": "2026-04-20T17:28:10Z"
-    },
-    {
       "closed_at": "2026-04-22T16:24:26Z",
       "closeout_criteria": [
         "The delete contract, implementation, and regression coverage are all completed and verified.",
@@ -461,24 +443,6 @@
       "updated_at": "2026-04-22T16:24:26Z"
     },
     {
-      "created_at": "2026-04-21T15:50:18Z",
-      "details": "add the nelson dynamic integration to the project backlog and reprioritize the existing project backlog",
-      "id": "REC-20260421-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add the nelson dynamic integration to the project backlog and reprioritize the existing project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add the nelson dynamic integration to the project backlog and reprioritize the existing project back",
-      "updated_at": "2026-04-21T15:50:18Z"
-    },
-    {
       "closed_at": "2026-04-21T16:10:59Z",
       "created_at": "2026-04-21T15:51:10Z",
       "details": "Implement the Nelson dynamic integration plan so Nelson packages are discovered, scored for relevance, and loaded only when relevant or explicitly requested. Reuse the same runtime-owned overlay model already used for reusable skills: keep Codex authoritative for routing, memory, budgets, and output contracts; add package-level registries for Nelson skills, hooks, rules, and workflows; and label selected sources in runtime state and logs. Execution plan: superpowers/docs/plans/2026-04-21-nelson-dynamic-integration.md.",
@@ -501,24 +465,6 @@
       ],
       "title": "Implement Nelson dynamic integration",
       "updated_at": "2026-04-21T16:10:59Z"
-    },
-    {
-      "created_at": "2026-04-21T15:53:02Z",
-      "details": "promote the next open project backlog recommendation into a completion checklist built of individual commitable tasks",
-      "id": "REC-20260421-003",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "codex",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "promote the next open project backlog recommendation into a completion checklist built of individual commitable tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "promote the next open project backlog recommendation into a completion checklist built of individual",
-      "updated_at": "2026-04-21T15:53:02Z"
     },
     {
       "created_at": "2026-04-21T15:55:48Z",
@@ -753,14 +699,32 @@
       ],
       "title": "reprioritize project backlog open recommendations then promote next highest priority open recommenda",
       "updated_at": "2026-04-22T16:05:58Z"
+    },
+    {
+      "created_at": "2026-04-22T16:26:19Z",
+      "details": "delete the remaining project backlog open recommendations as noise",
+      "id": "REC-20260422-010",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "delete the remaining project backlog open recommendations as noise",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "delete the remaining project backlog open recommendations as noise",
+      "updated_at": "2026-04-22T16:26:19Z"
     }
   ],
   "stats": {
     "completed_tasks": 13,
-    "open_recommendations": 3,
+    "open_recommendations": 0,
     "open_tasks": 0
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T16:24:26Z",
+  "updated_at": "2026-04-22T16:26:27Z",
   "version": 1
 }
