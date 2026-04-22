@@ -276,6 +276,8 @@
         "The test suite demonstrates Nelson can run without manual inspection.",
         "The test remains stable against the current package-local registries."
       ],
+      "commit_sha": "efa990b",
+      "completed_at": "2026-04-22T16:03:09Z",
       "created_at": "2026-04-22T14:41:39Z",
       "details": "Add regression tests that prove Nelson can be selected, can load package context, can execute the command and orchestration surfaces, and can preserve coordination state through a full run. Acceptance criteria: the test suite covers selection, context, commands, and state capture without relying on manual inspection.",
       "execution_checklist": [
@@ -290,7 +292,7 @@
       "recommendation_id": "REC-20260421-006",
       "related_id": "REC-20260421-006",
       "source": "recommendation",
-      "status": "pending",
+      "status": "completed",
       "summary": "Verify Nelson selection, context loading, commands, and coordination state end to end.",
       "tags": [
         "nelson",
@@ -300,7 +302,8 @@
         "verification"
       ],
       "title": "Add end-to-end Nelson selection and state tests",
-      "updated_at": "2026-04-22T14:41:39Z"
+      "updated_at": "2026-04-22T16:03:09Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -441,6 +444,7 @@
       "updated_at": "2026-04-21T16:43:37Z"
     },
     {
+      "closed_at": "2026-04-22T16:03:09Z",
       "closeout_criteria": [
         "All six linked Nelson parity-gap tasks are completed and verified.",
         "The Codex runtime can select, load, and preserve Nelson plugin state end to end.",
@@ -461,7 +465,7 @@
       "priority": "high",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "promoted",
+      "status": "completed",
       "summary": "Add the missing plugin-class capabilities needed for Nelson to behave like the public Claude Code Nelson package.",
       "tags": [
         "agents",
@@ -473,7 +477,7 @@
         "plugin"
       ],
       "title": "Close Nelson Claude Code parity gaps",
-      "updated_at": "2026-04-22T15:57:09Z"
+      "updated_at": "2026-04-22T16:03:09Z"
     },
     {
       "created_at": "2026-04-22T14:39:12Z",
@@ -608,6 +612,6 @@
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-04-22T15:57:09Z",
+  "updated_at": "2026-04-22T16:03:09Z",
   "version": 1
 }
