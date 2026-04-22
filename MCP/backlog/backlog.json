@@ -406,6 +406,165 @@
       "title": "Implement backlog delete persistence and audit",
       "updated_at": "2026-04-22T16:23:11Z",
       "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Every public Nelson concept has a Codex-native equivalent or an explicit gap note.",
+        "The parity contract is checked into the repo and can drive implementation directly.",
+        "Later tasks can implement against the contract without ambiguity."
+      ],
+      "created_at": "2026-04-22T16:34:48Z",
+      "details": "Document the public Nelson coordination vocabulary and the Codex-native equivalents for sailing orders, battle plans, action stations, captain's log, and mission lifecycle states so the implementation work has an explicit contract.",
+      "execution_checklist": [
+        "Compare public Nelson coordination concepts to Codex primitives.",
+        "Define mappings for sailing orders, battle plans, action stations, and captain's log.",
+        "Publish the parity contract in a reviewable machine-readable and human-readable form."
+      ],
+      "id": "TASK-20260422-010",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260422-011",
+      "related_id": "REC-20260422-011",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Map public Nelson terms and flows into Codex primitives.",
+      "tags": [
+        "contract",
+        "nelson",
+        "parity",
+        "project-management"
+      ],
+      "title": "Define Nelson parity contract and concept map",
+      "updated_at": "2026-04-22T16:35:17Z"
+    },
+    {
+      "closeout_criteria": [
+        "Nelson mission lifecycle is represented as Codex workflows and commands.",
+        "Relevant prompts route to the correct Nelson surface.",
+        "Routing behavior is covered by regression tests."
+      ],
+      "created_at": "2026-04-22T16:34:48Z",
+      "details": "Add the Codex workflow and command surfaces that represent Nelson mission planning, dispatch, execution, and recovery, using the parity contract as the source of truth.",
+      "execution_checklist": [
+        "Add workflow stages for mission planning, dispatch, execution, recovery, and summary.",
+        "Add routing hooks for Nelson mission requests and canonical command surfaces.",
+        "Verify Nelson routing is selected only when the prompt is Nelson-relevant."
+      ],
+      "id": "TASK-20260422-011",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260422-011",
+      "related_id": "REC-20260422-011",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Route Nelson coordination requests through Codex workflows and commands.",
+      "tags": [
+        "command",
+        "nelson",
+        "parity",
+        "project-management",
+        "workflow"
+      ],
+      "title": "Implement Nelson mission lifecycle workflows and command routing",
+      "updated_at": "2026-04-22T16:35:17Z"
+    },
+    {
+      "closeout_criteria": [
+        "Nelson mission history is recorded in stable artifacts.",
+        "The captain's-log equivalent is visible in runtime or package-local files.",
+        "The ledger supports regression verification."
+      ],
+      "created_at": "2026-04-22T16:34:48Z",
+      "details": "Extend the package-local state capture so the converted Nelson flow preserves mission status, action history, and log visibility in a form analogous to the public captain's log.",
+      "execution_checklist": [
+        "Extend runtime state to record mission, action, and summary fields.",
+        "Add a machine-readable ledger for orchestration history.",
+        "Preserve package-local visibility of mission state and captain's-log data."
+      ],
+      "id": "TASK-20260422-012",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260422-011",
+      "related_id": "REC-20260422-011",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Record Nelson mission state and action history in Codex runtime artifacts.",
+      "tags": [
+        "logging",
+        "nelson",
+        "parity",
+        "project-management",
+        "state"
+      ],
+      "title": "Add Nelson coordination ledger and captain's log parity",
+      "updated_at": "2026-04-22T16:35:17Z"
+    },
+    {
+      "closeout_criteria": [
+        "MCP and app surfaces are discoverable and validated.",
+        "The Nelson package loads with the expected manifest and interfaces.",
+        "Coordination tools are available in the runtime."
+      ],
+      "created_at": "2026-04-22T16:34:48Z",
+      "details": "Make the Nelson package expose the MCP and app entrypoints required for mission coordination so the converted package can load and validate the same way a public plugin would.",
+      "execution_checklist": [
+        "Add or refine MCP and app surfaces needed for Nelson coordination.",
+        "Ensure the package manifest exposes the relevant entrypoints and labels.",
+        "Validate package-local discovery and load behavior."
+      ],
+      "id": "TASK-20260422-013",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260422-011",
+      "related_id": "REC-20260422-011",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Expose the package-local tool and app surfaces needed by Nelson missions.",
+      "tags": [
+        "app",
+        "mcp",
+        "nelson",
+        "parity",
+        "project-management"
+      ],
+      "title": "Wire Nelson MCP and app surfaces for coordination parity",
+      "updated_at": "2026-04-22T16:35:17Z"
+    },
+    {
+      "closeout_criteria": [
+        "The regression suite covers the parity contract and mission flows.",
+        "Documentation covers the Nelson-to-Codex mapping.",
+        "All linked tasks are verified and the recommendation can close."
+      ],
+      "created_at": "2026-04-22T16:34:48Z",
+      "details": "Add regression coverage and docs that verify the parity contract, command routing, workflow selection, state capture, and package-local coordination artifacts remain stable over time.",
+      "execution_checklist": [
+        "Add end-to-end tests for selection, routing, state, and mission execution.",
+        "Add documentation that maps public Nelson behavior to Codex equivalents.",
+        "Verify positive and negative parity cases."
+      ],
+      "id": "TASK-20260422-014",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260422-011",
+      "related_id": "REC-20260422-011",
+      "source": "user_prompt",
+      "status": "pending",
+      "summary": "Prove the converted Nelson flows behave consistently end to end.",
+      "tags": [
+        "docs",
+        "nelson",
+        "parity",
+        "project-management",
+        "tests"
+      ],
+      "title": "Add Nelson parity regression tests and documentation",
+      "updated_at": "2026-04-22T16:35:17Z"
     }
   ],
   "meta": {
@@ -717,14 +876,46 @@
       ],
       "title": "delete the remaining project backlog open recommendations as noise",
       "updated_at": "2026-04-22T16:26:19Z"
+    },
+    {
+      "closeout_criteria": [
+        "The Nelson parity contract is documented, reviewable, and mapped to Codex primitives.",
+        "All derived parity tasks are completed and verified.",
+        "The behavioral parity regression suite passes end to end."
+      ],
+      "created_at": "2026-04-22T16:34:33Z",
+      "details": "Complete the Codex conversion so Nelson behaves like the public Claude Code coordination plugin: preserve the sailing-order / battle-plan / action-station / captain's-log model in Codex primitives, keep package-local registries and dynamic routing, and cover the converted behavior with regression tests.",
+      "id": "REC-20260422-011",
+      "implementation_tasks": [
+        "TASK-20260422-010",
+        "TASK-20260422-011",
+        "TASK-20260422-012",
+        "TASK-20260422-013",
+        "TASK-20260422-014"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "promoted",
+      "summary": "Map Nelson coordination semantics into Codex-native commands, agents, workflows, state, and tests.",
+      "tags": [
+        "backlog",
+        "nelson",
+        "parity",
+        "plugin",
+        "project-management"
+      ],
+      "title": "Close Nelson behavioral parity gaps",
+      "updated_at": "2026-04-22T16:35:17Z"
     }
   ],
   "stats": {
     "completed_tasks": 13,
-    "open_recommendations": 0,
-    "open_tasks": 0
+    "open_recommendations": 1,
+    "open_tasks": 5
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T16:26:27Z",
+  "updated_at": "2026-04-22T16:34:48Z",
   "version": 1
 }
