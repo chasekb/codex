@@ -342,6 +342,8 @@
         "Scope and audit requirements are explicit.",
         "The follow-up implementation task can be built directly from the contract."
       ],
+      "commit_sha": "a1ccfa7",
+      "completed_at": "2026-04-22T16:18:08Z",
       "created_at": "2026-04-22T16:08:35Z",
       "details": "Specify delete inputs, project scope enforcement, audit metadata, and the post-delete backlog accounting rules.",
       "execution_checklist": [
@@ -356,7 +358,7 @@
       "recommendation_id": "REC-20260420-002",
       "related_id": "REC-20260420-002",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Define supported delete semantics for recommendations and tasks.",
       "tags": [
         "backlog",
@@ -365,7 +367,8 @@
         "project-management"
       ],
       "title": "Define backlog delete contract and scope checks",
-      "updated_at": "2026-04-22T16:08:53Z"
+      "updated_at": "2026-04-22T16:18:08Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -448,7 +451,7 @@
         "project-management"
       ],
       "title": "Implement backlog delete operation",
-      "updated_at": "2026-04-22T16:08:53Z"
+      "updated_at": "2026-04-22T16:18:08Z"
     },
     {
       "created_at": "2026-04-21T15:50:18Z",
@@ -746,11 +749,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 0,
-    "open_recommendations": 11,
-    "open_tasks": 0
+    "completed_tasks": 11,
+    "open_recommendations": 4,
+    "open_tasks": 2
   },
-  "stats_scope": "global",
-  "updated_at": "2026-04-22T16:13:49Z",
+  "stats_scope": "project",
+  "updated_at": "2026-04-22T16:18:08Z",
   "version": 1
 }
