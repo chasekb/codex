@@ -311,6 +311,8 @@
         "The tests are stable against the current canonical store layout.",
         "The task is verified with evidence after implementation."
       ],
+      "commit_sha": "86d09ea",
+      "completed_at": "2026-04-22T16:24:26Z",
       "created_at": "2026-04-22T16:08:31Z",
       "details": "Add regression coverage for supported deletions, project scoping, and post-delete stats consistency.",
       "execution_checklist": [
@@ -325,7 +327,7 @@
       "recommendation_id": "REC-20260420-002",
       "related_id": "REC-20260420-002",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Verify delete, scope rejection, and stats updates end to end.",
       "tags": [
         "backlog",
@@ -334,7 +336,8 @@
         "tests"
       ],
       "title": "Add backlog delete regression tests",
-      "updated_at": "2026-04-22T16:08:53Z"
+      "updated_at": "2026-04-22T16:24:26Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -428,6 +431,7 @@
       "updated_at": "2026-04-20T17:28:10Z"
     },
     {
+      "closed_at": "2026-04-22T16:24:26Z",
       "closeout_criteria": [
         "The delete contract, implementation, and regression coverage are all completed and verified.",
         "The delete path enforces project scope checks and preserves auditability.",
@@ -445,7 +449,7 @@
       "priority": "high",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "promoted",
+      "status": "completed",
       "summary": "Add a supported delete path for removing prompt-noise or obsolete backlog items",
       "tags": [
         "backlog",
@@ -454,7 +458,7 @@
         "project-management"
       ],
       "title": "Implement backlog delete operation",
-      "updated_at": "2026-04-22T16:23:11Z"
+      "updated_at": "2026-04-22T16:24:26Z"
     },
     {
       "created_at": "2026-04-21T15:50:18Z",
@@ -752,11 +756,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 12,
-    "open_recommendations": 4,
-    "open_tasks": 1
+    "completed_tasks": 13,
+    "open_recommendations": 3,
+    "open_tasks": 0
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T16:23:11Z",
+  "updated_at": "2026-04-22T16:24:26Z",
   "version": 1
 }
