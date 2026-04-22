@@ -171,6 +171,8 @@
         "The integrations load dynamically and preserve source labeling.",
         "Package validation can prove the integrations are discoverable."
       ],
+      "commit_sha": "80ca759",
+      "completed_at": "2026-04-22T15:36:31Z",
       "created_at": "2026-04-22T14:41:39Z",
       "details": "Introduce any MCP servers or app-level hooks required for Nelson coordination flows, with explicit source labels and safe defaults. Acceptance criteria: integrations are registered, load dynamically, and the package validation step can prove they are discoverable.",
       "execution_checklist": [
@@ -185,7 +187,7 @@
       "recommendation_id": "REC-20260421-006",
       "related_id": "REC-20260421-006",
       "source": "recommendation",
-      "status": "pending",
+      "status": "completed",
       "summary": "Add the minimal MCP or app plumbing needed for external coordination steps.",
       "tags": [
         "claude-code",
@@ -195,7 +197,8 @@
         "plugin"
       ],
       "title": "Wire Nelson MCP and app integrations",
-      "updated_at": "2026-04-22T14:41:39Z"
+      "updated_at": "2026-04-22T15:36:31Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -464,7 +467,7 @@
         "plugin"
       ],
       "title": "Close Nelson Claude Code parity gaps",
-      "updated_at": "2026-04-22T15:32:58Z"
+      "updated_at": "2026-04-22T15:36:31Z"
     },
     {
       "created_at": "2026-04-22T14:39:12Z",
@@ -576,11 +579,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 6,
+    "completed_tasks": 7,
     "open_recommendations": 5,
-    "open_tasks": 4
+    "open_tasks": 3
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T15:32:58Z",
+  "updated_at": "2026-04-22T15:36:31Z",
   "version": 1
 }
