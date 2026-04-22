@@ -749,11 +749,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 11,
-    "open_recommendations": 4,
-    "open_tasks": 2
+    "completed_tasks": 0,
+    "open_recommendations": 11,
+    "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-22T16:18:08Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-22T16:19:28Z",
   "version": 1
 }

@@ -37,6 +37,8 @@ The delete contract reserves these audit fields for the eventual mutating delete
 - `requested_at`
 - `reason`
 - `result`
+- `stats_before`
+- `stats_after`
 
 ## Accounting invariants
 
@@ -49,6 +51,7 @@ The delete contract reserves these audit fields for the eventual mutating delete
 
 - `missing_target_id`
 - `missing_target`
+- `missing_confirmation`
 - `kind_mismatch`
 - `wrong_project`
 - `unsupported_status`
@@ -62,3 +65,17 @@ The `delete-contract` preview command returns:
 - the active scope mode
 - the reserved audit payload
 - the projected stats after deletion
+
+## Mutating command
+
+The mutating `delete` command uses the same validation rules as `delete-contract`, but it also requires explicit confirmation:
+
+- `confirm: true`
+- optional `reason`
+- optional `actor`
+
+On success it:
+
+- removes the target item from the canonical store
+- recomputes stats through the normal save path
+- appends an audit record to `outputs/backlog-delete-audit.jsonl` unless overridden by `CODEX_BACKLOG_DELETE_AUDIT_FILE`

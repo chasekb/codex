@@ -246,8 +246,8 @@ assert payload["contract"]["target_kinds"] == ["recommendation", "task"]
 assert payload["scope_allowed"] is True
 assert payload["target"]["id"] == "REC-20260401-001"
 assert payload["target"]["kind"] == "recommendation"
-assert payload["projected_stats_after_delete"]["open_recommendations"] == 1
-assert payload["projected_stats_after_delete"]["open_tasks"] == 2
+assert payload["projected_stats_after_delete"]["open_recommendations"] == 0
+assert payload["projected_stats_after_delete"]["open_tasks"] == 1
 print("backlog_delete_contract_preview:ok")
 PY
 pass backlog_delete_contract_payload
@@ -266,7 +266,7 @@ import json, pathlib, sys
 text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
 payload = json.loads(text.split("\nbacklog:delete-contract", 1)[0])
 assert payload["target"]["id"] == "TASK-20260401-001"
-assert payload["projected_stats_after_delete"]["open_tasks"] == 1
+assert payload["projected_stats_after_delete"]["open_tasks"] == 0
 print("backlog_delete_contract_task_preview:ok")
 PY
 pass backlog_delete_contract_task_payload
@@ -283,6 +283,35 @@ PY
 pass backlog_delete_contract_global_payload
 delete_backlog_after="$(sha256sum "$delete_backlog" | cut -d' ' -f1)"
 [[ "$delete_backlog_before" == "$delete_backlog_after" ]] && pass backlog_delete_contract_read_only || fail backlog_delete_contract_read_only
+
+delete_mutation_file="$tmpdir/delete-mutation-audit.jsonl"
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_PROJECT=alpha CODEX_BACKLOG_DELETE_AUDIT_FILE="$delete_mutation_file" hooks/_internal/backlog/backlog-manager delete REC-20260401-001 <<<'{"confirm":true,"reason":"remove obsolete alpha recommendation","actor":"tester"}' >/dev/null && pass backlog_delete_mutation_recommendation || fail backlog_delete_mutation_recommendation
+CODEX_BACKLOG_FILE="$delete_backlog" CODEX_BACKLOG_PROJECT=alpha CODEX_BACKLOG_DELETE_AUDIT_FILE="$delete_mutation_file" hooks/_internal/backlog/backlog-manager delete TASK-20260401-001 <<<'{"confirm":true,"reason":"remove obsolete alpha task","actor":"tester"}' >/dev/null && pass backlog_delete_mutation_task || fail backlog_delete_mutation_task
+python3 - <<'PY' "$delete_backlog" "$delete_mutation_file"
+import json, sys
+backlog_file, audit_file = sys.argv[1], sys.argv[2]
+with open(backlog_file, "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert len(data["recommendations"]) == 1
+assert data["recommendations"][0]["id"] == "REC-20260401-000"
+assert len(data["implementation_tasks"]) == 1
+assert data["implementation_tasks"][0]["id"] == "TASK-20260401-002"
+assert data["stats"]["open_recommendations"] == 0
+assert data["stats"]["open_tasks"] == 0
+with open(audit_file, "r", encoding="utf-8") as fh:
+    lines = [json.loads(line) for line in fh if line.strip()]
+assert len(lines) == 2
+assert lines[0]["result"] == "deleted"
+assert lines[1]["result"] == "deleted"
+assert {line["target_id"] for line in lines} == {"REC-20260401-001", "TASK-20260401-001"}
+assert all("stats_before" in line and "stats_after" in line for line in lines)
+assert lines[0]["stats_after"]["open_recommendations"] == 0
+assert lines[0]["stats_after"]["open_tasks"] == 1
+assert lines[1]["stats_after"]["open_recommendations"] == 0
+assert lines[1]["stats_after"]["open_tasks"] == 0
+print("backlog_delete_mutation:ok")
+PY
+pass backlog_delete_mutation_state
 
 project_backlog="$tmpdir/project-backlog.json"
 cat > "$project_backlog" <<'JSON'

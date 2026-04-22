@@ -30,6 +30,15 @@ def backlog_path():
     return Path(os.environ.get("CODEX_BACKLOG_FILE", str(repo_root() / "MCP" / "backlog" / "backlog.json")))
 
 
+def delete_audit_path():
+    return Path(
+        os.environ.get(
+            "CODEX_BACKLOG_DELETE_AUDIT_FILE",
+            str(repo_root() / "outputs" / "backlog-delete-audit.jsonl"),
+        )
+    )
+
+
 def current_project_id():
     return normalize_text(
         os.environ.get("CODEX_BACKLOG_PROJECT")
@@ -164,6 +173,14 @@ def render_template(template, mapping):
     return rendered
 
 
+def append_jsonl(path, payload):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload, sort_keys=True))
+        fh.write("\n")
+
+
 def run_command_with_input(command, stdin_text, cwd=None):
     proc = subprocess.run(
         ["/bin/bash", "-lc", command],
@@ -230,10 +247,14 @@ def delete_contract_spec():
         "failure_cases": [
             "missing_target_id",
             "missing_target",
+            "missing_confirmation",
             "kind_mismatch",
             "wrong_project",
             "unsupported_status",
         ],
+        "mutation_command": "delete",
+        "preview_command": "delete-contract",
+        "audit_destination": str(delete_audit_path()),
     }
 
 
@@ -533,7 +554,7 @@ def delete_contract(state, target_id, payload):
             )
         }
 
-    stats_before = deepcopy(state.get("stats", {}))
+    stats_before = scoped_stats(state, scope_mode)
     projected_stats = deepcopy(stats_before)
     if found_kind == "recommendation":
         projected_stats["open_recommendations"] = max(0, int(projected_stats.get("open_recommendations", 0)) - 1)
@@ -564,6 +585,77 @@ def delete_contract(state, target_id, payload):
         "audit": audit,
         "stats_before": stats_before,
         "projected_stats_after_delete": projected_stats,
+    }
+
+
+def delete_item(state, target_id, payload):
+    target_id = normalize_text(target_id)
+    if not target_id:
+        return 1, {"error": "missing_target_id"}
+    if not bool(payload.get("confirm", False)):
+        return 1, {"error": "missing_confirmation"}
+
+    scope_mode = backlog_scope_mode(payload.get("scope"))
+    payload_kind = normalize_text(payload.get("kind") or payload.get("target_kind")).lower()
+    found_kind, item = find_item_by_id(state, target_id)
+    if not item:
+        return 1, {"error": f"missing_target={target_id}"}
+    if payload_kind and payload_kind not in {found_kind, item.get("kind")}:
+        return 1, {"error": f"kind_mismatch expected={found_kind} actual={payload_kind}"}
+    if not item_visible_in_scope(item, scope_mode):
+        return 1, {"error": f"wrong_project={normalized_project_id(item)}"}
+
+    allowed_statuses = delete_contract_spec()["allowed_statuses"].get(found_kind, [])
+    item_status = normalize_text(item.get("status"))
+    if item_status not in allowed_statuses:
+        return 1, {
+            "error": (
+                f"unsupported_status kind={found_kind} "
+                f"status={item_status or 'missing'}"
+            )
+        }
+
+    stats_before = scoped_stats(state, scope_mode)
+    removed_item = deepcopy(item)
+    if found_kind == "recommendation":
+        state["recommendations"] = [
+            candidate for candidate in state["recommendations"]
+            if candidate.get("id") != target_id
+        ]
+    else:
+        state["implementation_tasks"] = [
+            candidate for candidate in state["implementation_tasks"]
+            if candidate.get("id") != target_id
+        ]
+
+    requested_at = now_iso()
+    audit = {
+        "actor": normalize_text(payload.get("actor")) or "codex",
+        "project_scope": current_project_id() or "global",
+        "scope_mode": scope_mode,
+        "target_id": removed_item.get("id"),
+        "target_kind": found_kind,
+        "target_title": removed_item.get("title", ""),
+        "target_project_id": normalized_project_id(removed_item),
+        "target_status": item_status,
+        "requested_at": requested_at,
+        "reason": normalize_text(payload.get("reason")),
+        "result": "deleted",
+        "stats_before": stats_before,
+        "stats_after": deepcopy(state.get("stats", {})),
+    }
+    state["stats"] = scoped_stats(state, scope_mode)
+    audit["stats_after"] = deepcopy(state["stats"])
+    append_jsonl(delete_audit_path(), audit)
+    return 0, {
+        "status": "deleted",
+        "target_id": target_id,
+        "target_kind": found_kind,
+        "target_project_id": normalized_project_id(removed_item),
+        "stats_before": stats_before,
+        "stats_after": deepcopy(state["stats"]),
+        "audit_file": str(delete_audit_path()),
+        "audit": audit,
     }
 
 
@@ -633,6 +725,9 @@ def main():
     elif command in {"delete-contract", "delete-preview"}:
         target_id = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("target_id"))
         rc, result = delete_contract(state, target_id, payload)
+    elif command == "delete":
+        target_id = normalize_text(sys.argv[2]) if len(sys.argv) > 2 else normalize_text(payload.get("target_id"))
+        rc, result = delete_item(state, target_id, payload)
     elif command in {"list", "status"}:
         return list_state(state, payload.get("scope"))
     else:
@@ -676,6 +771,18 @@ def main():
             f"projected_open_recommendations={result.get('projected_stats_after_delete', {}).get('open_recommendations', state['stats'].get('open_recommendations', 0))} "
             f"projected_open_tasks={result.get('projected_stats_after_delete', {}).get('open_tasks', state['stats'].get('open_tasks', 0))} "
             f"completed_tasks={state['stats'].get('completed_tasks', 0)}"
+        )
+    elif command == "delete":
+        print(
+            "backlog:delete "
+            f"status={normalize_text(result.get('status', ''))} "
+            f"target_id={normalize_text(result.get('target_id', ''))} "
+            f"target_kind={normalize_text(result.get('target_kind', ''))} "
+            f"target_project={normalize_text(result.get('target_project_id', ''))} "
+            f"open_recommendations={state['stats'].get('open_recommendations', 0)} "
+            f"open_tasks={state['stats'].get('open_tasks', 0)} "
+            f"completed_tasks={state['stats'].get('completed_tasks', 0)} "
+            f"audit_file={normalize_text(result.get('audit_file', ''))}"
         )
     else:
         print(
