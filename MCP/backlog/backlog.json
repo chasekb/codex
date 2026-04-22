@@ -241,6 +241,8 @@
         "The flow is documented with a runnable validation path.",
         "The package still preserves the existing conversion workflow."
       ],
+      "commit_sha": "9879142",
+      "completed_at": "2026-04-22T15:57:09Z",
       "created_at": "2026-04-22T14:41:39Z",
       "details": "Generalize the Nelson package from the conversion workflow into reusable coordination flows that cover the most common public Nelson use cases. Acceptance criteria: at least one non-conversion mission flow is implemented and documented with a runnable validation path.",
       "execution_checklist": [
@@ -255,7 +257,7 @@
       "recommendation_id": "REC-20260421-006",
       "related_id": "REC-20260421-006",
       "source": "recommendation",
-      "status": "pending",
+      "status": "completed",
       "summary": "Add reusable Nelson coordination flows beyond the current conversion workflow.",
       "tags": [
         "conversion",
@@ -265,7 +267,8 @@
         "workflow"
       ],
       "title": "Expand Nelson mission coverage beyond conversion",
-      "updated_at": "2026-04-22T14:41:39Z"
+      "updated_at": "2026-04-22T15:57:09Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -470,7 +473,7 @@
         "plugin"
       ],
       "title": "Close Nelson Claude Code parity gaps",
-      "updated_at": "2026-04-22T15:49:03Z"
+      "updated_at": "2026-04-22T15:57:09Z"
     },
     {
       "created_at": "2026-04-22T14:39:12Z",
@@ -605,6 +608,6 @@
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-04-22T15:49:03Z",
+  "updated_at": "2026-04-22T15:57:09Z",
   "version": 1
 }
