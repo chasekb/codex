@@ -8,3 +8,4 @@ output="$("$root/hooks/session-start")"
 printf '%s\n' "$output" | grep -q '"additionalContext"'
 printf '%s\n' "$output" | grep -q '"package"'
 printf '%s\n' "$output" | grep -q '"name": "nelson"'
+printf '%s\n' "$output" | grep -q '"commands": \['

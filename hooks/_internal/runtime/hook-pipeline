@@ -145,6 +145,8 @@ def default_state():
             "task_class": "general",
             "workflow": "unknown",
             "output_contract": "",
+            "command_id": "",
+            "command_registry_label": "",
             "skill_id": "none",
             "skill_registry_label": "",
             "external_skill_id": "",
@@ -1588,6 +1590,16 @@ def main():
         _, wf_out = run_internal("select-workflow", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         workflow = text(wf_out.splitlines()[-1] if wf_out.splitlines() else "unknown") or "unknown"
         output_contract = resolve_output_contract(workflow)
+        _, command_out = run_internal("select-command", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
+        command_lines = [l for l in command_out.splitlines() if text(l)]
+        command_id = text(command_lines[-1]) if command_lines and command_lines[-1] != "none" else ""
+        command_registry_label = ""
+        for line in command_lines:
+            if "source=" in line:
+                match = re.search(r"source=([^\s]+)", line)
+                if match:
+                    command_registry_label = text(match.group(1))
+                    break
         _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
@@ -1779,6 +1791,8 @@ def main():
                 "task_class": str(task_class),
                 "workflow": workflow,
                 "output_contract": output_contract,
+                "command_id": command_id,
+                "command_registry_label": command_registry_label,
                 "skill_id": skill_id,
                 "skill_registry_label": skill_registry_label,
                 "external_skill_id": text(external_skill_report.get("selected", {}).get("name", "")),

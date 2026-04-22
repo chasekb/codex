@@ -23,8 +23,21 @@ scenario_lines = [
     if line.strip().startswith(tuple(str(i) + "." for i in range(1, 10)))
 ]
 mapping = json.loads((root / "validation" / "nelson-mapping.json").read_text(encoding="utf-8"))
+command_registry = (root / "commands" / "registry.yaml").read_text(encoding="utf-8")
+command_ids = []
+in_commands = False
+for raw in command_registry.splitlines():
+    stripped = raw.strip()
+    if stripped == "commands:":
+        in_commands = True
+        continue
+    if not in_commands:
+        continue
+    if stripped.startswith("- id:"):
+        command_ids.append(stripped.split(":", 1)[1].strip())
 
 component_counts = {
+    "commands": len(command_ids),
     "skills": sum(1 for _ in (root / "skills").rglob("SKILL.md")),
     "hooks": sum(1 for _ in (root / "hooks").rglob("*") if _.is_file()),
     "rules": sum(1 for _ in (root / "rules").rglob("*.rules")),
@@ -34,6 +47,7 @@ component_counts = {
 
 summary = (
     f"{manifest['name']} {manifest['version']} package loaded with "
+    f"{component_counts['commands']} command(s), "
     f"{component_counts['skills']} skill(s), "
     f"{component_counts['hooks']} hook file(s), "
     f"{component_counts['rules']} rule file(s), and "
@@ -48,6 +62,7 @@ payload = {
         "version": manifest.get("version"),
         "displayName": manifest.get("interface", {}).get("displayName"),
         "components": component_counts,
+        "commands": command_ids,
         "mission_scenarios": len(scenario_lines),
         "mapped_concepts": len(mapping.get("concepts", [])),
     },

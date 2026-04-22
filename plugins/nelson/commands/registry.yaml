@@ -1,0 +1,17 @@
+version: 1
+selection:
+  low_confidence_command: nelson-context
+  metadata_only_default: true
+commands:
+  - id: nelson-context
+    file: context.md
+    tags: [nelson, context, package, routing]
+    priority: 1
+  - id: nelson-inventory
+    file: inventory.md
+    tags: [nelson, inventory, mapping, package]
+    priority: 2
+  - id: nelson-validate
+    file: validate.md
+    tags: [nelson, validate, validation, package]
+    priority: 3

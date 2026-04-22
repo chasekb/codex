@@ -16,6 +16,7 @@
     "plugin"
   ],
   "skills": "./skills/",
+  "commands": "./commands/",
   "hooks": "./hooks/",
   "mcpServers": "./.mcp.json",
   "apps": "./.app.json",
@@ -34,6 +35,7 @@
     "termsOfServiceURL": "https://openai.com/policies/row-terms-of-use/",
     "defaultPrompt": [
       "Inventory Nelson workflows and map them into Codex primitives.",
+      "Resolve Nelson commands dynamically when the prompt asks for package context or validation.",
       "Package the Nelson conversion boundary for Codex.",
       "Validate mission scenarios for the converted plugin."
     ],

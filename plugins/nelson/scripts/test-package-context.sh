@@ -7,4 +7,6 @@ output="$(bash "$root/scripts/package-context.sh")"
 
 printf '%s\n' "$output" | grep -q '"additionalContext"'
 printf '%s\n' "$output" | grep -q '"name": "nelson"'
+printf '%s\n' "$output" | grep -q '"commands": \['
+printf '%s\n' "$output" | grep -q '"commands": 3'
 printf '%s\n' "$output" | grep -q '"mission_scenarios": 5'

@@ -10,9 +10,14 @@ test -d "$root/hooks"
 test -d "$root/rules"
 test -d "$root/workflows"
 test -d "$root/skills"
+test -d "$root/commands"
 test -d "$root/scripts"
 test -d "$root/assets"
 test -f "$root/validation/mission-scenarios.md"
+test -f "$root/commands/registry.yaml"
+test -f "$root/commands/context.md"
+test -f "$root/commands/inventory.md"
+test -f "$root/commands/validate.md"
 test -f "$root/workflows/pipelines/conversion.yaml"
 test -f "$root/rules/conversion.rules"
 test -f "$root/skills/nelson-conversion/SKILL.md"
@@ -24,13 +29,16 @@ test -x "$root/hooks/session-start"
 test -x "$root/scripts/package-context.sh"
 test -x "$root/scripts/validate-mapping.sh"
 test -x "$root/scripts/run-mission-scenarios.sh"
+test -x "$root/scripts/test-select-command.sh"
 
 grep -q '"name": "nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"displayName": "Nelson"' "$root/.codex-plugin/plugin.json"
 grep -q '"skills": "./skills/"' "$root/.codex-plugin/plugin.json"
+grep -q '"commands": "./commands/"' "$root/.codex-plugin/plugin.json"
 
 bash "$root/scripts/validate-mapping.sh" >/dev/null
-bash "$root/scripts/package-context.sh" | grep -q '"additionalContext": "nelson 0.1.0 package loaded'
+bash "$root/scripts/package-context.sh" | grep -q '"additionalContext": "nelson 0.1.0 package loaded with 3 command(s)'
+bash "$root/scripts/test-select-command.sh" >/dev/null
 bash "$root/scripts/run-mission-scenarios.sh" >/dev/null
 bash "$root/scripts/validate-mission-scenarios.sh" >/dev/null
 

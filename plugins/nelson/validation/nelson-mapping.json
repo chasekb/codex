@@ -14,6 +14,11 @@
       "handling": "Convert Nelson orchestration steps into explicit Codex pipelines with named stages."
     },
     {
+      "codex_primitive": "hooks/_internal/routing/select-command + commands/*",
+      "concept": "Command surfaces",
+      "handling": "Convert Nelson command intents into a dedicated routing hook and package-local command definitions."
+    },
+    {
       "codex_primitive": "hooks/_internal/*",
       "concept": "Hook behavior",
       "handling": "Convert interception, routing, and validation behavior into internal hooks."

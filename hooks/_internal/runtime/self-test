@@ -44,6 +44,10 @@ hooks/_internal/routing/load-skill project-backlog-management metadata 200 "$ROO
 nelson_skill_meta="$(hooks/_internal/routing/load-skill nelson-conversion metadata 200 "$ROOT/plugins/nelson/skills/registry.yaml")"
 echo "$nelson_skill_meta" | grep -Fq '"registry_label":"plugin:nelson"' && pass load_skill_nelson_registry_label || fail load_skill_nelson_registry_label
 echo "$nelson_skill_meta" | grep -Fq "\"source_file\":\"$ROOT/plugins/nelson/skills/nelson-conversion/SKILL.md\"" && pass load_skill_nelson_source_file || fail load_skill_nelson_source_file
+nelson_command_catalog_out="$(hooks/_internal/routing/select-command-catalog implement 0.9 "nelson package validation" "$ROOT")"
+echo "$nelson_command_catalog_out" | tail -n1 | grep -qx 'nelson-validate' && pass select_command_nelson_catalog || fail select_command_nelson_catalog
+nelson_command_out="$(hooks/_internal/routing/select-command implement 0.9 "nelson package validation" "$ROOT")"
+echo "$nelson_command_out" | tail -n1 | grep -qx 'nelson-validate' && pass select_command_nelson || fail select_command_nelson
 nelson_workflow_catalog_out="$(hooks/_internal/routing/select-workflow-catalog implement 0.9 "nelson plugin integration package conversion" "$ROOT")"
 echo "$nelson_workflow_catalog_out" | tail -n1 | grep -qx 'nelson-conversion' && pass select_workflow_nelson_catalog || fail select_workflow_nelson_catalog
 nelson_workflow_out="$(hooks/_internal/routing/select-workflow implement 0.9 "nelson plugin integration package conversion" "$ROOT")"
@@ -51,6 +55,12 @@ echo "$nelson_workflow_out" | tail -n1 | grep -qx 'nelson-conversion' && pass se
 nelson_workflow_playbook="$(hooks/_internal/routing/load-playbook-snippet workflow nelson-conversion 700 "$ROOT")"
 echo "$nelson_workflow_playbook" | grep -Fq '"registry_label":"plugin:nelson"' && pass load_playbook_nelson_workflow_registry || fail load_playbook_nelson_workflow_registry
 echo "$nelson_workflow_playbook" | grep -Fq "\"source_file\":\"$ROOT/plugins/nelson/workflows/pipelines/conversion.yaml\"" && pass load_playbook_nelson_workflow_source || fail load_playbook_nelson_workflow_source
+nelson_package_context="$(bash "$ROOT/plugins/nelson/scripts/package-context.sh")"
+echo "$nelson_package_context" | grep -Fq '"commands": [' && pass nelson_package_context_commands || fail nelson_package_context_commands
+echo "$nelson_package_context" | grep -Fq '"nelson-context"' && pass nelson_package_context_command_context || fail nelson_package_context_command_context
+echo "$nelson_package_context" | grep -Fq '"nelson-inventory"' && pass nelson_package_context_command_inventory || fail nelson_package_context_command_inventory
+echo "$nelson_package_context" | grep -Fq '"nelson-validate"' && pass nelson_package_context_command_validate || fail nelson_package_context_command_validate
+echo "$nelson_package_context" | grep -Fq '"commands": 3' && pass nelson_package_context_command_count || fail nelson_package_context_command_count
 [[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
@@ -499,6 +509,8 @@ grep -Fq '"skill_id": "nelson-conversion"' outputs/hook-runtime-state.json && pa
 grep -Fq '"skill_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_skill_registry || fail hook_pipeline_nelson_skill_registry
 grep -Fq '"plugin_id": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_id || fail hook_pipeline_nelson_plugin_id
 grep -Fq '"plugin_source": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_source || fail hook_pipeline_nelson_plugin_source
+grep -Fq '"command_id": "nelson-context"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_command_id || fail hook_pipeline_nelson_command_id
+grep -Fq '"command_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_command_registry || fail hook_pipeline_nelson_command_registry
 grep -Fq '"mission_scenarios": 5' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
 grep -Fq '"name": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_name || fail hook_pipeline_nelson_plugin_name
 grep -Fq '"version": "0.1.0"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_version || fail hook_pipeline_nelson_plugin_version
