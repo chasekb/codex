@@ -376,6 +376,8 @@
         "Deletes preserve auditability and keep stats accurate.",
         "The implementation is covered by regression tests and review evidence."
       ],
+      "commit_sha": "86d09ea",
+      "completed_at": "2026-04-22T16:23:11Z",
       "created_at": "2026-04-22T16:08:35Z",
       "details": "Add deletion support to hooks/_internal/backlog/backlog-manager with project-scope enforcement, auditability, and stats consistency.",
       "execution_checklist": [
@@ -390,7 +392,7 @@
       "recommendation_id": "REC-20260420-002",
       "related_id": "REC-20260420-002",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Implement the canonical delete path in the backlog manager.",
       "tags": [
         "backlog",
@@ -399,7 +401,8 @@
         "project-management"
       ],
       "title": "Implement backlog delete persistence and audit",
-      "updated_at": "2026-04-22T16:08:53Z"
+      "updated_at": "2026-04-22T16:23:11Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -451,7 +454,7 @@
         "project-management"
       ],
       "title": "Implement backlog delete operation",
-      "updated_at": "2026-04-22T16:18:08Z"
+      "updated_at": "2026-04-22T16:23:11Z"
     },
     {
       "created_at": "2026-04-21T15:50:18Z",
@@ -749,11 +752,11 @@
     }
   ],
   "stats": {
-    "completed_tasks": 0,
-    "open_recommendations": 11,
-    "open_tasks": 0
+    "completed_tasks": 12,
+    "open_recommendations": 4,
+    "open_tasks": 1
   },
-  "stats_scope": "global",
-  "updated_at": "2026-04-22T16:19:28Z",
+  "stats_scope": "project",
+  "updated_at": "2026-04-22T16:23:11Z",
   "version": 1
 }
