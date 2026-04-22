@@ -206,6 +206,8 @@
         "The action-state history can be inspected repeatably.",
         "The log is separate from the generic runtime snapshot."
       ],
+      "commit_sha": "ea80bfc",
+      "completed_at": "2026-04-22T15:49:03Z",
       "created_at": "2026-04-22T14:41:39Z",
       "details": "Create a Nelson-native coordination log or action-state ledger that records command invocations, orchestration state, and milestone transitions separately from the generic runtime state. Acceptance criteria: the ledger persists meaningful Nelson events and can be inspected in a repeatable way.",
       "execution_checklist": [
@@ -220,7 +222,7 @@
       "recommendation_id": "REC-20260421-006",
       "related_id": "REC-20260421-006",
       "source": "recommendation",
-      "status": "pending",
+      "status": "completed",
       "summary": "Persist Nelson-specific coordination events separate from the generic runtime snapshot.",
       "tags": [
         "audit",
@@ -230,7 +232,8 @@
         "state"
       ],
       "title": "Add a Nelson coordination log and action-state ledger",
-      "updated_at": "2026-04-22T14:41:39Z"
+      "updated_at": "2026-04-22T15:49:03Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -467,7 +470,7 @@
         "plugin"
       ],
       "title": "Close Nelson Claude Code parity gaps",
-      "updated_at": "2026-04-22T15:36:31Z"
+      "updated_at": "2026-04-22T15:49:03Z"
     },
     {
       "created_at": "2026-04-22T14:39:12Z",
@@ -576,14 +579,32 @@
       ],
       "title": "implement the next highest priority project backlog open task",
       "updated_at": "2026-04-22T15:30:11Z"
+    },
+    {
+      "created_at": "2026-04-22T15:42:46Z",
+      "details": "make a recommendation and implement the recommendation",
+      "id": "REC-20260422-007",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "make a recommendation and implement the recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "make a recommendation and implement the recommendation",
+      "updated_at": "2026-04-22T15:42:46Z"
     }
   ],
   "stats": {
-    "completed_tasks": 7,
-    "open_recommendations": 5,
-    "open_tasks": 3
+    "completed_tasks": 0,
+    "open_recommendations": 9,
+    "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-22T15:36:31Z",
+  "stats_scope": "global",
+  "updated_at": "2026-04-22T15:49:03Z",
   "version": 1
 }
