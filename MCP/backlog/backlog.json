@@ -413,6 +413,8 @@
         "The parity contract is checked into the repo and can drive implementation directly.",
         "Later tasks can implement against the contract without ambiguity."
       ],
+      "commit_sha": "20e6a10",
+      "completed_at": "2026-04-22T16:50:15Z",
       "created_at": "2026-04-22T16:34:48Z",
       "details": "Document the public Nelson coordination vocabulary and the Codex-native equivalents for sailing orders, battle plans, action stations, captain's log, and mission lifecycle states so the implementation work has an explicit contract.",
       "execution_checklist": [
@@ -427,7 +429,7 @@
       "recommendation_id": "REC-20260422-011",
       "related_id": "REC-20260422-011",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Map public Nelson terms and flows into Codex primitives.",
       "tags": [
         "contract",
@@ -436,7 +438,8 @@
         "project-management"
       ],
       "title": "Define Nelson parity contract and concept map",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-22T16:50:15Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -907,15 +910,33 @@
         "project-management"
       ],
       "title": "Close Nelson behavioral parity gaps",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-22T16:50:15Z"
+    },
+    {
+      "created_at": "2026-04-22T16:43:26Z",
+      "details": "make a recommendation and implement it",
+      "id": "REC-20260422-012",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "make a recommendation and implement it",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "make a recommendation and implement it",
+      "updated_at": "2026-04-22T16:43:26Z"
     }
   ],
   "stats": {
-    "completed_tasks": 13,
+    "completed_tasks": 14,
     "open_recommendations": 1,
-    "open_tasks": 5
+    "open_tasks": 4
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T16:34:48Z",
+  "updated_at": "2026-04-22T16:50:15Z",
   "version": 1
 }
