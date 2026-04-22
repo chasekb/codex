@@ -7,4 +7,4 @@ The Nelson conversion should be considered valid when the following scenarios ca
 3. A reusable Nelson behavior is represented as a Codex skill or hook.
 4. The plugin package can be loaded with the expected manifest and layout.
 5. The converted package supports at least one representative mission end to end.
-
+6. The package can also run an inventory mission that reports commands, agents, and workflows without using the conversion workflow.

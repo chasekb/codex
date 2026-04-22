@@ -39,7 +39,7 @@
       "Resolve Nelson commands dynamically when the prompt asks for package context or validation.",
       "Resolve Nelson agents dynamically when the prompt asks for orchestration or background coordination.",
       "Package the Nelson conversion boundary for Codex.",
-      "Validate mission scenarios for the converted plugin."
+      "Validate mission scenarios for the converted plugin and run the inventory mission when the prompt asks for package introspection."
     ],
     "brandColor": "#1F4E79",
     "composerIcon": "./assets/icon.svg",

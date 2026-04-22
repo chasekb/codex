@@ -6,6 +6,7 @@ root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 bash "$root/scripts/validate-mapping.sh" >/dev/null
 bash "$root/scripts/test-package-context.sh" >/dev/null
 bash "$root/scripts/test-session-start.sh" >/dev/null
+bash "$root/scripts/test-run-inventory-mission.sh" >/dev/null
 bash "$root/scripts/validate-mission-scenarios.sh" >/dev/null
 
 python3 - "$root" <<'PY'
@@ -23,10 +24,11 @@ scenario_count = sum(
 print(
     json.dumps(
         {
+            "missions": ["nelson-conversion", "nelson-inventory"],
             "status": "passed",
             "mapped_concepts": len(mapping.get("concepts", [])),
             "mission_scenarios": scenario_count,
-            "message": "Nelson conversion package exercised end to end.",
+            "message": "Nelson conversion and inventory missions exercised end to end.",
         },
         indent=2,
         sort_keys=True,

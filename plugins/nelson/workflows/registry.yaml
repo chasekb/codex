@@ -4,3 +4,7 @@ workflows:
     file: pipelines/conversion.yaml
     tags: [nelson, dynamic, integration, plugin]
     priority: 1
+  - id: nelson-inventory
+    file: pipelines/inventory.yaml
+    tags: [nelson, inventory, coordination, package]
+    priority: 2

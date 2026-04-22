@@ -1,0 +1,7 @@
+id: nelson-inventory
+steps:
+  - use: package_context
+  - use: inspect
+  - use: report
+budget_profile: implement
+output_contract: implement
