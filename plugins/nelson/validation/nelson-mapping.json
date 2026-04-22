@@ -19,6 +19,11 @@
       "handling": "Convert Nelson command intents into a dedicated routing hook and package-local command definitions."
     },
     {
+      "codex_primitive": "hooks/_internal/routing/select-agent + agents/*",
+      "concept": "Agent orchestration",
+      "handling": "Convert Nelson orchestration intents into a dedicated routing hook and package-local agent definitions."
+    },
+    {
       "codex_primitive": "hooks/_internal/*",
       "concept": "Hook behavior",
       "handling": "Convert interception, routing, and validation behavior into internal hooks."

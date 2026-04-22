@@ -65,6 +65,7 @@ def parse_plugin_catalog(path):
                     "path": "",
                     "manifest": "",
                     "commands_registry": "",
+                    "agents_registry": "",
                     "skills_registry": "",
                     "rules_registry": "",
                     "workflows_registry": "",
@@ -82,6 +83,8 @@ def parse_plugin_catalog(path):
                 current["manifest"] = stripped.split(":", 1)[1].strip()
             elif stripped.startswith("commands_registry:"):
                 current["commands_registry"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("agents_registry:"):
+                current["agents_registry"] = stripped.split(":", 1)[1].strip()
             elif stripped.startswith("skills_registry:"):
                 current["skills_registry"] = stripped.split(":", 1)[1].strip()
             elif stripped.startswith("rules_registry:"):
@@ -113,7 +116,7 @@ def plugin_entries(root=None, code_home=None):
         normalized = dict(entry)
         normalized["root"] = str(plugin_root)
         normalized["manifest"] = str(root / normalized["manifest"]) if normalized.get("manifest") else ""
-        for key in ("commands_registry", "skills_registry", "rules_registry", "workflows_registry"):
+        for key in ("commands_registry", "agents_registry", "skills_registry", "rules_registry", "workflows_registry"):
             registry = normalized.get(key, "")
             normalized[key] = str(root / registry) if registry else ""
         entries.append(normalized)
@@ -207,7 +210,7 @@ def registry_label(path, root=None, code_home=None):
     if path == root / "skills" / "registry.yaml":
         return "core"
     for entry in plugin_entries(root=root, code_home=code_home):
-        for key in ("commands_registry", "skills_registry", "rules_registry", "workflows_registry"):
+        for key in ("commands_registry", "agents_registry", "skills_registry", "rules_registry", "workflows_registry"):
             registry = entry.get(key, "")
             if registry and path == Path(registry):
                 return f"plugin:{entry.get('id', 'unknown')}"

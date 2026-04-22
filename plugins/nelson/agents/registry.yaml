@@ -1,0 +1,13 @@
+version: 1
+selection:
+  low_confidence_agent: nelson-coordinator
+  metadata_only_default: true
+agents:
+  - id: nelson-coordinator
+    file: coordinator.md
+    tags: [nelson, agent, coordination, orchestration]
+    priority: 1
+  - id: nelson-captain-log
+    file: captain-log.md
+    tags: [nelson, agent, log, state]
+    priority: 2

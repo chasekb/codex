@@ -1,1 +1,11 @@
-{}
+{
+  "servers": [
+    {
+      "id": "nelson-coordination",
+      "name": "Nelson Coordination",
+      "transport": "stdio",
+      "entrypoint": "scripts/nelson-coordination-mcp.sh",
+      "description": "Package-local coordination surface for Nelson orchestration, state capture, and validation."
+    }
+  ]
+}

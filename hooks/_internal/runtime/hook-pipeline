@@ -33,6 +33,9 @@ DEFAULTS_PATH = os.path.join(ROOT, "MCP", "defaults.yaml")
 TOKEN_DEBUG_PATH = os.path.join(ROOT, "outputs", "hook-token-debug.log")
 SKILLS_REGISTRY = os.environ.get("CODEX_SKILLS_REGISTRY") or os.path.join(ROOT, "skills", "registry.yaml")
 HOOK_EVENTS_PATH = os.path.join(ROOT, "outputs", "hook-events.log")
+NELSON_VALIDATION_DIR = os.path.join(ROOT, "plugins", "nelson", "validation")
+NELSON_COORDINATION_LOG_PATH = os.path.join(NELSON_VALIDATION_DIR, "nelson-coordination-log.jsonl")
+NELSON_ACTION_STATE_PATH = os.path.join(NELSON_VALIDATION_DIR, "nelson-action-state.json")
 LEARNINGS_DIR = os.path.join(ROOT, ".learnings")
 LEARNINGS_PATH = os.path.join(LEARNINGS_DIR, "LEARNINGS.md")
 ERRORS_PATH = os.path.join(LEARNINGS_DIR, "ERRORS.md")
@@ -147,6 +150,10 @@ def default_state():
             "output_contract": "",
             "command_id": "",
             "command_registry_label": "",
+            "agent_id": "",
+            "agent_registry_label": "",
+            "mcp_surface": "",
+            "app_surface": "",
             "skill_id": "none",
             "skill_registry_label": "",
             "external_skill_id": "",
@@ -944,6 +951,77 @@ def append_event_log(
         f.write(format_event_line(event_name, hook_name, workflow, skill, stage, status, tool, details) + "\n")
 
 
+def build_nelson_coordination_entry(state, hook_name, stage, status):
+    session = state.get("session", {}) if isinstance(state, dict) else {}
+    metrics = state.get("metrics", {}) if isinstance(state, dict) else {}
+    counters = state.get("counters", {}) if isinstance(state, dict) else {}
+    tokens = state.get("tokens", {}) if isinstance(state, dict) else {}
+    plugin_package = session.get("plugin_package", {}) if isinstance(session, dict) else {}
+    return {
+        "timestamp": now_iso(),
+        "hook_name": hook_name,
+        "stage": stage,
+        "status": status,
+        "workflow": session.get("workflow", "unknown"),
+        "skill_id": session.get("skill_id", "none"),
+        "skill_registry_label": session.get("skill_registry_label", ""),
+        "command_id": session.get("command_id", ""),
+        "command_registry_label": session.get("command_registry_label", ""),
+        "agent_id": session.get("agent_id", ""),
+        "agent_registry_label": session.get("agent_registry_label", ""),
+        "plugin_id": session.get("plugin_id", ""),
+        "plugin_source": session.get("plugin_source", ""),
+        "plugin_context": session.get("plugin_context", ""),
+        "plugin_package": plugin_package if isinstance(plugin_package, dict) else {},
+        "mcp_surface": session.get("mcp_surface", ""),
+        "app_surface": session.get("app_surface", ""),
+        "task_class": session.get("task_class", "general"),
+        "objective": session.get("objective", ""),
+        "confidence": session.get("confidence", 0.0),
+        "tokens": {
+            "input": tokens.get("input", 0),
+            "output": tokens.get("output", 0),
+            "total": tokens.get("total", 0),
+        },
+        "counters": {
+            "pre_tool": counters.get("pre_tool", 0),
+            "post_tool": counters.get("post_tool", 0),
+            "tools": counters.get("tools", 0),
+        },
+        "metrics": {
+            "elapsed_ms": metrics.get("elapsed_ms", 0),
+            "pre_prompt_est_tokens": metrics.get("pre_prompt_est_tokens", 0),
+            "pre_prompt_utilization": metrics.get("pre_prompt_utilization", 0.0),
+            "pre_prompt_margin_tokens": metrics.get("pre_prompt_margin_tokens", 0),
+            "memory_loaded": metrics.get("memory_loaded", 0),
+            "learning_loaded": metrics.get("learning_loaded", 0),
+            "playbook_loaded": metrics.get("playbook_loaded", 0),
+            "search_hints_loaded": metrics.get("search_hints_loaded", 0),
+        },
+    }
+
+
+def write_nelson_coordination_artifacts(state, hook_name, stage, status):
+    session = state.get("session", {}) if isinstance(state, dict) else {}
+    if text(session.get("plugin_id", "")) != "nelson":
+        return None
+    os.makedirs(NELSON_VALIDATION_DIR, exist_ok=True)
+    entry = build_nelson_coordination_entry(state, hook_name, stage, status)
+    with open(NELSON_COORDINATION_LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, sort_keys=True) + "\n")
+    snapshot = {
+        "updated_at": now_iso(),
+        "current_action": {
+            "hook_name": hook_name,
+            "stage": stage,
+            "status": status,
+        },
+        "session": entry,
+    }
+    save_json(NELSON_ACTION_STATE_PATH, snapshot)
+    return entry
+
+
 SEARCH_TOOL_NAMES = {
     "web_search",
     "news_search",
@@ -1600,6 +1678,16 @@ def main():
                 if match:
                     command_registry_label = text(match.group(1))
                     break
+        _, agent_out = run_internal("select-agent", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
+        agent_lines = [l for l in agent_out.splitlines() if text(l)]
+        agent_id = text(agent_lines[-1]) if agent_lines and agent_lines[-1] != "none" else ""
+        agent_registry_label = ""
+        for line in agent_lines:
+            if "source=" in line:
+                match = re.search(r"source=([^\s]+)", line)
+                if match:
+                    agent_registry_label = text(match.group(1))
+                    break
         _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
@@ -1696,6 +1784,11 @@ def main():
             _, plugin_context_out = run_internal(os.path.join("plugins", plugin_id, "scripts", "package-context.sh"))
             plugin_context = parse_first_json_object(plugin_context_out)
             plugin_context_text = text(plugin_context.get("additionalContext", "")) if plugin_context else ""
+        mcp_surface = ""
+        app_surface = ""
+        if plugin_id:
+            mcp_surface = f"plugin:{plugin_id}:mcp"
+            app_surface = f"plugin:{plugin_id}:app"
 
         _, controller_out = run_internal(
             "load-budget-controller",
@@ -1793,6 +1886,8 @@ def main():
                 "output_contract": output_contract,
                 "command_id": command_id,
                 "command_registry_label": command_registry_label,
+                "agent_id": agent_id,
+                "agent_registry_label": agent_registry_label,
                 "skill_id": skill_id,
                 "skill_registry_label": skill_registry_label,
                 "external_skill_id": text(external_skill_report.get("selected", {}).get("name", "")),
@@ -1801,6 +1896,8 @@ def main():
                 "plugin_source": plugin_source,
                 "plugin_context": text(plugin_context.get("additionalContext", "")),
                 "plugin_package": plugin_context.get("package", {}),
+                "mcp_surface": mcp_surface,
+                "app_surface": app_surface,
                 "confidence": confidence,
                 "objective": objective,
             }
@@ -1879,6 +1976,7 @@ def main():
             stage="selection",
             status="loaded" if skill_loaded_chars else "missing",
         )
+        write_nelson_coordination_artifacts(state, hook_name, "selection", "selected")
         write_memory(
             state,
             "decision",
@@ -2178,6 +2276,7 @@ def main():
                 f"kept={output_compact['kept_count']}"
             ),
         )
+        write_nelson_coordination_artifacts(state, hook_name, "postrun", status)
 
         run_internal(
             "postrun-metrics",

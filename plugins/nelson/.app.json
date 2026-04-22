@@ -1,1 +1,14 @@
-{}
+{
+  "apps": [
+    {
+      "id": "nelson-coordination",
+      "name": "Nelson Coordination",
+      "description": "Package-local app surface for Nelson orchestration, package context, and validation flows.",
+      "commands": [
+        "nelson-context",
+        "nelson-inventory",
+        "nelson-validate"
+      ]
+    }
+  ]
+}

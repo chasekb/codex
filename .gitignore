@@ -23,3 +23,5 @@ MCP/memory/
 plugins/cache/
 **/__pycache__/
 *.pyc
+plugins/nelson/validation/nelson-coordination-log.jsonl
+plugins/nelson/validation/nelson-action-state.json

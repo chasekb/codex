@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+import os
+import sys
+from pathlib import Path
+
+from agent_registry import agent_registry_candidates, parse_registry, score_entry
+from skill_registry import tokenize
+
+
+def main():
+    task_class = sys.argv[1] if len(sys.argv) > 1 else "general"
+    confidence = sys.argv[2] if len(sys.argv) > 2 else "1.0"
+    keywords = sys.argv[3] if len(sys.argv) > 3 else ""
+    workspace_root = Path(sys.argv[4]) if len(sys.argv) > 4 else Path.cwd()
+    keywords_lc = keywords.lower()
+    terms = [term for term in tokenize(f"{task_class} {keywords}") if term]
+    code_home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+
+    if not any(
+        phrase in keywords_lc
+        for phrase in (
+            "nelson",
+            "orchestration",
+            "background work",
+            "agent coordination",
+            "captain log",
+            "action state",
+            "subagent",
+        )
+    ):
+        print("none")
+        return 0
+
+    best = None
+    best_score = -1.0
+    best_index = 10**6
+    best_registry = ""
+    for index, registry_path in enumerate(agent_registry_candidates(root=workspace_root, code_home=code_home)):
+        for entry in parse_registry(registry_path):
+            score = score_entry(entry, task_class, terms)
+            if score is None:
+                continue
+            if score > best_score or (score == best_score and index < best_index):
+                best = entry.get("id", "")
+                best_score = score
+                best_index = index
+                best_registry = str(registry_path)
+
+    if best:
+        source = "core" if best_registry == str(workspace_root / "agents" / "registry.yaml") else "plugin:nelson"
+        print(f"agent:selected id={best} source={source} confidence={confidence}")
+        print(best)
+    else:
+        print("none")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

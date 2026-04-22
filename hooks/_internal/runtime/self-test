@@ -48,6 +48,13 @@ nelson_command_catalog_out="$(hooks/_internal/routing/select-command-catalog imp
 echo "$nelson_command_catalog_out" | tail -n1 | grep -qx 'nelson-validate' && pass select_command_nelson_catalog || fail select_command_nelson_catalog
 nelson_command_out="$(hooks/_internal/routing/select-command implement 0.9 "nelson package validation" "$ROOT")"
 echo "$nelson_command_out" | tail -n1 | grep -qx 'nelson-validate' && pass select_command_nelson || fail select_command_nelson
+nelson_agent_catalog_out="$(hooks/_internal/routing/select-agent-catalog implement 0.9 "nelson orchestration background work" "$ROOT")"
+echo "$nelson_agent_catalog_out" | tail -n1 | grep -qx 'nelson-coordinator' && pass select_agent_nelson_catalog || fail select_agent_nelson_catalog
+nelson_agent_out="$(hooks/_internal/routing/select-agent implement 0.9 "nelson orchestration background work" "$ROOT")"
+echo "$nelson_agent_out" | tail -n1 | grep -qx 'nelson-coordinator' && pass select_agent_nelson || fail select_agent_nelson
+coordination_mcp_out="$(bash "$ROOT/plugins/nelson/scripts/nelson-coordination-mcp.sh")"
+echo "$coordination_mcp_out" | grep -Fq '"agents": [' && pass nelson_coordination_mcp_agents || fail nelson_coordination_mcp_agents
+echo "$coordination_mcp_out" | grep -Fq '"commands": [' && pass nelson_coordination_mcp_commands || fail nelson_coordination_mcp_commands
 nelson_workflow_catalog_out="$(hooks/_internal/routing/select-workflow-catalog implement 0.9 "nelson plugin integration package conversion" "$ROOT")"
 echo "$nelson_workflow_catalog_out" | tail -n1 | grep -qx 'nelson-conversion' && pass select_workflow_nelson_catalog || fail select_workflow_nelson_catalog
 nelson_workflow_out="$(hooks/_internal/routing/select-workflow implement 0.9 "nelson plugin integration package conversion" "$ROOT")"
@@ -61,6 +68,10 @@ echo "$nelson_package_context" | grep -Fq '"nelson-context"' && pass nelson_pack
 echo "$nelson_package_context" | grep -Fq '"nelson-inventory"' && pass nelson_package_context_command_inventory || fail nelson_package_context_command_inventory
 echo "$nelson_package_context" | grep -Fq '"nelson-validate"' && pass nelson_package_context_command_validate || fail nelson_package_context_command_validate
 echo "$nelson_package_context" | grep -Fq '"commands": 3' && pass nelson_package_context_command_count || fail nelson_package_context_command_count
+echo "$nelson_package_context" | grep -Fq '"agents": [' && pass nelson_package_context_agents || fail nelson_package_context_agents
+echo "$nelson_package_context" | grep -Fq '"nelson-coordinator"' && pass nelson_package_context_agent_coordinator || fail nelson_package_context_agent_coordinator
+echo "$nelson_package_context" | grep -Fq '"nelson-captain-log"' && pass nelson_package_context_agent_captain_log || fail nelson_package_context_agent_captain_log
+echo "$nelson_package_context" | grep -Fq '"agents": 2' && pass nelson_package_context_agent_count || fail nelson_package_context_agent_count
 [[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
@@ -504,6 +515,7 @@ grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_sk
 
 nelson_pipeline_payload='{"task":{"class":"implement","objective":"nelson plugin integration package conversion"},"classification":{"confidence":0.92}}'
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$nelson_pipeline_payload" >/dev/null && pass hook_pipeline_nelson_smoke || fail hook_pipeline_nelson_smoke
+python3 hooks/_internal/runtime/hook-pipeline TaskComplete <<<'{}' >/dev/null && pass hook_pipeline_nelson_task_complete || fail hook_pipeline_nelson_task_complete
 grep -Fq '"workflow": "nelson-conversion"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_workflow || fail hook_pipeline_nelson_workflow
 grep -Fq '"skill_id": "nelson-conversion"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_skill || fail hook_pipeline_nelson_skill
 grep -Fq '"skill_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_skill_registry || fail hook_pipeline_nelson_skill_registry
@@ -511,9 +523,16 @@ grep -Fq '"plugin_id": "nelson"' outputs/hook-runtime-state.json && pass hook_pi
 grep -Fq '"plugin_source": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_source || fail hook_pipeline_nelson_plugin_source
 grep -Fq '"command_id": "nelson-context"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_command_id || fail hook_pipeline_nelson_command_id
 grep -Fq '"command_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_command_registry || fail hook_pipeline_nelson_command_registry
+grep -Fq '"agent_id": "nelson-coordinator"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_agent_id || fail hook_pipeline_nelson_agent_id
+grep -Fq '"agent_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_agent_registry || fail hook_pipeline_nelson_agent_registry
+grep -Fq '"mcp_surface": "plugin:nelson:mcp"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_mcp_surface || fail hook_pipeline_nelson_mcp_surface
+grep -Fq '"app_surface": "plugin:nelson:app"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_app_surface || fail hook_pipeline_nelson_app_surface
 grep -Fq '"mission_scenarios": 5' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
 grep -Fq '"name": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_name || fail hook_pipeline_nelson_plugin_name
 grep -Fq '"version": "0.1.0"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_version || fail hook_pipeline_nelson_plugin_version
+grep -Fq 'nelson plugin integration package conversion' plugins/nelson/validation/nelson-coordination-log.jsonl && pass hook_pipeline_nelson_coordination_log || fail hook_pipeline_nelson_coordination_log
+grep -Fq '"hook_name": "TaskComplete"' plugins/nelson/validation/nelson-action-state.json && pass hook_pipeline_nelson_action_state_hook || fail hook_pipeline_nelson_action_state_hook
+grep -Fq '"status": "pass"' plugins/nelson/validation/nelson-action-state.json && pass hook_pipeline_nelson_action_state_status || fail hook_pipeline_nelson_action_state_status
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_nelson_event_workflow || fail hook_pipeline_nelson_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_nelson_event_skill || fail hook_pipeline_nelson_event_skill
 

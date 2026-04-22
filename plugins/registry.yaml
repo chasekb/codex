@@ -4,6 +4,7 @@ plugins:
     path: plugins/nelson
     manifest: plugins/nelson/.codex-plugin/plugin.json
     commands_registry: plugins/nelson/commands/registry.yaml
+    agents_registry: plugins/nelson/agents/registry.yaml
     skills_registry: plugins/nelson/skills/registry.yaml
     rules_registry: plugins/nelson/rules/registry.yaml
     workflows_registry: plugins/nelson/workflows/registry.yaml

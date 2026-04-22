@@ -17,6 +17,7 @@
   ],
   "skills": "./skills/",
   "commands": "./commands/",
+  "agents": "./agents/",
   "hooks": "./hooks/",
   "mcpServers": "./.mcp.json",
   "apps": "./.app.json",
@@ -36,6 +37,7 @@
     "defaultPrompt": [
       "Inventory Nelson workflows and map them into Codex primitives.",
       "Resolve Nelson commands dynamically when the prompt asks for package context or validation.",
+      "Resolve Nelson agents dynamically when the prompt asks for orchestration or background coordination.",
       "Package the Nelson conversion boundary for Codex.",
       "Validate mission scenarios for the converted plugin."
     ],

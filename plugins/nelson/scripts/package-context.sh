@@ -36,8 +36,22 @@ for raw in command_registry.splitlines():
     if stripped.startswith("- id:"):
         command_ids.append(stripped.split(":", 1)[1].strip())
 
+agent_registry = (root / "agents" / "registry.yaml").read_text(encoding="utf-8")
+agent_ids = []
+in_agents = False
+for raw in agent_registry.splitlines():
+    stripped = raw.strip()
+    if stripped == "agents:":
+        in_agents = True
+        continue
+    if not in_agents:
+        continue
+    if stripped.startswith("- id:"):
+        agent_ids.append(stripped.split(":", 1)[1].strip())
+
 component_counts = {
     "commands": len(command_ids),
+    "agents": len(agent_ids),
     "skills": sum(1 for _ in (root / "skills").rglob("SKILL.md")),
     "hooks": sum(1 for _ in (root / "hooks").rglob("*") if _.is_file()),
     "rules": sum(1 for _ in (root / "rules").rglob("*.rules")),
@@ -48,6 +62,7 @@ component_counts = {
 summary = (
     f"{manifest['name']} {manifest['version']} package loaded with "
     f"{component_counts['commands']} command(s), "
+    f"{component_counts['agents']} agent(s), "
     f"{component_counts['skills']} skill(s), "
     f"{component_counts['hooks']} hook file(s), "
     f"{component_counts['rules']} rule file(s), and "
@@ -63,6 +78,7 @@ payload = {
         "displayName": manifest.get("interface", {}).get("displayName"),
         "components": component_counts,
         "commands": command_ids,
+        "agents": agent_ids,
         "mission_scenarios": len(scenario_lines),
         "mapped_concepts": len(mapping.get("concepts", [])),
     },
