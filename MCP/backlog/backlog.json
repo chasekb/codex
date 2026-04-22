@@ -106,7 +106,7 @@
       "id": "REC-20260420-001",
       "kind": "recommendation",
       "priority": "medium",
-      "project_id": "global",
+      "project_id": "codex",
       "source": "user_prompt",
       "status": "open",
       "summary": "add to open recommendations project backlog to implement the backlog delete operation",
@@ -143,7 +143,7 @@
       "id": "REC-20260421-001",
       "kind": "recommendation",
       "priority": "medium",
-      "project_id": "global",
+      "project_id": "codex",
       "source": "user_prompt",
       "status": "open",
       "summary": "add the nelson dynamic integration to the project backlog and reprioritize the existing project backlog",
@@ -185,7 +185,7 @@
       "id": "REC-20260421-003",
       "kind": "recommendation",
       "priority": "medium",
-      "project_id": "global",
+      "project_id": "codex",
       "source": "user_prompt",
       "status": "open",
       "summary": "promote the next open project backlog recommendation into a completion checklist built of individual commitable tasks",
@@ -214,14 +214,54 @@
       ],
       "title": "complete implementation of open project backlog tasks",
       "updated_at": "2026-04-21T15:55:48Z"
+    },
+    {
+      "created_at": "2026-04-21T16:43:37Z",
+      "details": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and assign the appropritate priority",
+      "id": "REC-20260421-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and assign the appropritate priority",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and",
+      "updated_at": "2026-04-21T16:43:37Z"
+    },
+    {
+      "created_at": "2026-04-21T16:43:59Z",
+      "details": "Gap matrix:\n- Commands: missing. The public Claude Code Nelson plugin exposes user-facing command surfaces; the Codex Nelson package currently relies on runtime selection and package-local loading only.\n- Agent/subagent orchestration: missing. The public plugin behavior implies coordinated agent workflows; the Codex Nelson package does not yet define Nelson-specific agents or managed background jobs.\n- MCP/tool integrations: missing. The public plugin model supports MCP servers and app integrations; the Codex Nelson package currently has no Nelson-specific MCP or app wiring.\n- Coordination log/state: partial. Codex records plugin_id, plugin_source, plugin_context, and plugin_package, but it does not yet provide a Nelson-native captain's log / action-state ledger.\n- Workflow breadth: partial. Codex has one conversion workflow and package-local registries; the public Nelson plugin appears to be a general coordination framework for recurring task orchestration.\n\nRemediation plan:\n1. Define Nelson command surfaces for the most common coordination operations.\n2. Add Nelson-specific agents or subagent entrypoints for orchestration and background tasks.\n3. Introduce MCP/app integrations where needed to support external coordination steps.\n4. Add a Nelson coordination log and action-state ledger separate from the generic runtime state snapshot.\n5. Expand mission coverage beyond the conversion workflow into reusable coordination flows.\n6. Add tests that prove Nelson can be selected, load its package context, execute its commands, and preserve coordination state end to end.\n\nPriority rationale: high. This is a functional parity gap versus the public plugin behavior, not a minor enhancement.",
+      "id": "REC-20260421-006",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "Add the missing plugin-class capabilities needed for Nelson to behave like the public Claude Code Nelson package.",
+      "tags": [
+        "agents",
+        "claude-code",
+        "coordination",
+        "mcp",
+        "nelson",
+        "parity-gap",
+        "plugin"
+      ],
+      "title": "Close Nelson Claude Code parity gaps",
+      "updated_at": "2026-04-21T16:44:55Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 4,
+    "open_recommendations": 6,
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-04-21T16:11:09Z",
+  "updated_at": "2026-04-21T16:43:59Z",
   "version": 1
 }
