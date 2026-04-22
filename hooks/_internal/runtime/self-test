@@ -75,7 +75,11 @@ echo "$nelson_package_context" | grep -Fq '"agents": [' && pass nelson_package_c
 echo "$nelson_package_context" | grep -Fq '"nelson-coordinator"' && pass nelson_package_context_agent_coordinator || fail nelson_package_context_agent_coordinator
 echo "$nelson_package_context" | grep -Fq '"nelson-captain-log"' && pass nelson_package_context_agent_captain_log || fail nelson_package_context_agent_captain_log
 echo "$nelson_package_context" | grep -Fq '"agents": 2' && pass nelson_package_context_agent_count || fail nelson_package_context_agent_count
-echo "$nelson_package_context" | grep -Fq '"mission_scenarios": 6' && pass nelson_package_context_mission_count || fail nelson_package_context_mission_count
+echo "$nelson_package_context" | grep -Fq '"public_vocabulary": [' && pass nelson_package_context_vocabulary || fail nelson_package_context_vocabulary
+echo "$nelson_package_context" | grep -Fq '"public_vocabulary_count": 4' && pass nelson_package_context_vocabulary_count || fail nelson_package_context_vocabulary_count
+echo "$nelson_package_context" | grep -Fq '"battle plan"' && pass nelson_package_context_vocabulary_battle_plan || fail nelson_package_context_vocabulary_battle_plan
+echo "$nelson_package_context" | grep -Fq '"captain'"'"'s log"' && pass nelson_package_context_vocabulary_captains_log || fail nelson_package_context_vocabulary_captains_log
+echo "$nelson_package_context" | grep -Fq '"mission_scenarios": 7' && pass nelson_package_context_mission_count || fail nelson_package_context_mission_count
 [[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
@@ -690,7 +694,8 @@ grep -Fq '"agent_id": "nelson-coordinator"' outputs/hook-runtime-state.json && p
 grep -Fq '"agent_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_agent_registry || fail hook_pipeline_nelson_agent_registry
 grep -Fq '"mcp_surface": "plugin:nelson:mcp"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_mcp_surface || fail hook_pipeline_nelson_mcp_surface
 grep -Fq '"app_surface": "plugin:nelson:app"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_app_surface || fail hook_pipeline_nelson_app_surface
-grep -Fq '"mission_scenarios": 6' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
+grep -Fq '"mission_scenarios": 7' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
+grep -Fq '"public_vocabulary_count": 4' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package_vocabulary || fail hook_pipeline_nelson_plugin_package_vocabulary
 grep -Fq '"name": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_name || fail hook_pipeline_nelson_plugin_name
 grep -Fq '"version": "0.1.0"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_version || fail hook_pipeline_nelson_plugin_version
 grep -Fq 'nelson plugin integration package conversion' plugins/nelson/validation/nelson-coordination-log.jsonl && pass hook_pipeline_nelson_coordination_log || fail hook_pipeline_nelson_coordination_log

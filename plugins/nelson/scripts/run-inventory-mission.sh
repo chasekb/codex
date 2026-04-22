@@ -39,6 +39,8 @@ payload = {
         "agents": package.get("agents", []),
         "components": components,
         "mission_scenarios": scenario_count,
+        "public_vocabulary": package.get("public_vocabulary", []),
+        "public_vocabulary_count": package.get("public_vocabulary_count", 0),
     },
 }
 

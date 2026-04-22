@@ -23,6 +23,8 @@ scenario_lines = [
     if line.strip().startswith(tuple(str(i) + "." for i in range(1, 10)))
 ]
 mapping = json.loads((root / "validation" / "nelson-mapping.json").read_text(encoding="utf-8"))
+public_vocabulary = mapping.get("public_vocabulary", {})
+public_vocabulary_terms = sorted(public_vocabulary.keys())
 command_registry = (root / "commands" / "registry.yaml").read_text(encoding="utf-8")
 command_ids = []
 in_commands = False
@@ -57,6 +59,7 @@ component_counts = {
     "rules": sum(1 for _ in (root / "rules").rglob("*.rules")),
     "workflows": sum(1 for _ in (root / "workflows").rglob("*.yaml")),
     "mapped_concepts": len(mapping.get("concepts", [])),
+    "public_vocabulary": len(public_vocabulary_terms),
 }
 
 summary = (
@@ -67,6 +70,7 @@ summary = (
     f"{component_counts['hooks']} hook file(s), "
     f"{component_counts['rules']} rule file(s), and "
     f"{component_counts['workflows']} workflow file(s). "
+    f"Public vocabulary aliases: {len(public_vocabulary_terms)} term(s). "
     f"Mission coverage: {len(scenario_lines)} scenario(s) documented."
 )
 
@@ -81,6 +85,8 @@ payload = {
         "agents": agent_ids,
         "mission_scenarios": len(scenario_lines),
         "mapped_concepts": len(mapping.get("concepts", [])),
+        "public_vocabulary": public_vocabulary_terms,
+        "public_vocabulary_count": len(public_vocabulary_terms),
     },
 }
 

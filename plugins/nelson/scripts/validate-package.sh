@@ -55,7 +55,8 @@ grep -q '"id": "nelson-coordination"' "$root/.mcp.json"
 grep -q '"id": "nelson-coordination"' "$root/.app.json"
 
 bash "$root/scripts/validate-mapping.sh" >/dev/null
-bash "$root/scripts/package-context.sh" | grep -q '"mission_scenarios": 6'
+bash "$root/scripts/package-context.sh" | grep -q '"mission_scenarios": 7'
+bash "$root/scripts/package-context.sh" | grep -q '"public_vocabulary_count": 4'
 bash "$root/scripts/test-select-command.sh" >/dev/null
 bash "$root/scripts/test-select-agent.sh" >/dev/null
 bash "$root/scripts/test-coordination-ledger.sh" >/dev/null

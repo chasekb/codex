@@ -7,6 +7,28 @@
     "skills": "skills/",
     "workflows": "workflows/"
   },
+  "public_vocabulary": {
+    "sailing orders": {
+      "codex_primitive": "workflow selection and dispatch",
+      "concept": "Mission request routed to a workflow",
+      "handling": "Treat a sailing order as the user-facing request that selects the mission workflow and its stages."
+    },
+    "battle plan": {
+      "codex_primitive": "workflows/pipelines/*.yaml",
+      "concept": "Planned execution path",
+      "handling": "Treat a battle plan as the explicit workflow plan that sequences inspection, patching, verification, and reporting."
+    },
+    "action station": {
+      "codex_primitive": "commands/* + hooks/_internal/routing/select-command",
+      "concept": "Immediate command surface",
+      "handling": "Treat an action station as the command-level entrypoint used for a focused coordination action."
+    },
+    "captain's log": {
+      "codex_primitive": "validation/nelson-coordination-log.jsonl + validation/nelson-action-state.json",
+      "concept": "Coordination record",
+      "handling": "Treat the captain's log as the package-local coordination history and current action state."
+    }
+  },
   "concepts": [
     {
       "codex_primitive": "workflows/pipelines/*.yaml",

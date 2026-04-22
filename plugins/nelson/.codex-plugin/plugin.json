@@ -38,6 +38,7 @@
       "Inventory Nelson workflows and map them into Codex primitives.",
       "Resolve Nelson commands dynamically when the prompt asks for package context or validation.",
       "Resolve Nelson agents dynamically when the prompt asks for orchestration or background coordination.",
+      "Map Nelson public vocabulary like sailing orders, battle plans, action stations, and captain's log to Codex primitives.",
       "Package the Nelson conversion boundary for Codex.",
       "Validate mission scenarios for the converted plugin and run the inventory mission when the prompt asks for package introspection."
     ],
