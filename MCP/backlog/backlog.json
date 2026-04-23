@@ -447,6 +447,8 @@
         "Relevant prompts route to the correct Nelson surface.",
         "Routing behavior is covered by regression tests."
       ],
+      "commit_sha": "4617002",
+      "completed_at": "2026-04-23T15:43:46Z",
       "created_at": "2026-04-22T16:34:48Z",
       "details": "Add the Codex workflow and command surfaces that represent Nelson mission planning, dispatch, execution, and recovery, using the parity contract as the source of truth.",
       "execution_checklist": [
@@ -461,7 +463,7 @@
       "recommendation_id": "REC-20260422-011",
       "related_id": "REC-20260422-011",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Route Nelson coordination requests through Codex workflows and commands.",
       "tags": [
         "command",
@@ -471,7 +473,8 @@
         "workflow"
       ],
       "title": "Implement Nelson mission lifecycle workflows and command routing",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-23T15:43:46Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -479,6 +482,8 @@
         "The captain's-log equivalent is visible in runtime or package-local files.",
         "The ledger supports regression verification."
       ],
+      "commit_sha": "ea80bfc",
+      "completed_at": "2026-04-23T15:43:49Z",
       "created_at": "2026-04-22T16:34:48Z",
       "details": "Extend the package-local state capture so the converted Nelson flow preserves mission status, action history, and log visibility in a form analogous to the public captain's log.",
       "execution_checklist": [
@@ -493,7 +498,7 @@
       "recommendation_id": "REC-20260422-011",
       "related_id": "REC-20260422-011",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Record Nelson mission state and action history in Codex runtime artifacts.",
       "tags": [
         "logging",
@@ -503,7 +508,8 @@
         "state"
       ],
       "title": "Add Nelson coordination ledger and captain's log parity",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-23T15:43:49Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -511,6 +517,8 @@
         "The Nelson package loads with the expected manifest and interfaces.",
         "Coordination tools are available in the runtime."
       ],
+      "commit_sha": "80ca759",
+      "completed_at": "2026-04-23T15:43:52Z",
       "created_at": "2026-04-22T16:34:48Z",
       "details": "Make the Nelson package expose the MCP and app entrypoints required for mission coordination so the converted package can load and validate the same way a public plugin would.",
       "execution_checklist": [
@@ -525,7 +533,7 @@
       "recommendation_id": "REC-20260422-011",
       "related_id": "REC-20260422-011",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Expose the package-local tool and app surfaces needed by Nelson missions.",
       "tags": [
         "app",
@@ -535,7 +543,8 @@
         "project-management"
       ],
       "title": "Wire Nelson MCP and app surfaces for coordination parity",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-23T15:43:52Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -543,6 +552,8 @@
         "Documentation covers the Nelson-to-Codex mapping.",
         "All linked tasks are verified and the recommendation can close."
       ],
+      "commit_sha": "20e6a10",
+      "completed_at": "2026-04-23T15:44:01Z",
       "created_at": "2026-04-22T16:34:48Z",
       "details": "Add regression coverage and docs that verify the parity contract, command routing, workflow selection, state capture, and package-local coordination artifacts remain stable over time.",
       "execution_checklist": [
@@ -557,7 +568,7 @@
       "recommendation_id": "REC-20260422-011",
       "related_id": "REC-20260422-011",
       "source": "user_prompt",
-      "status": "pending",
+      "status": "completed",
       "summary": "Prove the converted Nelson flows behave consistently end to end.",
       "tags": [
         "docs",
@@ -567,7 +578,151 @@
         "tests"
       ],
       "title": "Add Nelson parity regression tests and documentation",
-      "updated_at": "2026-04-22T16:35:17Z"
+      "updated_at": "2026-04-23T15:44:01Z",
+      "verified": true
+    },
+    {
+      "closed_at": "2026-04-23T16:02:01Z",
+      "closeout_criteria": [
+        "The Nelson mission model exposes explicit lifecycle stages in workflow definitions.",
+        "At least one non-conversion mission flow exercises the expanded lifecycle.",
+        "The workflow remains commit-sized and covered by a focused regression."
+      ],
+      "commit_sha": "9e10a81",
+      "completed_at": "2026-04-23T16:03:16Z",
+      "created_at": "2026-04-23T15:48:54Z",
+      "details": "Expand the Nelson workflow layer from the current conversion and inventory pipelines into an explicit mission lifecycle model that covers planning, dispatch, execution, recovery, and summary. The workflow should remain package-local, preserve the existing conversion path, and expose one additional reusable mission flow so the package behaves like a coordination tool instead of a single-purpose conversion scaffold.",
+      "execution_checklist": [
+        "Define explicit lifecycle stages for Nelson mission execution.",
+        "Add or extend workflow pipelines to represent the lifecycle stages.",
+        "Keep the existing conversion path and inventory path working unchanged.",
+        "Add a focused regression check for the expanded lifecycle."
+      ],
+      "id": "TASK-20260423-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260423-004",
+      "related_id": "REC-20260423-004",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Expand Nelson workflows to include explicit mission lifecycle stages.",
+      "tags": [
+        "nelson",
+        "workflow",
+        "parity",
+        "project-management"
+      ],
+      "title": "Expand Nelson mission lifecycle workflows",
+      "updated_at": "2026-04-23T16:03:16Z",
+      "verified": true
+    },
+    {
+      "closed_at": "2026-04-23T16:02:01Z",
+      "closeout_criteria": [
+        "Captain's log state is reachable through a first-class command or query surface.",
+        "The log surface returns both the current action state and recent history.",
+        "The surface is documented and covered by a regression test."
+      ],
+      "commit_sha": "9e10a81",
+      "completed_at": "2026-04-23T16:03:16Z",
+      "created_at": "2026-04-23T15:48:54Z",
+      "details": "Add a package-local captain's log surface so users can inspect Nelson mission state without depending only on validation artifacts. The local integration already stores coordination history in validation files, but the gap analysis shows it still needs an explicit user-facing surface for querying the current action state and recent log entries.",
+      "execution_checklist": [
+        "Define the captain's log entrypoint as a command, agent, or both.",
+        "Expose the current action state and recent coordination history through that surface.",
+        "Wire the surface into package metadata and routing if needed.",
+        "Add a regression check that proves the log surface is reachable and returns data."
+      ],
+      "id": "TASK-20260423-002",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260423-004",
+      "related_id": "REC-20260423-004",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Expose the Nelson captain's log as a first-class package surface.",
+      "tags": [
+        "nelson",
+        "logging",
+        "state",
+        "project-management"
+      ],
+      "title": "Add a first-class Nelson captain's log surface",
+      "updated_at": "2026-04-23T16:03:16Z",
+      "verified": true
+    },
+    {
+      "closed_at": "2026-04-23T16:02:17Z",
+      "closeout_criteria": [
+        "Prompt variants beyond the current keyword list still resolve to the correct Nelson surface.",
+        "Command and agent selection behave consistently across the expanded alias set.",
+        "Negative cases still fall through to non-Nelson routing when appropriate."
+      ],
+      "commit_sha": "9e10a81",
+      "completed_at": "2026-04-23T16:03:16Z",
+      "created_at": "2026-04-23T15:48:54Z",
+      "details": "Broaden the Nelson routing selectors so they recognize mission-language variants instead of only the current fixed phrases. The present hooks are intentionally narrow, which keeps them stable for the scaffold but leaves a functional gap relative to a more usable coordination plugin. This task should improve intent matching while preserving core routing precedence and non-Nelson fallback behavior.",
+      "execution_checklist": [
+        "Audit the current keyword gates in the Nelson command and agent selectors.",
+        "Add additional aliases and intent phrases for mission, coordination, log, and validation requests.",
+        "Keep core routing precedence and non-Nelson fallback behavior intact.",
+        "Add positive and negative selector tests for the expanded vocabulary."
+      ],
+      "id": "TASK-20260423-003",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260423-004",
+      "related_id": "REC-20260423-004",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Expand Nelson command and agent intent matching beyond the current narrow keyword gates.",
+      "tags": [
+        "nelson",
+        "routing",
+        "selection",
+        "project-management"
+      ],
+      "title": "Broaden Nelson routing heuristics and aliases",
+      "updated_at": "2026-04-23T16:03:16Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "The regression suite covers the expanded mission lifecycle, routing, and captain's log surface.",
+        "The docs explain the mapping from the Nelson plugin behavior to Codex primitives.",
+        "The task can be verified end to end without manual inspection."
+      ],
+      "commit_sha": "9e10a81",
+      "completed_at": "2026-04-23T16:03:16Z",
+      "created_at": "2026-04-23T15:48:54Z",
+      "details": "Add end-to-end verification and documentation for the remaining functional parity work. The current package proves the scaffold shape, but the gap analysis still needs a regression layer that demonstrates the broader mission lifecycle, routing coverage, and first-class log surface behave consistently over time.",
+      "execution_checklist": [
+        "Add an end-to-end regression path for the expanded mission lifecycle.",
+        "Add assertions for captain's log access and routing alias coverage.",
+        "Document the remaining Nelson-to-Codex behavioral mapping.",
+        "Verify both positive and negative cases before closeout."
+      ],
+      "id": "TASK-20260423-004",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260423-004",
+      "related_id": "REC-20260423-004",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Prove and document the remaining Nelson parity behavior end to end.",
+      "tags": [
+        "nelson",
+        "docs",
+        "tests",
+        "project-management"
+      ],
+      "title": "Add Nelson parity regression tests and documentation for the remaining gaps",
+      "updated_at": "2026-04-23T16:03:16Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -881,6 +1036,7 @@
       "updated_at": "2026-04-22T16:26:19Z"
     },
     {
+      "closed_at": "2026-04-23T15:44:01Z",
       "closeout_criteria": [
         "The Nelson parity contract is documented, reviewable, and mapped to Codex primitives.",
         "All derived parity tasks are completed and verified.",
@@ -900,7 +1056,7 @@
       "priority": "high",
       "project_id": "codex",
       "source": "user_prompt",
-      "status": "promoted",
+      "status": "completed",
       "summary": "Map Nelson coordination semantics into Codex-native commands, agents, workflows, state, and tests.",
       "tags": [
         "backlog",
@@ -910,7 +1066,7 @@
         "project-management"
       ],
       "title": "Close Nelson behavioral parity gaps",
-      "updated_at": "2026-04-22T16:50:15Z"
+      "updated_at": "2026-04-23T15:44:01Z"
     },
     {
       "created_at": "2026-04-22T16:43:26Z",
@@ -929,14 +1085,139 @@
       ],
       "title": "make a recommendation and implement it",
       "updated_at": "2026-04-22T16:43:26Z"
+    },
+    {
+      "created_at": "2026-04-23T14:44:43Z",
+      "details": "show project backlog",
+      "id": "REC-20260423-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show project backlog",
+      "updated_at": "2026-04-23T14:44:43Z"
+    },
+    {
+      "created_at": "2026-04-23T15:39:22Z",
+      "details": "show project backlog filtered to only codex project",
+      "id": "REC-20260423-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show project backlog filtered to only codex project",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show project backlog filtered to only codex project",
+      "updated_at": "2026-04-23T15:39:22Z"
+    },
+    {
+      "created_at": "2026-04-23T15:40:20Z",
+      "details": "complete pending codex project backlog tasks",
+      "id": "REC-20260423-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete pending codex project backlog tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete pending codex project backlog tasks",
+      "updated_at": "2026-04-23T15:40:20Z"
+    },
+    {
+      "closed_at": "2026-04-23T16:03:16Z",
+      "closeout_criteria": [
+        "The Nelson mission model includes explicit planning, dispatch, execution, recovery, and summary stages.",
+        "Captain's log access is exposed through a first-class package surface instead of validation artifacts only.",
+        "Routing, validation, and docs reflect the expanded functional surface."
+      ],
+      "commit_sha": "9e10a81",
+      "completed_at": "2026-04-23T16:03:16Z",
+      "created_at": "2026-04-23T15:48:54Z",
+      "details": "Convert the remaining functional gaps in the local Nelson integration into commit-sized backlog work. This remediation covers mission lifecycle breadth, a first-class captain's log surface, broader Nelson intent routing, and end-to-end regression coverage so the package can be compared against the Claude Code Nelson plugin on behavior rather than only scaffold shape.",
+      "id": "REC-20260423-004",
+      "implementation_tasks": [
+        "TASK-20260423-001",
+        "TASK-20260423-002",
+        "TASK-20260423-003",
+        "TASK-20260423-004"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Turn the remaining Nelson functional gaps into commitable Codex backlog work.",
+      "tags": [
+        "backlog",
+        "nelson",
+        "parity",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "Close Nelson functional gap remediation",
+      "updated_at": "2026-04-23T16:03:16Z",
+      "verified": true
+    },
+    {
+      "created_at": "2026-04-23T15:53:32Z",
+      "details": "complete the pending codex project backlog tasks",
+      "id": "REC-20260423-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete the pending codex project backlog tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete the pending codex project backlog tasks",
+      "updated_at": "2026-04-23T15:53:32Z"
+    },
+    {
+      "created_at": "2026-04-23T16:01:08Z",
+      "details": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable transform project backlog tasks with execution and completion criteria checklists to derive sql questions for the existing metabase instance to present the most meaningful data calculated for the last day for which complete data exists",
+      "id": "REC-20260423-006",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable transform project backlog tasks with execution and completion criteria checklists to derive sql questions for the exist",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable",
+      "updated_at": "2026-04-23T16:01:08Z"
     }
   ],
   "stats": {
-    "completed_tasks": 14,
-    "open_recommendations": 1,
-    "open_tasks": 4
+    "completed_tasks": 22,
+    "open_recommendations": 18,
+    "open_tasks": 0
   },
   "stats_scope": "project",
-  "updated_at": "2026-04-22T16:50:15Z",
+  "updated_at": "2026-04-23T16:03:16Z",
   "version": 1
 }
