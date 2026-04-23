@@ -20,26 +20,34 @@ test -f "$root/commands/registry.yaml"
 test -f "$root/agents/registry.yaml"
 test -f "$root/commands/context.md"
 test -f "$root/commands/inventory.md"
+test -f "$root/commands/captain-log.md"
 test -f "$root/commands/validate.md"
 test -f "$root/agents/coordinator.md"
 test -f "$root/agents/captain-log.md"
 test -f "$root/workflows/pipelines/conversion.yaml"
+test -f "$root/workflows/pipelines/mission.yaml"
 test -f "$root/workflows/pipelines/inventory.yaml"
 test -f "$root/rules/conversion.rules"
 test -f "$root/skills/nelson-conversion/SKILL.md"
 test -f "$root/hooks/session-start"
 test -f "$root/scripts/package-context.sh"
+test -f "$root/scripts/captain-log.sh"
 test -f "$root/scripts/validate-mapping.sh"
 test -f "$root/scripts/run-mission-scenarios.sh"
 test -f "$root/scripts/run-inventory-mission.sh"
+test -f "$root/scripts/test-captain-log.sh"
+test -f "$root/scripts/test-mission-lifecycle.sh"
 test -f "$root/scripts/test-coordination-ledger.sh"
 test -f "$root/scripts/test-run-inventory-mission.sh"
 test -f "$root/scripts/test-selection-state.sh"
 test -x "$root/hooks/session-start"
 test -x "$root/scripts/package-context.sh"
+test -x "$root/scripts/captain-log.sh"
 test -x "$root/scripts/validate-mapping.sh"
 test -x "$root/scripts/run-mission-scenarios.sh"
 test -x "$root/scripts/run-inventory-mission.sh"
+test -x "$root/scripts/test-captain-log.sh"
+test -x "$root/scripts/test-mission-lifecycle.sh"
 test -x "$root/scripts/test-select-command.sh"
 test -x "$root/scripts/test-select-agent.sh"
 test -x "$root/scripts/test-coordination-ledger.sh"
@@ -55,8 +63,12 @@ grep -q '"id": "nelson-coordination"' "$root/.mcp.json"
 grep -q '"id": "nelson-coordination"' "$root/.app.json"
 
 bash "$root/scripts/validate-mapping.sh" >/dev/null
-bash "$root/scripts/package-context.sh" | grep -q '"mission_scenarios": 7'
-bash "$root/scripts/package-context.sh" | grep -q '"public_vocabulary_count": 4'
+bash "$root/scripts/package-context.sh" | grep -q '"commands": 4'
+bash "$root/scripts/package-context.sh" | grep -q '"mission_scenarios": 9'
+bash "$root/scripts/package-context.sh" | grep -q '"public_vocabulary_count": 5'
+bash "$root/scripts/package-context.sh" | grep -q '"mapped_concepts": 11'
+bash "$root/scripts/test-captain-log.sh" >/dev/null
+bash "$root/scripts/test-mission-lifecycle.sh" >/dev/null
 bash "$root/scripts/test-select-command.sh" >/dev/null
 bash "$root/scripts/test-select-agent.sh" >/dev/null
 bash "$root/scripts/test-coordination-ledger.sh" >/dev/null

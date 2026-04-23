@@ -24,11 +24,11 @@ scenario_count = sum(
 print(
     json.dumps(
         {
-            "missions": ["nelson-conversion", "nelson-inventory"],
+            "missions": ["nelson-conversion", "nelson-mission", "nelson-inventory"],
             "status": "passed",
             "mapped_concepts": len(mapping.get("concepts", [])),
             "mission_scenarios": scenario_count,
-            "message": "Nelson conversion and inventory missions exercised end to end.",
+            "message": "Nelson conversion, mission lifecycle, and inventory missions exercised end to end.",
         },
         indent=2,
         sort_keys=True,

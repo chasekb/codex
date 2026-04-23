@@ -9,3 +9,5 @@ The Nelson conversion should be considered valid when the following scenarios ca
 5. The converted package supports at least one representative mission end to end.
 6. The package can also run an inventory mission that reports commands, agents, and workflows without using the conversion workflow.
 7. The package surfaces the public Nelson vocabulary for sailing orders, battle plans, action stations, and captain's log as Codex-native aliases.
+8. The package exposes an explicit mission lifecycle workflow with planning, dispatch, execution, recovery, and summary stages.
+9. The package exposes a first-class captain's log surface that returns current action state and recent coordination history.

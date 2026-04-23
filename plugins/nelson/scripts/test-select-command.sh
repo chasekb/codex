@@ -6,6 +6,9 @@ root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 context_out="$(hooks/_internal/routing/select-command general 0.9 "nelson package context" "$root")"
 echo "$context_out" | tail -n1 | grep -qx 'nelson-context'
 
+log_out="$(hooks/_internal/routing/select-command general 0.9 "nelson captain log recent history" "$root")"
+echo "$log_out" | tail -n1 | grep -qx 'nelson-captain-log'
+
 validate_out="$(hooks/_internal/routing/select-command general 0.9 "nelson package validation" "$root")"
 echo "$validate_out" | tail -n1 | grep -qx 'nelson-validate'
 

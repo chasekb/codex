@@ -18,15 +18,20 @@
       "concept": "Planned execution path",
       "handling": "Treat a battle plan as the explicit workflow plan that sequences inspection, patching, verification, and reporting."
     },
+    "mission lifecycle": {
+      "codex_primitive": "workflows/pipelines/mission.yaml",
+      "concept": "Mission lifecycle orchestration",
+      "handling": "Treat mission lifecycle as the ordered planning, dispatch, execution, recovery, and summary stages for Nelson coordination."
+    },
     "action station": {
       "codex_primitive": "commands/* + hooks/_internal/routing/select-command",
       "concept": "Immediate command surface",
       "handling": "Treat an action station as the command-level entrypoint used for a focused coordination action."
     },
     "captain's log": {
-      "codex_primitive": "validation/nelson-coordination-log.jsonl + validation/nelson-action-state.json",
+      "codex_primitive": "commands/captain-log.md + scripts/captain-log.sh + validation/nelson-coordination-log.jsonl + validation/nelson-action-state.json",
       "concept": "Coordination record",
-      "handling": "Treat the captain's log as the package-local coordination history and current action state."
+      "handling": "Treat the captain's log as the package-local coordination history, current action state, and user-facing log surface."
     }
   },
   "concepts": [
@@ -34,6 +39,11 @@
       "codex_primitive": "workflows/pipelines/*.yaml",
       "concept": "Workflow orchestration",
       "handling": "Convert Nelson orchestration steps into explicit Codex pipelines with named stages."
+    },
+    {
+      "codex_primitive": "workflows/pipelines/mission.yaml",
+      "concept": "Mission lifecycle",
+      "handling": "Convert Nelson mission lifecycles into a reusable coordination workflow with planning, dispatch, execution, recovery, and summary."
     },
     {
       "codex_primitive": "hooks/_internal/routing/select-command + commands/*",
@@ -69,6 +79,11 @@
       "codex_primitive": "assets/ + scripts/",
       "concept": "Static assets",
       "handling": "Preserve assets and helper scripts as companion files under the plugin root."
+    },
+    {
+      "codex_primitive": "commands/captain-log.md + scripts/captain-log.sh + tests and validation cases",
+      "concept": "Captain's log surface",
+      "handling": "Convert the Nelson captain's log into a first-class query surface backed by package-local validation state."
     },
     {
       "codex_primitive": "tests and validation cases",

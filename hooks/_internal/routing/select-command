@@ -17,7 +17,7 @@ def main():
 
     if not any(
         phrase in keywords_lc
-        for phrase in (
+    for phrase in (
             "nelson",
             "plugin integration",
             "package context",
@@ -25,6 +25,16 @@ def main():
             "command surface",
             "inventory nelson",
             "validate nelson",
+            "sailing orders",
+            "battle plan",
+            "action station",
+            "captain log",
+            "captain's log",
+            "action state",
+            "coordination history",
+            "mission log",
+            "log history",
+            "mission state",
         )
     ):
         print("none")

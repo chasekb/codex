@@ -18,13 +18,20 @@ def main():
 
     if not any(
         phrase in keywords_lc
-        for phrase in (
+    for phrase in (
             "nelson",
             "orchestration",
             "background work",
             "agent coordination",
+            "sailing orders",
+            "battle plan",
+            "action station",
             "captain log",
             "action state",
+            "coordination history",
+            "mission lifecycle",
+            "mission state",
+            "mission history",
             "subagent",
         )
     ):

@@ -43,7 +43,7 @@ if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(weekly backlog review|weekly
   exit 0
 fi
 
-if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(nelson|plugin catalog|plugin integration|dynamic integration|package conversion)([[:space:]]|$)'; then
+if echo "$keywords_lc" | grep -Eiq '(^|[[:space:]])(nelson|plugin catalog|plugin integration|dynamic integration|package conversion|mission lifecycle|mission planning|mission dispatch|mission recovery|captain log|action state|coordination history)([[:space:]]|$)'; then
   catalog_skill="$("$workspace_root/hooks/_internal/routing/select-workflow-catalog" "$task_class" "$confidence" "$keywords" "$workspace_root" | tail -n1)"
   if [[ -n "$catalog_skill" ]]; then
     echo "$catalog_skill"

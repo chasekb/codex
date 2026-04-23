@@ -16,5 +16,7 @@ grep -q 'A reusable Nelson behavior is represented as a Codex skill or hook\.' "
 grep -q 'The plugin package can be loaded with the expected manifest and layout\.' "$scenarios"
 grep -q 'The converted package supports at least one representative mission end to end\.' "$scenarios"
 grep -q 'The package can also run an inventory mission that reports commands, agents, and workflows without using the conversion workflow\.' "$scenarios"
+grep -q 'The package exposes an explicit mission lifecycle workflow with planning, dispatch, execution, recovery, and summary stages\.' "$scenarios"
+grep -q 'The package exposes a first-class captain'"'"'s log surface that returns current action state and recent coordination history\.' "$scenarios"
 
 printf 'nelson-mission-scenarios:ok\n'

@@ -1,0 +1,9 @@
+id: nelson-mission
+steps:
+  - use: mission_plan
+  - use: mission_dispatch
+  - use: mission_execute
+  - use: mission_recover
+  - use: mission_summary
+budget_profile: implement
+output_contract: implement
