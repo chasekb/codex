@@ -723,10 +723,196 @@
       "title": "Add Nelson parity regression tests and documentation for the remaining gaps",
       "updated_at": "2026-04-23T16:03:16Z",
       "verified": true
+    },
+    {
+      "commit_sha": "87a27d3",
+      "completed_at": "2026-04-23T16:42:12Z",
+      "created_at": "2026-04-23T16:37:17Z",
+      "details": "Turn the snapshot history into a reusable Metabase filter that identifies the last day with complete options valuation data. This task should determine whether the default cutoff can safely be `MAX(daily_timestamp)` or whether completeness requires an additional row-count / success-rate gate before the day is considered complete.\n\nExecution checklist:\n- Inspect the snapshot table across the latest days and compare row counts, success counts, and validation failures by `daily_timestamp`.\n- Define the cutoff rule that selects exactly one last complete day.\n- Write the SQL question or CTE that can be reused as the day anchor for the downstream Metabase questions.\n- Verify the query uses only existing snapshot columns and does not depend on new transforms.\n\nCompletion checklist:\n- The cutoff rule is explicit, documented, and reproducible.\n- The SQL returns a single day that Metabase can reuse in other questions.\n- The query is grounded in the existing snapshot history and captures completeness, not just recency.",
+      "id": "TASK-20260423-005",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "transform",
+      "recommendation_id": "REC-20260423-008",
+      "related_id": "REC-20260423-008",
+      "source": "conversation",
+      "status": "completed",
+      "summary": "Create the cutoff query that returns the last complete `daily_timestamp` for the options snapshot table.",
+      "tags": [
+        "cutoff",
+        "metabase",
+        "quality",
+        "snapshot",
+        "sql"
+      ],
+      "title": "Define the last complete options snapshot day SQL",
+      "updated_at": "2026-04-23T16:42:12Z",
+      "verified": true
+    },
+    {
+      "commit_sha": "87a27d3",
+      "completed_at": "2026-04-23T16:42:23Z",
+      "created_at": "2026-04-23T16:37:26Z",
+      "details": "Build the core Metabase questions that summarize the calculated snapshot on the last complete day. These questions should surface the volume of successful valuations, the split between expired and live contracts, and the gap between model value and the observed quote fields so a reviewer can quickly see whether the snapshot is broadly healthy and economically interesting.\n\nSuggested question themes:\n- Coverage and validation rate by `underlying_symbol` and `option_type`.\n- Average / median `theoretical_value` compared with `last_price`, `bid`, and `ask`.\n- Rows grouped by `expiration_date` bucket and `time_to_expiry_years`.\n- Rollups for `is_expired`, `is_success`, and `validation_message` on the last complete day.\n\nExecution checklist:\n- Draft each SQL question with the last-complete-day cutoff applied.\n- Make sure the questions answer something a decision-maker can use without additional manual filtering.\n- Keep the set small enough to fit in a single Metabase collection or dashboard section.\n\nCompletion checklist:\n- The summary questions cover coverage, valuation quality, and live/expired mix.\n- The SQL is directly runnable against the existing snapshot table.\n- The outputs are understandable as a daily executive summary for the last complete day.",
+      "id": "TASK-20260423-006",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "transform",
+      "recommendation_id": "REC-20260423-008",
+      "related_id": "REC-20260423-008",
+      "source": "conversation",
+      "status": "completed",
+      "summary": "Create the board-level SQL questions that describe the last complete day\u2019s valuation quality and P&L-style signals.",
+      "tags": [
+        "dashboard",
+        "metabase",
+        "snapshot",
+        "sql",
+        "summary"
+      ],
+      "title": "Build the snapshot valuation summary Metabase questions",
+      "updated_at": "2026-04-23T16:42:23Z",
+      "verified": true
+    },
+    {
+      "commit_sha": "87a27d3",
+      "completed_at": "2026-04-23T16:42:30Z",
+      "created_at": "2026-04-23T16:37:33Z",
+      "details": "Build the drill-down questions that make the snapshot useful for investigation after the summary view shows something interesting. These should identify the contracts and underlyings with the largest premium or discount versus model value, the widest bid/ask spread, the highest implied volatility, and the shortest / longest time to expiry on the last complete day.\n\nSuggested question themes:\n- Top contracts by absolute and percentage difference between `theoretical_value` and `last_price` or midpoint `bid`/`ask`.\n- Largest outliers grouped by `underlying_symbol`, `option_type`, and `expiration_date`.\n- Data-quality drill-downs for rows with `is_success = false` or non-empty `validation_message`.\n- Concentration views for `binomial_steps`, `dividend_yield`, `risk_free_rate`, and `time_to_expiry_years`.\n\nExecution checklist:\n- Draft the SQL for each outlier or concentration query using the last-complete-day anchor.\n- Add reasonable `ORDER BY` and `LIMIT` behavior so each question is immediately readable in Metabase.\n- Confirm the output is suitable for a single-question drill-down after the dashboard summary.\n\nCompletion checklist:\n- The drill-down questions clearly identify meaningful outliers and risk clusters.\n- Each question is runnable on the current snapshot schema with no extra pipeline work.\n- The set complements the summary questions instead of duplicating them.",
+      "id": "TASK-20260423-007",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "transform",
+      "recommendation_id": "REC-20260423-008",
+      "related_id": "REC-20260423-008",
+      "source": "conversation",
+      "status": "completed",
+      "summary": "Create the SQL questions that highlight the most meaningful single-day outliers and risk concentration in the snapshot.",
+      "tags": [
+        "metabase",
+        "outliers",
+        "risk",
+        "snapshot",
+        "sql"
+      ],
+      "title": "Build the mispricing and concentration drill-down Metabase questions",
+      "updated_at": "2026-04-23T16:42:30Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Representative codex runs show materially lower pre-prompt estimate error than the current baseline.",
+        "The updated estimator preserves the existing metrics fields and does not break budget report generation.",
+        "The runtime can explain the remaining estimate gap, if any, with documented exceptions."
+      ],
+      "commit_sha": "c562a1a",
+      "completed_at": "2026-05-06T15:14:28Z",
+      "created_at": "2026-04-27T18:10:05Z",
+      "details": "Use the current token-management gap analysis to recalibrate pre-prompt token estimation for codex-relevant workflows, with emphasis on keeping estimates close to observed input usage so budget tuning can act on measured behavior instead of inflated prediction. Preserve the existing telemetry and tuning loop.",
+      "execution_checklist": [
+        "Measure the current estimate error against representative codex workflow samples.",
+        "Adjust the pre-prompt estimation logic or scaling inputs to reduce overestimation.",
+        "Verify the token-metrics and budget-report artifacts still emit all expected fields."
+      ],
+      "id": "TASK-20260427-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260427-003",
+      "related_id": "REC-20260427-003",
+      "source": "recommendation",
+      "status": "completed",
+      "summary": "Reduce the gap between pre-prompt token estimates and actual input usage",
+      "tags": [
+        "backlog",
+        "budgets",
+        "codex",
+        "metrics",
+        "recommendation",
+        "runtime",
+        "token-budgeting"
+      ],
+      "title": "Tighten codex pre-prompt token estimation model",
+      "updated_at": "2026-05-06T15:14:28Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "The budget controller produces stable prompt-scale and context-loading decisions for codex-relevant workflows.",
+        "The tuning loop reflects measured utilization and margin instead of oversized prompt assumptions.",
+        "Budget comparisons do not show unexplained regressions in codex workflows after calibration."
+      ],
+      "commit_sha": "c562a1a",
+      "completed_at": "2026-05-06T15:14:28Z",
+      "created_at": "2026-04-27T18:10:13Z",
+      "details": "Use the current token-management gap analysis and historical budget reports to calibrate prompt-scale and context-loading decisions for codex-relevant workflows. The goal is stable controller behavior that reflects measured utilization, margin, and estimate fidelity without regressing existing pre-prompt telemetry.",
+      "execution_checklist": [
+        "Review budget-report history for codex-relevant workflows and identify consistent overestimation patterns.",
+        "Tune controller thresholds or scaling inputs using the measured estimate and utilization data.",
+        "Run budget comparison checks to confirm the calibration does not destabilize existing workflows."
+      ],
+      "id": "TASK-20260427-002",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260427-003",
+      "related_id": "REC-20260427-003",
+      "source": "recommendation",
+      "status": "completed",
+      "summary": "Tune budget-controller behavior using observed codex token metrics",
+      "tags": [
+        "backlog",
+        "budgets",
+        "codex",
+        "metrics",
+        "recommendation",
+        "runtime",
+        "token-budgeting"
+      ],
+      "title": "Calibrate codex budget controller against token metrics",
+      "updated_at": "2026-05-06T15:14:28Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "The token-management gap analysis is covered by regression checks and continues to generate valid reports.",
+        "Documentation describes the metric set, gap criteria, and acceptance thresholds for codex token budgeting.",
+        "The retained output files include the analyzer artifacts and remain discoverable after compaction."
+      ],
+      "commit_sha": "c562a1a",
+      "completed_at": "2026-05-06T15:14:28Z",
+      "created_at": "2026-04-27T18:10:17Z",
+      "details": "Add regression coverage for the token-management gap analysis, pre-prompt estimation behavior, and budget report generation so the codex runtime can prove the remediation works end to end. Document the updated metrics and acceptance thresholds alongside the analyzer output.",
+      "execution_checklist": [
+        "Add a regression test for the token-management gap analysis output and key summary fields.",
+        "Document the budget and metric thresholds that define acceptable codex token-management behavior.",
+        "Confirm the analyzer artifacts remain retained in outputs and are not pruned by compaction."
+      ],
+      "id": "TASK-20260427-003",
+      "kind": "task",
+      "priority": "medium",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260427-003",
+      "related_id": "REC-20260427-003",
+      "source": "recommendation",
+      "status": "completed",
+      "summary": "Prove the token-budget feedback loop with repeatable tests and documentation",
+      "tags": [
+        "backlog",
+        "codex",
+        "docs",
+        "metrics",
+        "recommendation",
+        "tests",
+        "token-budgeting"
+      ],
+      "title": "Add codex token-budget regression coverage and docs",
+      "updated_at": "2026-05-06T15:14:28Z",
+      "verified": true
     }
   ],
   "meta": {
-    "last_weekly_review_at": "2026-04-21T16:04:27Z"
+    "last_weekly_review_at": "2026-05-02T15:47:31Z"
   },
   "recommendations": [
     {
@@ -1210,14 +1396,350 @@
       ],
       "title": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable",
       "updated_at": "2026-04-23T16:01:08Z"
+    },
+    {
+      "created_at": "2026-04-23T16:22:04Z",
+      "details": "show codex project backlog",
+      "id": "REC-20260423-007",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show codex project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show codex project backlog",
+      "updated_at": "2026-04-23T16:22:04Z"
+    },
+    {
+      "closed_at": "2026-04-23T16:42:30Z",
+      "created_at": "2026-04-23T16:37:02Z",
+      "details": "Review the calculated fields in `priority_queue.options_valuation_snapshot_american` and define the SQL questions Metabase should expose for the last day with complete data. The question set should use `daily_timestamp` as the snapshot day, identify the last complete day from the existing history, and emphasize the most decision-relevant outputs: coverage, valuation quality, and mispricing/risk concentration.\n\nPrimary snapshot fields available for analysis: `underlying_symbol`, `contract_symbol`, `quote_timestamp`, `daily_timestamp`, `valuation_timestamp`, `expiration_date`, `option_type`, `model_name`, `strike`, `underlying_price`, `last_price`, `bid`, `ask`, `implied_volatility`, `risk_free_rate`, `dividend_yield`, `time_to_expiry_years`, `intrinsic_value`, `theoretical_value`, `contract_multiplier`, `binomial_steps`, `is_expired`, `is_success`, `validation_message`.\n\nExecution checklist:\n- Review the snapshot rows and define the business rule for the last complete day, using `MAX(daily_timestamp)` or a stricter completeness test if row counts or success rates show gaps.\n- Identify the 3-5 highest-value Metabase questions to answer for that day.\n- Draft the SQL shape for each question with the date filter anchored to the last complete day.\n- Confirm each question can be answered directly from the existing snapshot table without new transforms.\n\nCompletion checklist:\n- The last-complete-day rule is written down and unambiguous.\n- Each proposed Metabase question is tied to a clear analytical purpose and a concrete SQL filter.\n- The question set covers coverage/quality, valuation summary, and opportunity or risk concentration.\n- The resulting backlog item is small enough to promote into commit-sized implementation tasks.",
+      "id": "REC-20260423-008",
+      "implementation_tasks": [
+        "TASK-20260423-005",
+        "TASK-20260423-006",
+        "TASK-20260423-007"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "transform",
+      "source": "conversation",
+      "status": "completed",
+      "summary": "Turn the snapshot table into a Metabase question set focused on the most recent complete day.",
+      "tags": [
+        "analytics",
+        "metabase",
+        "options",
+        "snapshot",
+        "sql"
+      ],
+      "title": "Define Metabase questions for the last complete options valuation day",
+      "updated_at": "2026-04-23T16:42:30Z"
+    },
+    {
+      "created_at": "2026-04-23T16:40:38Z",
+      "details": "complete the transform project backlog open tasks",
+      "id": "REC-20260423-009",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete the transform project backlog open tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete the transform project backlog open tasks",
+      "updated_at": "2026-04-23T16:40:38Z"
+    },
+    {
+      "created_at": "2026-04-27T15:36:35Z",
+      "details": "show project backlog for this project",
+      "id": "REC-20260427-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show project backlog for this project",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show project backlog for this project",
+      "updated_at": "2026-04-27T15:36:35Z"
+    },
+    {
+      "created_at": "2026-04-27T18:03:31Z",
+      "details": "show project backlog for project id = codex",
+      "id": "REC-20260427-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show project backlog for project id = codex",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show project backlog for project id = codex",
+      "updated_at": "2026-04-27T18:03:31Z"
+    },
+    {
+      "closed_at": "2026-05-06T15:14:28Z",
+      "closeout_criteria": [
+        "The pre-prompt token estimate is materially closer to actual input usage on representative runs.",
+        "The budget controller reports stable adjustment decisions for codex-relevant workflows.",
+        "The token-management gap analysis shows an improved estimate gap or a documented exception for any remaining outliers."
+      ],
+      "created_at": "2026-04-27T18:06:57Z",
+      "details": "Remediate the current codex runtime functional gap in pre-prompt token management. The latest gap analysis shows the main remaining issue is estimation fidelity: pre-prompt token estimates materially overstate actual input usage, which weakens budget tuning signals. This recommendation should tighten the estimate model, preserve the existing telemetry loop, and keep the codex runtime budgeted against measured behavior rather than the current oversized estimate.",
+      "id": "REC-20260427-003",
+      "implementation_tasks": [
+        "TASK-20260427-001",
+        "TASK-20260427-002",
+        "TASK-20260427-003"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "user_prompt",
+      "status": "completed",
+      "summary": "Reduce pre-prompt token estimation error and tighten codex budget feedback loops",
+      "tags": [
+        "backlog",
+        "budgets",
+        "codex",
+        "metrics",
+        "recommendation",
+        "runtime",
+        "token-budgeting"
+      ],
+      "title": "Remediate codex token-budget functional gaps",
+      "updated_at": "2026-05-06T15:14:28Z"
+    },
+    {
+      "created_at": "2026-04-27T18:09:34Z",
+      "details": "promote the highest priority open recommendation for the codex project backlog to itemizable, commitable tasks with execution and completion closeout criteria",
+      "id": "REC-20260427-004",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "promote the highest priority open recommendation for the codex project backlog to itemizable, commitable tasks with execution and completion closeout criteria",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "promote the highest priority open recommendation for the codex project backlog to itemizable, commit",
+      "updated_at": "2026-04-27T18:09:34Z"
+    },
+    {
+      "created_at": "2026-04-29T14:30:23Z",
+      "details": "optimize the names/descriptions for a trader-facing dashboard. develop recommendations to add to the transform project backlog for relevant analyst/qa names/descriptions commonly viewed as relatively relevant",
+      "id": "REC-20260429-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "optimize the names/descriptions for a trader-facing dashboard. develop recommendations to add to the transform project backlog for relevant analyst/qa names/descriptions commonly viewed as relatively relevant",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "optimize the names/descriptions for a trader-facing dashboard. develop recommendations to add to the",
+      "updated_at": "2026-04-29T14:30:23Z"
+    },
+    {
+      "created_at": "2026-04-29T14:36:32Z",
+      "details": "continue with the recommendation",
+      "id": "REC-20260429-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "continue with the recommendation",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "continue with the recommendation",
+      "updated_at": "2026-04-29T14:36:32Z"
+    },
+    {
+      "created_at": "2026-04-29T14:41:58Z",
+      "details": "Create a companion set of analyst/QA saved-question names and descriptions for the options snapshot table. The goal is to make audit-oriented views easy to find without reusing trader-facing wording.\n\nRelevant analyst/QA themes:\n- Latest-day completeness by `daily_timestamp`.\n- Failed valuations and validation-message breakdowns.\n- Missing quote-input checks for `bid`, `ask`, `last_price`, and `implied_volatility`.\n- Row-count and success-rate summaries by `underlying_symbol` and `option_type`.\n\nExecution checklist:\n- Draft analyst/QA names and descriptions that clearly say audit, validation, or completeness.\n- Keep the SQL shared with the trader pack where possible so maintenance stays low.\n- Make the names discoverable by people looking for quality review instead of trading signals.\n\nCompletion checklist:\n- Analyst/QA saved-question names are distinct from trader-facing names.\n- The set covers completeness, failed rows, and missing-input checks.\n- The descriptions explain the audit purpose in plain language.",
+      "id": "REC-20260429-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "transform",
+      "source": "conversation",
+      "status": "open",
+      "summary": "Create analyst/QA-facing Metabase names and descriptions for completeness, validation, and missing-input review on the options snapshot.",
+      "tags": [
+        "metabase",
+        "qa",
+        "quality",
+        "snapshot",
+        "sql"
+      ],
+      "title": "Add analyst/QA snapshot completeness and validation saved questions",
+      "updated_at": "2026-04-29T14:41:58Z"
+    },
+    {
+      "created_at": "2026-04-29T14:43:28Z",
+      "details": "add the backlog rcommendation but ensure the project id is the same as the project parent directory name",
+      "id": "REC-20260429-004",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add the backlog rcommendation but ensure the project id is the same as the project parent directory name",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add the backlog rcommendation but ensure the project id is the same as the project parent directory",
+      "updated_at": "2026-04-29T14:43:28Z"
+    },
+    {
+      "created_at": "2026-04-29T14:44:49Z",
+      "details": "add the backlog recommendation but set the project id to the project directory name",
+      "id": "REC-20260429-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "add the backlog recommendation but set the project id to the project directory name",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "add the backlog recommendation but set the project id to the project directory name",
+      "updated_at": "2026-04-29T14:44:49Z"
+    },
+    {
+      "created_at": "2026-04-29T14:45:31Z",
+      "details": "Create a companion set of analyst/QA saved-question names and descriptions that focus on valuation audit and execution risk. These should be easy to find for reviewers who want to validate model behavior or inspect market-quality outliers.\n\nRelevant analyst/QA themes:\n- Model-vs-market premium and discount audits.\n- Widest bid/ask spread checks.\n- Highest implied-volatility watchlists.\n- Near-expiry and short-dated outlier reviews.\n\nExecution checklist:\n- Draft analyst/QA names and descriptions that use audit-oriented language.\n- Keep the questions aligned with the trader dashboard so the SQL does not fork unnecessarily.\n- Prefer names that make it obvious the view is for review, not trade execution.\n\nCompletion checklist:\n- Analyst/QA names and descriptions are explicit about audit and execution-risk intent.\n- The set covers mispricing, spreads, volatility, and near-expiry inspection.\n- The descriptions are concise enough to be used directly in Metabase saved-question metadata.",
+      "id": "REC-20260429-006",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "transform",
+      "source": "conversation",
+      "status": "open",
+      "summary": "Create analyst/QA-facing Metabase names and descriptions for mispricing, spread, implied-volatility, and near-expiry audit views.",
+      "tags": [
+        "audit",
+        "metabase",
+        "qa",
+        "risk",
+        "snapshot",
+        "sql"
+      ],
+      "title": "Add analyst/QA valuation audit and execution-risk saved questions",
+      "updated_at": "2026-04-29T14:45:31Z"
+    },
+    {
+      "created_at": "2026-04-29T15:17:24Z",
+      "details": "develop a recommendation for the transform project backlong to update the options valuation snapshot to drop the existing table prior to beginning a new valuation snapshot run to ensure the valuation snapshot database memory does not grow uncontrollably",
+      "id": "REC-20260429-007",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "develop a recommendation for the transform project backlong to update the options valuation snapshot to drop the existing table prior to beginning a new valuation snapshot run to ensure the valuation snapshot database me",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "develop a recommendation for the transform project backlong to update the options valuation snapshot",
+      "updated_at": "2026-04-29T15:17:24Z"
+    },
+    {
+      "created_at": "2026-04-29T15:18:40Z",
+      "details": "Update the options valuation snapshot workflow so `priority_queue.options_valuation_snapshot_american` is dropped and recreated before each new snapshot run begins. The goal is to prevent unbounded growth in the snapshot table and associated database memory pressure when running repeated daily snapshot valuations.\n\nThis recommendation is specifically for snapshot mode, not the incremental historical valuation path. The run should start from a clean snapshot table, repopulate the latest complete snapshot day, and then continue with normal valuation writes.\n\nExecution checklist:\n- Confirm the snapshot workflow entrypoint that owns `--option-revaluation-mode=snapshot`.\n- Add a pre-run step that drops or truncates the snapshot table before valuation starts, then recreates it with the expected schema.\n- Verify the snapshot run still writes all expected rows after the reset.\n- Confirm the table size and database memory pressure stay bounded across repeated snapshot runs.\n\nCompletion checklist:\n- Snapshot mode starts from an empty table each run.\n- The table is recreated with the correct schema before writes begin.\n- Repeated snapshot runs no longer accumulate stale rows or uncontrolled storage growth.\n- The recommendation clearly distinguishes snapshot-mode behavior from incremental/backfill behavior.",
+      "id": "REC-20260429-008",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "transform",
+      "source": "conversation",
+      "status": "open",
+      "summary": "Reset the snapshot valuation table at the start of snapshot mode so memory and table growth stay bounded.",
+      "tags": [
+        "database",
+        "memory",
+        "options",
+        "postgres",
+        "snapshot"
+      ],
+      "title": "Drop and recreate the options valuation snapshot table before each snapshot run",
+      "updated_at": "2026-04-29T15:18:40Z"
+    },
+    {
+      "created_at": "2026-04-30T14:52:04Z",
+      "details": "implement recommendation and test for success",
+      "id": "REC-20260430-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "implement recommendation and test for success",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "implement recommendation and test for success",
+      "updated_at": "2026-04-30T14:52:04Z"
+    },
+    {
+      "created_at": "2026-05-06T14:50:44Z",
+      "details": "implement incomplete codex project backlog tasks",
+      "id": "REC-20260506-001",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "implement incomplete codex project backlog tasks",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "implement incomplete codex project backlog tasks",
+      "updated_at": "2026-05-06T14:50:44Z"
     }
   ],
   "stats": {
-    "completed_tasks": 22,
-    "open_recommendations": 18,
+    "completed_tasks": 0,
+    "open_recommendations": 30,
     "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-04-23T16:03:16Z",
+  "stats_scope": "global",
+  "updated_at": "2026-05-06T15:14:28Z",
   "version": 1
 }

@@ -129,6 +129,7 @@ The runtime now tries to improve the next prompt in this order:
 - `postrun-metrics`: appends normalized run metrics row
 - `regression-guard`: token regression baseline checks
 - `tune-from-metrics`: generate budget proposals from historical metrics
+- `token-management-gap-analysis`: generate a pre/post token budget gap report with metric coverage and workflow-level remediation signals
 - `apply-tuning-canary`: apply bounded proposal changes to canary budgets
 - `promote-tuning`, `rollback-tuning`: canary promotion/rollback helpers
 - `compact-outputs`: prune unknown `outputs/` artifacts and truncate retention windows
@@ -207,6 +208,8 @@ Runtime tuning artifacts in `outputs/`:
 - `budget-report.json`
 - `budget-compare.md`
 - `budget-compare.json`
+- `token-management-gap-analysis.md`
+- `token-management-gap-analysis.json`
 - `tuning-open-request.md`
 - `tuning-open-request.json`
 - `budget-summary.md`

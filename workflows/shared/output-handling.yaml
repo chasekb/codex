@@ -25,6 +25,8 @@ compaction:
     - budget-report.json
     - budget-compare.md
     - budget-compare.json
+    - token-management-gap-analysis.md
+    - token-management-gap-analysis.json
     - budget-history.jsonl
     - tuning-open-request.md
     - tuning-open-request.json
