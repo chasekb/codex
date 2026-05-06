@@ -94,6 +94,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "contract_bad": 0,
             "retry_sum": 0.0,
             "fallback_sum": 0.0,
+            "input_tokens_sum": 0.0,
             "total_tokens_sum": 0.0,
             "memory_chars_sum": 0.0,
             "learning_chars_sum": 0.0,
@@ -105,7 +106,10 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             "pre_prompt_budget_hard_sum": 0.0,
             "pre_prompt_objective_chars_sum": 0.0,
             "pre_prompt_context_chars_sum": 0.0,
+            "pre_prompt_estimate_scale_sum": 0.0,
             "pre_prompt_est_tokens_sum": 0.0,
+            "pre_prompt_estimate_error_tokens_sum": 0.0,
+            "pre_prompt_estimate_error_rate_sum": 0.0,
             "pre_prompt_utilization_sum": 0.0,
             "pre_prompt_margin_tokens_sum": 0.0,
             "pre_prompt_adjustment_count": 0,
@@ -117,6 +121,7 @@ with open(metrics_file, "r", encoding="utf-8") as f:
             s["contract_bad"] += 1
         s["retry_sum"] += float(r.get("retries", 0) or 0)
         s["fallback_sum"] += float(r.get("fallbacks", 0) or 0)
+        s["input_tokens_sum"] += float(r.get("input_tokens", 0) or 0)
         s["total_tokens_sum"] += float(r.get("total_tokens", 0) or 0)
         s["memory_chars_sum"] += float(r.get("memory_chars", 0) or 0)
         s["learning_chars_sum"] += float(r.get("learning_chars", 0) or 0)
@@ -128,7 +133,10 @@ with open(metrics_file, "r", encoding="utf-8") as f:
         s["pre_prompt_budget_hard_sum"] += float(r.get("pre_prompt_budget_hard", 0) or 0)
         s["pre_prompt_objective_chars_sum"] += float(r.get("pre_prompt_objective_chars", 0) or 0)
         s["pre_prompt_context_chars_sum"] += float(r.get("pre_prompt_context_chars", 0) or 0)
+        s["pre_prompt_estimate_scale_sum"] += float(r.get("pre_prompt_estimate_scale", 0) or 0)
         s["pre_prompt_est_tokens_sum"] += float(r.get("pre_prompt_est_tokens", 0) or 0)
+        s["pre_prompt_estimate_error_tokens_sum"] += float(r.get("pre_prompt_estimate_error_tokens", 0) or 0)
+        s["pre_prompt_estimate_error_rate_sum"] += float(r.get("pre_prompt_estimate_error_rate", 0) or 0)
         s["pre_prompt_utilization_sum"] += float(r.get("pre_prompt_utilization", 0) or 0)
         s["pre_prompt_margin_tokens_sum"] += float(r.get("pre_prompt_margin_tokens", 0) or 0)
         if str(r.get("pre_prompt_adjustment_warranted", "")).lower() == "true":
@@ -145,6 +153,7 @@ for wf, s in stats.items():
     contract_invalid = s["contract_bad"] / n
     retry_rate = s["retry_sum"] / n
     fallback_rate = s["fallback_sum"] / n
+    avg_input_tokens = s["input_tokens_sum"] / n
     avg_tokens = s["total_tokens_sum"] / n
     avg_memory_chars = s["memory_chars_sum"] / n
     avg_learning_chars = s["learning_chars_sum"] / n
@@ -156,7 +165,10 @@ for wf, s in stats.items():
     avg_pre_prompt_budget_hard = s["pre_prompt_budget_hard_sum"] / n
     avg_pre_prompt_objective_chars = s["pre_prompt_objective_chars_sum"] / n
     avg_pre_prompt_context_chars = s["pre_prompt_context_chars_sum"] / n
+    avg_pre_prompt_estimate_scale = s["pre_prompt_estimate_scale_sum"] / n
     avg_pre_prompt_est_tokens = s["pre_prompt_est_tokens_sum"] / n
+    avg_pre_prompt_estimate_error_tokens = s["pre_prompt_estimate_error_tokens_sum"] / n
+    avg_pre_prompt_estimate_error_rate = s["pre_prompt_estimate_error_rate_sum"] / n
     avg_pre_prompt_utilization = s["pre_prompt_utilization_sum"] / n
     avg_pre_prompt_margin_tokens = s["pre_prompt_margin_tokens_sum"] / n
     pre_prompt_adjustment_rate = s["pre_prompt_adjustment_count"] / n
@@ -185,6 +197,8 @@ for wf, s in stats.items():
         and pre_prompt_adjustment_rate == 0
     )
 
+    estimate_gap = bool(abs(avg_pre_prompt_estimate_error_rate) >= 0.15)
+
     if healthy and prompt_pressure_high:
         if "input_soft" in profile_cfg:
             proposed_changes["input_soft"] = max(1, int(round(profile_cfg["input_soft"] * (1 + shift))))
@@ -200,6 +214,13 @@ for wf, s in stats.items():
         for k in ("input_soft", "output_soft"):
             if k in profile_cfg:
                 proposed_changes[k] = max(1, int(round(profile_cfg[k] * (1 - shift))))
+
+    if healthy and estimate_gap and "estimate_scale_pct" in profile_cfg and avg_pre_prompt_est_tokens > 0:
+        current_scale_pct = float(profile_cfg.get("estimate_scale_pct", 100.0) or 100.0)
+        observed_scale_pct = max(50.0, min(150.0, (avg_input_tokens / avg_pre_prompt_est_tokens) * 100.0))
+        delta_pct = observed_scale_pct - current_scale_pct
+        step_pct = max(-policy["max_shift"], min(policy["max_shift"], delta_pct * policy["prompt_budget_adjustment_rate"]))
+        proposed_changes["estimate_scale_pct"] = max(50, min(150, int(round(current_scale_pct + step_pct))))
 
     if healthy and avg_memory_chars < 120 and "memory_read_soft" in profile_cfg:
         proposed_changes["memory_read_soft"] = max(1, int(round(profile_cfg["memory_read_soft"] * (1 - shift))))
@@ -222,6 +243,7 @@ for wf, s in stats.items():
                 "retry_rate": round(retry_rate, 4),
                 "fallback_rate": round(fallback_rate, 4),
                 "avg_total_tokens": round(avg_tokens, 2),
+                "avg_input_tokens": round(avg_input_tokens, 2),
                 "avg_memory_chars": round(avg_memory_chars, 2),
                 "avg_learning_chars": round(avg_learning_chars, 2),
                 "avg_failure_history_chars": round(avg_failure_history_chars, 2),
@@ -232,10 +254,14 @@ for wf, s in stats.items():
                 "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
                 "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
                 "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+                "avg_pre_prompt_estimate_scale": round(avg_pre_prompt_estimate_scale, 4),
                 "avg_pre_prompt_est_tokens": round(avg_pre_prompt_est_tokens, 2),
+                "avg_pre_prompt_estimate_error_tokens": round(avg_pre_prompt_estimate_error_tokens, 2),
+                "avg_pre_prompt_estimate_error_rate": round(avg_pre_prompt_estimate_error_rate, 4),
                 "avg_pre_prompt_utilization": round(avg_pre_prompt_utilization, 4),
                 "avg_pre_prompt_margin_tokens": round(avg_pre_prompt_margin_tokens, 2),
                 "pre_prompt_adjustment_rate": round(pre_prompt_adjustment_rate, 4),
+                "estimate_gap": bool(estimate_gap),
             }
         })
 
@@ -248,6 +274,7 @@ for wf, s in stats.items():
         "retry_rate": round(retry_rate, 4),
         "fallback_rate": round(fallback_rate, 4),
         "avg_total_tokens": round(avg_tokens, 2),
+        "avg_input_tokens": round(avg_input_tokens, 2),
         "avg_memory_chars": round(avg_memory_chars, 2),
         "avg_learning_chars": round(avg_learning_chars, 2),
         "avg_failure_history_chars": round(avg_failure_history_chars, 2),
@@ -258,7 +285,10 @@ for wf, s in stats.items():
         "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
         "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
         "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+        "avg_pre_prompt_estimate_scale": round(avg_pre_prompt_estimate_scale, 4),
         "avg_pre_prompt_est_tokens": round(avg_pre_prompt_est_tokens, 2),
+        "avg_pre_prompt_estimate_error_tokens": round(avg_pre_prompt_estimate_error_tokens, 2),
+        "avg_pre_prompt_estimate_error_rate": round(avg_pre_prompt_estimate_error_rate, 4),
         "avg_pre_prompt_utilization": round(avg_pre_prompt_utilization, 4),
         "avg_pre_prompt_margin_tokens": round(avg_pre_prompt_margin_tokens, 2),
         "pre_prompt_adjustment_rate": round(pre_prompt_adjustment_rate, 4),
@@ -266,6 +296,7 @@ for wf, s in stats.items():
         "prompt_pressure_low": bool(prompt_pressure_low),
         "healthy": bool(healthy),
         "proposal_emitted": bool(proposed_changes),
+        "estimate_gap": bool(estimate_gap),
     })
 
 result = {
@@ -319,6 +350,7 @@ report_lines = [
 for row in workflow_summary:
     report_lines.extend([
         f"- `{row['workflow']}` ({row['budget_profile']}): samples={row['samples']} pass_rate={row['pass_rate']} util={row['avg_pre_prompt_utilization']} margin={row['avg_pre_prompt_margin_tokens']} pressure_high={str(row['prompt_pressure_high']).lower()} pressure_low={str(row['prompt_pressure_low']).lower()} proposal={str(row['proposal_emitted']).lower()}",
+        f"  estimate_gap={str(row['estimate_gap']).lower()} avg_input_tokens={row['avg_input_tokens']} avg_est_tokens={row['avg_pre_prompt_est_tokens']} avg_est_error_tokens={row['avg_pre_prompt_estimate_error_tokens']} avg_est_error_rate={row['avg_pre_prompt_estimate_error_rate']}",
     ])
 
 with open(report_file, "w", encoding="utf-8") as f:

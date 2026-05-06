@@ -5,6 +5,7 @@ budgets:
     input_hard: 2500
     output_soft: 260
     output_hard: 350
+    estimate_scale_pct: 100
     memory_read_soft: 350
     memory_read_hard: 500
     learning_read_soft: 220
@@ -18,6 +19,7 @@ budgets:
     input_hard: 4000
     output_soft: 450
     output_hard: 600
+    estimate_scale_pct: 100
     memory_read_soft: 400
     memory_read_hard: 600
     learning_read_soft: 240
@@ -31,6 +33,7 @@ budgets:
     input_hard: 5000
     output_soft: 520
     output_hard: 700
+    estimate_scale_pct: 100
     memory_read_soft: 500
     memory_read_hard: 700
     learning_read_soft: 280
@@ -44,6 +47,7 @@ budgets:
     input_hard: 2000
     output_soft: 220
     output_hard: 300
+    estimate_scale_pct: 100
     memory_read_soft: 280
     memory_read_hard: 420
     learning_read_soft: 180

@@ -70,16 +70,16 @@ echo "$nelson_package_context" | grep -Fq '"commands": [' && pass nelson_package
 echo "$nelson_package_context" | grep -Fq '"nelson-context"' && pass nelson_package_context_command_context || fail nelson_package_context_command_context
 echo "$nelson_package_context" | grep -Fq '"nelson-inventory"' && pass nelson_package_context_command_inventory || fail nelson_package_context_command_inventory
 echo "$nelson_package_context" | grep -Fq '"nelson-validate"' && pass nelson_package_context_command_validate || fail nelson_package_context_command_validate
-echo "$nelson_package_context" | grep -Fq '"commands": 3' && pass nelson_package_context_command_count || fail nelson_package_context_command_count
+echo "$nelson_package_context" | grep -Fq '"commands": 4' && pass nelson_package_context_command_count || fail nelson_package_context_command_count
 echo "$nelson_package_context" | grep -Fq '"agents": [' && pass nelson_package_context_agents || fail nelson_package_context_agents
 echo "$nelson_package_context" | grep -Fq '"nelson-coordinator"' && pass nelson_package_context_agent_coordinator || fail nelson_package_context_agent_coordinator
 echo "$nelson_package_context" | grep -Fq '"nelson-captain-log"' && pass nelson_package_context_agent_captain_log || fail nelson_package_context_agent_captain_log
 echo "$nelson_package_context" | grep -Fq '"agents": 2' && pass nelson_package_context_agent_count || fail nelson_package_context_agent_count
 echo "$nelson_package_context" | grep -Fq '"public_vocabulary": [' && pass nelson_package_context_vocabulary || fail nelson_package_context_vocabulary
-echo "$nelson_package_context" | grep -Fq '"public_vocabulary_count": 4' && pass nelson_package_context_vocabulary_count || fail nelson_package_context_vocabulary_count
+echo "$nelson_package_context" | grep -Fq '"public_vocabulary_count": 5' && pass nelson_package_context_vocabulary_count || fail nelson_package_context_vocabulary_count
 echo "$nelson_package_context" | grep -Fq '"battle plan"' && pass nelson_package_context_vocabulary_battle_plan || fail nelson_package_context_vocabulary_battle_plan
 echo "$nelson_package_context" | grep -Fq '"captain'"'"'s log"' && pass nelson_package_context_vocabulary_captains_log || fail nelson_package_context_vocabulary_captains_log
-echo "$nelson_package_context" | grep -Fq '"mission_scenarios": 7' && pass nelson_package_context_mission_count || fail nelson_package_context_mission_count
+echo "$nelson_package_context" | grep -Fq '"mission_scenarios": 9' && pass nelson_package_context_mission_count || fail nelson_package_context_mission_count
 [[ "$(hooks/_internal/routing/select-workflow general 0.5 "project backlog recommendations")" == "project-backlog-management" ]] && pass select_workflow_backlog || fail select_workflow_backlog
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "triage backlog and prioritize items")" == "backlog-triage" ]] && pass select_workflow_backlog_triage || fail select_workflow_backlog_triage
 [[ "$(hooks/_internal/routing/select-workflow general 0.9 "convert recommendation into task")" == "recommendation-to-task" ]] && pass select_workflow_recommendation_to_task || fail select_workflow_recommendation_to_task
@@ -656,6 +656,7 @@ budgets:
   debug_rca:
     input_soft: 4200
     output_soft: 520
+    estimate_scale_pct: 100
     memory_read_soft: 500
     learning_read_soft: 280
     skill_read_soft: 420
@@ -664,6 +665,7 @@ bc="$(hooks/_internal/metrics/load-budget-controller debug-rca implement "$contr
 echo "$bc" | grep -Fq 'budget_controller:metrics loaded=1' && pass load_budget_controller || fail load_budget_controller
 echo "$bc" | grep -Fq '"budget_controller_loaded":1' && pass load_budget_controller_json || fail load_budget_controller_json
 echo "$bc" | grep -Eq '"prompt_scale":1\.[0-9]+' && pass load_budget_controller_prompt_scale || fail load_budget_controller_prompt_scale
+echo "$bc" | grep -Eq '"estimate_scale_pct":100(\.0+)?' && pass load_budget_controller_estimate_scale || fail load_budget_controller_estimate_scale
 
 cat > outputs/budget-summary.json <<'JSON'
 {"generated_at":"2026-04-12T00:00:00Z","status":"ok","history_count":8,"tuning_history_count":2,"overall":{"runs":8,"proposal_runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0},"weekly":[{"period":"2026-W15","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"monthly":[{"period":"2026-04","runs":8,"proposal_count_sum":8,"attention_runs":8,"workflow_count_sum":8,"avg_utilization":0.0353,"avg_margin_tokens":3666.0}],"workflow_summary":[{"workflow":"implement-small","runs":8,"proposal_emitted_runs":8,"proposal_rate":1.0,"samples_sum":40,"avg_utilization":0.0353,"avg_margin_tokens":3666.0,"avg_pass_rate":1.0,"avg_memory_chars":80.0,"avg_learning_chars":34.0,"avg_failure_history_chars":44.0,"avg_playbook_chars":172.0,"avg_search_hints_chars":120.0,"avg_skill_loaded_chars":150.0}],"tuning_history_summary":{"rows":2,"promote_count":1,"rollback_count":1,"last_action":"rollback","last_timestamp":"2026-04-07T16:02:34Z"}}
@@ -677,6 +679,8 @@ grep -Fq '"playbook_loaded": 2' outputs/hook-runtime-state.json && pass hook_pip
 grep -Eq '"search_hints_loaded": [1-9]' outputs/hook-runtime-state.json && pass hook_pipeline_state_search_hints || fail hook_pipeline_state_search_hints
 grep -Fq '"budget_controller_loaded": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller || fail hook_pipeline_state_budget_controller
 grep -Eq '"budget_controller_prompt_scale": 1\.[0-9]+' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller_scale || fail hook_pipeline_state_budget_controller_scale
+grep -Fq '"budget_controller_estimate_scale": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller_estimate_scale || fail hook_pipeline_state_budget_controller_estimate_scale
+grep -Fq '"pre_prompt_estimate_scale": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_estimate_scale || fail hook_pipeline_state_estimate_scale
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
 
@@ -694,8 +698,8 @@ grep -Fq '"agent_id": "nelson-coordinator"' outputs/hook-runtime-state.json && p
 grep -Fq '"agent_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_agent_registry || fail hook_pipeline_nelson_agent_registry
 grep -Fq '"mcp_surface": "plugin:nelson:mcp"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_mcp_surface || fail hook_pipeline_nelson_mcp_surface
 grep -Fq '"app_surface": "plugin:nelson:app"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_app_surface || fail hook_pipeline_nelson_app_surface
-grep -Fq '"mission_scenarios": 7' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
-grep -Fq '"public_vocabulary_count": 4' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package_vocabulary || fail hook_pipeline_nelson_plugin_package_vocabulary
+grep -Fq '"mission_scenarios": 9' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
+grep -Fq '"public_vocabulary_count": 5' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package_vocabulary || fail hook_pipeline_nelson_plugin_package_vocabulary
 grep -Fq '"name": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_name || fail hook_pipeline_nelson_plugin_name
 grep -Fq '"version": "0.1.0"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_version || fail hook_pipeline_nelson_plugin_version
 grep -Fq 'nelson plugin integration package conversion' plugins/nelson/validation/nelson-coordination-log.jsonl && pass hook_pipeline_nelson_coordination_log || fail hook_pipeline_nelson_coordination_log
@@ -1062,9 +1066,9 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 600 false 1 1 1 1 3800 11800 12 534 134 0.0353 3666 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
-tail -n1 outputs/token-metrics.csv | grep -Fq '600,false,3800,11800,12,534,134,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
-head -n1 outputs/token-metrics.csv | grep -Fq 'learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 1.0 100 600 false 1 1 1 1 3800 11800 12 534 1.0 100 134 -124 -12.4 0.0353 3666 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
+tail -n1 outputs/token-metrics.csv | grep -Fq '1.0,100,600,false,1,1,1,1,3800,11800,12,534,1.0,100,134,-124,-12.4,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
+head -n1 outputs/token-metrics.csv | grep -Fq 'skill_fallback,budget_controller_estimate_scale,budget_controller_estimate_scale_pct,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_estimate_scale,pre_prompt_estimate_scale_pct,pre_prompt_est_tokens,pre_prompt_estimate_error_tokens,pre_prompt_estimate_error_rate,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
@@ -1077,12 +1081,12 @@ set -e
 
 metrics="$tmpdir/token-metrics.csv"
 cat > "$metrics" <<'CSV'
-timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,134,0.0353,3666,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,134,0.0353,3666,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,134,0.0353,3666,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,134,0.0353,3666,false
-2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,134,0.0353,3666,false
+timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_estimate_scale,pre_prompt_estimate_scale_pct,pre_prompt_est_tokens,pre_prompt_estimate_error_tokens,pre_prompt_estimate_error_rate,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,1.0,100,134,566,0.8086,0.0353,3666,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,1.0,100,134,566,0.8086,0.0353,3666,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,1.0,100,134,566,0.8086,0.0353,3666,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,1.0,100,134,566,0.8086,0.0353,3666,false
+2026-01-01T00:00:00Z,debug,debug-rca,0.9,700,500,1200,0,0,3,100,pass,true,2,80,1,34,1,44,2,172,1,120,0,2,4,plan-verify-execute,150,false,3800,11800,12,534,1.0,100,134,566,0.8086,0.0353,3666,false
 CSV
 policy="$tmpdir/tuning-policy.yaml"
 cat > "$policy" <<'YAML'
@@ -1114,6 +1118,8 @@ grep -Fq 'avg_pre_prompt_utilization' "$proposals" && pass tune_from_metrics_pre
 grep -Fq 'avg_failure_history_chars' "$proposals" && pass tune_from_metrics_failure_history || fail tune_from_metrics_failure_history
 grep -Fq 'avg_playbook_chars' "$proposals" && pass tune_from_metrics_playbook || fail tune_from_metrics_playbook
 grep -Fq 'avg_search_hints_chars' "$proposals" && pass tune_from_metrics_search_hints || fail tune_from_metrics_search_hints
+grep -Fq 'avg_pre_prompt_estimate_error_tokens' "$proposals" && pass tune_from_metrics_estimate_error || fail tune_from_metrics_estimate_error
+grep -Fq 'estimate_scale_pct' "$proposals" && pass tune_from_metrics_estimate_scale || fail tune_from_metrics_estimate_scale
 grep -Fq '# Budget Report' "$budget_report" && pass budget_report_artifact || fail budget_report_artifact
 grep -Fq 'Proposal count:' "$budget_report" && pass budget_report_summary || fail budget_report_summary
 python3 - <<'PY' "$budget_report_json"
@@ -1125,6 +1131,23 @@ assert "proposals" in data
 print("budget_report_json:ok")
 PY
 pass budget_report_json_artifact
+
+analysis_json="$tmpdir/token-management-gap-analysis.json"
+analysis_md="$tmpdir/token-management-gap-analysis.md"
+hooks/_internal/metrics/token-management-gap-analysis "$metrics" "$budget_report_json" "$policy" "$tmpdir/hook-runtime-state.json" "$analysis_json" "$analysis_md" >/dev/null && pass token_management_gap_analysis || fail token_management_gap_analysis
+python3 - <<'PY' "$analysis_json"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    data = json.load(f)
+assert "overall_gap" in data
+assert "metric_coverage" in data
+assert data["integration_model"]["pre_prompt_learnable_inputs"]
+assert data["integration_model"]["post_prompt_feedback_outputs"]
+print("token_management_gap_analysis_json:ok")
+PY
+pass token_management_gap_analysis_json_artifact
+grep -Fq '# Token Management Gap Analysis' "$analysis_md" && pass token_management_gap_analysis_md || fail token_management_gap_analysis_md
+grep -Fq 'adjustment_gap' "$analysis_md" && pass token_management_gap_analysis_gap || fail token_management_gap_analysis_gap
 
 compare_baseline="$tmpdir/budget-report-baseline.json"
 compare_head="$tmpdir/budget-report-head.json"

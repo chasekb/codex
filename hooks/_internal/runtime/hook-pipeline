@@ -196,6 +196,8 @@ def default_state():
             "budget_controller_playbook_scale": 1.0,
             "budget_controller_search_scale": 1.0,
             "budget_controller_skill_scale": 1.0,
+            "budget_controller_estimate_scale": 1.0,
+            "budget_controller_estimate_scale_pct": 100.0,
             "memory_write_count": 0,
             "memory_dedup_count": 0,
             "memory_compact_kept": 0,
@@ -207,9 +209,13 @@ def default_state():
             "pre_prompt_budget_hard": 0,
             "pre_prompt_objective_chars": 0,
             "pre_prompt_context_chars": 0,
+            "pre_prompt_estimate_scale": 1.0,
+            "pre_prompt_estimate_scale_pct": 100.0,
             "pre_prompt_est_tokens": 0,
             "pre_prompt_utilization": 0.0,
             "pre_prompt_margin_tokens": 0,
+            "pre_prompt_estimate_error_tokens": 0,
+            "pre_prompt_estimate_error_rate": 0.0,
             "pre_prompt_adjustment_warranted": False,
             "external_skill_discovery_runs": 0,
             "external_skill_install_attempts": 0,
@@ -617,6 +623,8 @@ def parse_budget_controller_metrics(output):
         "playbook_scale": 1.0,
         "search_scale": 1.0,
         "skill_scale": 1.0,
+        "estimate_scale": 1.0,
+        "estimate_scale_pct": 100.0,
         "reason": "",
     }
     for line in output.splitlines():
@@ -632,6 +640,8 @@ def parse_budget_controller_metrics(output):
                     report["playbook_scale"] = to_float(parsed.get("playbook_scale", report["playbook_scale"]), report["playbook_scale"])
                     report["search_scale"] = to_float(parsed.get("search_scale", report["search_scale"]), report["search_scale"])
                     report["skill_scale"] = to_float(parsed.get("skill_scale", report["skill_scale"]), report["skill_scale"])
+                    report["estimate_scale"] = to_float(parsed.get("estimate_scale", report["estimate_scale"]), report["estimate_scale"])
+                    report["estimate_scale_pct"] = to_float(parsed.get("estimate_scale_pct", report["estimate_scale_pct"]), report["estimate_scale_pct"])
                     report["reason"] = text(parsed.get("reason", report["reason"]))
             except Exception:
                 pass
@@ -644,6 +654,8 @@ def parse_budget_controller_metrics(output):
             report["playbook_scale"] = to_float(re.search(r"\bplaybook_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bplaybook_scale=([0-9.]+)", line) else 1.0
             report["search_scale"] = to_float(re.search(r"\bsearch_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bsearch_scale=([0-9.]+)", line) else 1.0
             report["skill_scale"] = to_float(re.search(r"\bskill_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bskill_scale=([0-9.]+)", line) else 1.0
+            report["estimate_scale"] = to_float(re.search(r"\bestimate_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bestimate_scale=([0-9.]+)", line) else 1.0
+            report["estimate_scale_pct"] = to_float(re.search(r"\bestimate_scale_pct=([0-9.]+)", line).group(1), 100.0) if re.search(r"\bestimate_scale_pct=([0-9.]+)", line) else 100.0
     return report
 
 
@@ -660,7 +672,7 @@ def estimate_prompt_tokens(chars):
     return max(0, (chars + 3) // 4)
 
 
-def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, playbook_chars, search_hint_chars, skill_chars):
+def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, playbook_chars, search_hint_chars, skill_chars, estimate_scale=1.0):
     token_defaults = load_token_defaults()
     objective_chars = len(text(objective))
     context_chars = (
@@ -672,7 +684,9 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         + max(0, to_int(search_hint_chars))
         + max(0, to_int(skill_chars))
     )
-    est_tokens = estimate_prompt_tokens(context_chars)
+    estimate_scale = max(0.1, to_float(estimate_scale, 1.0))
+    scaled_context_chars = int(round(context_chars * estimate_scale))
+    est_tokens = estimate_prompt_tokens(scaled_context_chars)
     soft_budget = max(1, token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"])
     hard_budget = max(soft_budget, token_defaults["hard_abort_tokens"] - token_defaults["reserve_output_tokens"])
     utilization = round(est_tokens / soft_budget, 4) if soft_budget else 0.0
@@ -692,6 +706,8 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         "pre_prompt_budget_hard": hard_budget,
         "pre_prompt_objective_chars": objective_chars,
         "pre_prompt_context_chars": context_chars,
+        "pre_prompt_estimate_scale": round(estimate_scale, 4),
+        "pre_prompt_estimate_scale_pct": round(estimate_scale * 100.0, 2),
         "pre_prompt_est_tokens": est_tokens,
         "pre_prompt_utilization": utilization,
         "pre_prompt_margin_tokens": margin_tokens,
@@ -1874,7 +1890,7 @@ def main():
             [str(task_class), context_keywords, str(search_hint_max_chars), str(search_hint_max_results), "MCP/memory"],
         )
         search_hint_loaded, search_hint_chars, search_hint_results = parse_search_hints_metrics(search_hint_out)
-        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, search_hint_chars, skill_loaded_chars)
+        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, search_hint_chars, skill_loaded_chars, budget_controller["estimate_scale"])
 
         state["session"].update(
             {
@@ -1920,10 +1936,18 @@ def main():
         state["metrics"]["budget_controller_playbook_scale"] = budget_controller["playbook_scale"]
         state["metrics"]["budget_controller_search_scale"] = budget_controller["search_scale"]
         state["metrics"]["budget_controller_skill_scale"] = budget_controller["skill_scale"]
+        state["metrics"]["budget_controller_estimate_scale"] = budget_controller["estimate_scale"]
+        state["metrics"]["budget_controller_estimate_scale_pct"] = budget_controller["estimate_scale_pct"]
         state["metrics"]["search_reuse_hit"] = search_reuse_hits(mem_results, objective)
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
         state["metrics"].update(pre_prompt_metrics)
+        state["metrics"]["pre_prompt_estimate_error_tokens"] = to_int(state["tokens"].get("input", 0)) - to_int(state["metrics"].get("pre_prompt_est_tokens", 0))
+        input_tokens_for_error = max(0, to_int(state["tokens"].get("input", 0)))
+        state["metrics"]["pre_prompt_estimate_error_rate"] = round(
+            (state["metrics"]["pre_prompt_estimate_error_tokens"] / input_tokens_for_error) if input_tokens_for_error else 0.0,
+            4,
+        )
         state["metrics"]["external_skill_id"] = text(external_skill_report.get("selected", {}).get("name", ""))
         state["metrics"]["external_skill_source"] = text(external_skill_report.get("selected", {}).get("source", ""))
         if playbook_results:
@@ -2314,6 +2338,8 @@ def main():
                 str(state["session"].get("skill_id", "none")),
                 str(state["metrics"].get("skill_loaded_chars", 0)),
                 str(state["metrics"].get("skill_fallback", False)).lower(),
+                str(state["metrics"].get("budget_controller_estimate_scale", 1.0)),
+                str(state["metrics"].get("budget_controller_estimate_scale_pct", 100.0)),
                 str(state["metrics"].get("output_compact_runs", 0)),
                 str(state["metrics"].get("output_compact_removed", 0)),
                 str(state["metrics"].get("output_compact_compacted", 0)),
@@ -2322,7 +2348,11 @@ def main():
                 str(state["metrics"].get("pre_prompt_budget_hard", 0)),
                 str(state["metrics"].get("pre_prompt_objective_chars", 0)),
                 str(state["metrics"].get("pre_prompt_context_chars", 0)),
+                str(state["metrics"].get("pre_prompt_estimate_scale", 1.0)),
+                str(state["metrics"].get("pre_prompt_estimate_scale_pct", 100.0)),
                 str(state["metrics"].get("pre_prompt_est_tokens", 0)),
+                str(state["metrics"].get("pre_prompt_estimate_error_tokens", 0)),
+                str(state["metrics"].get("pre_prompt_estimate_error_rate", 0.0)),
                 str(state["metrics"].get("pre_prompt_utilization", 0.0)),
                 str(state["metrics"].get("pre_prompt_margin_tokens", 0)),
                 str(state["metrics"].get("pre_prompt_adjustment_warranted", False)).lower(),

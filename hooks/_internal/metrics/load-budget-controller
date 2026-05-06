@@ -172,6 +172,8 @@ report = {
     "playbook_scale": round(playbook_scale, 4),
     "search_scale": round(search_scale, 4),
     "skill_scale": round(skill_scale, 4),
+    "estimate_scale_pct": round(float(profile_cfg.get("estimate_scale_pct", 100.0) or 100.0), 2),
+    "estimate_scale": round(float(profile_cfg.get("estimate_scale_pct", 100.0) or 100.0) / 100.0, 4),
     "utilization": round(float(selected.get("avg_utilization", overall.get("avg_utilization", 0.0)) or 0.0), 4) if selected else 0.0,
     "margin_tokens": round(float(selected.get("avg_margin_tokens", overall.get("avg_margin_tokens", 0.0)) or 0.0), 2) if selected else 0.0,
     "reason": reason,
@@ -186,6 +188,8 @@ print(
     f"failure_scale={report['failure_scale']} "
     f"playbook_scale={report['playbook_scale']} "
     f"search_scale={report['search_scale']} "
-    f"skill_scale={report['skill_scale']}"
+    f"skill_scale={report['skill_scale']} "
+    f"estimate_scale_pct={report['estimate_scale_pct']} "
+    f"estimate_scale={report['estimate_scale']}"
 )
 PY

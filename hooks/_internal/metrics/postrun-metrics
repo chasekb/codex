@@ -36,27 +36,33 @@ workflow_selected="${32:-unknown}"
 skill_id="${33:-none}"
 skill_loaded_chars="${34:-0}"
 skill_fallback="${35:-false}"
-output_compact_runs="${36:-0}"
-output_compact_removed="${37:-0}"
-output_compact_compacted="${38:-0}"
-output_compact_kept="${39:-0}"
-pre_prompt_budget_soft="${40:-0}"
-pre_prompt_budget_hard="${41:-0}"
-pre_prompt_objective_chars="${42:-0}"
-pre_prompt_context_chars="${43:-0}"
-pre_prompt_est_tokens="${44:-0}"
-pre_prompt_utilization="${45:-0}"
-pre_prompt_margin_tokens="${46:-0}"
-pre_prompt_adjustment_warranted="${47:-false}"
-external_skill_discovery_runs="${48:-0}"
-external_skill_install_attempts="${49:-0}"
-external_skill_install_successes="${50:-0}"
-external_skill_id="${51:-}"
-external_skill_source="${52:-}"
+budget_controller_estimate_scale="${36:-1.0}"
+budget_controller_estimate_scale_pct="${37:-100.0}"
+output_compact_runs="${38:-0}"
+output_compact_removed="${39:-0}"
+output_compact_compacted="${40:-0}"
+output_compact_kept="${41:-0}"
+pre_prompt_budget_soft="${42:-0}"
+pre_prompt_budget_hard="${43:-0}"
+pre_prompt_objective_chars="${44:-0}"
+pre_prompt_context_chars="${45:-0}"
+pre_prompt_estimate_scale="${46:-1.0}"
+pre_prompt_estimate_scale_pct="${47:-100.0}"
+pre_prompt_est_tokens="${48:-0}"
+pre_prompt_estimate_error_tokens="${49:-0}"
+pre_prompt_estimate_error_rate="${50:-0}"
+pre_prompt_utilization="${51:-0}"
+pre_prompt_margin_tokens="${52:-0}"
+pre_prompt_adjustment_warranted="${53:-false}"
+external_skill_discovery_runs="${54:-0}"
+external_skill_install_attempts="${55:-0}"
+external_skill_install_successes="${56:-0}"
+external_skill_id="${57:-}"
+external_skill_source="${58:-}"
 
 mkdir -p outputs
 metrics_file="outputs/token-metrics.csv"
-desired_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept,search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,hook_name,pipeline_stage,workflow_selected,skill_id,skill_loaded_chars,skill_fallback,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_est_tokens,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted,external_skill_discovery_runs,external_skill_install_attempts,external_skill_install_successes,external_skill_id,external_skill_source'
+desired_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,learning_loaded,learning_chars,failure_history_loaded,failure_history_chars,playbook_loaded,playbook_chars,search_hints_loaded,search_hints_chars,memory_write_count,memory_dedup_count,memory_compact_kept,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept,search_tool_count,search_query_count,search_source_count,search_reuse_hit,search_memory_write_count,hook_name,pipeline_stage,workflow_selected,skill_id,skill_loaded_chars,skill_fallback,budget_controller_estimate_scale,budget_controller_estimate_scale_pct,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_estimate_scale,pre_prompt_estimate_scale_pct,pre_prompt_est_tokens,pre_prompt_estimate_error_tokens,pre_prompt_estimate_error_rate,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted,external_skill_discovery_runs,external_skill_install_attempts,external_skill_install_successes,external_skill_id,external_skill_source'
 legacy_header='timestamp,task_class,workflow,confidence,input_tokens,output_tokens,total_tokens,retries,fallbacks,tools,elapsed_ms,status,contract_valid,memory_loaded,memory_chars,memory_write_count,memory_dedup_count,memory_compact_kept,skill_id,skill_loaded_chars,skill_fallback'
 
 if [[ ! -f "$metrics_file" ]]; then
@@ -99,8 +105,9 @@ python3 - "$metrics_file" "$desired_header" \
   "$output_compact_runs" "$output_compact_removed" "$output_compact_compacted" "$output_compact_kept" \
   "$search_tool_count" "$search_query_count" "$search_source_count" "$search_reuse_hit" "$search_memory_write_count" \
   "$hook_name" "$pipeline_stage" "$workflow_selected" "$skill_id" "$skill_loaded_chars" "$skill_fallback" \
+  "$budget_controller_estimate_scale" "$budget_controller_estimate_scale_pct" \
   "$pre_prompt_budget_soft" "$pre_prompt_budget_hard" "$pre_prompt_objective_chars" "$pre_prompt_context_chars" \
-  "$pre_prompt_est_tokens" "$pre_prompt_utilization" "$pre_prompt_margin_tokens" "$pre_prompt_adjustment_warranted" \
+  "$pre_prompt_estimate_scale" "$pre_prompt_estimate_scale_pct" "$pre_prompt_est_tokens" "$pre_prompt_estimate_error_tokens" "$pre_prompt_estimate_error_rate" "$pre_prompt_utilization" "$pre_prompt_margin_tokens" "$pre_prompt_adjustment_warranted" \
   "$external_skill_discovery_runs" "$external_skill_install_attempts" "$external_skill_install_successes" \
   "$external_skill_id" "$external_skill_source" <<'PY'
 import csv

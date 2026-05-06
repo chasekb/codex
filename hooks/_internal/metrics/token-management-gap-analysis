@@ -1,0 +1,571 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+metrics_file="${1:-outputs/token-metrics.csv}"
+budget_report_file="${2:-outputs/budget-report.json}"
+policy_file="${3:-MCP/budgets/tuning-policy.yaml}"
+runtime_state_file="${4:-outputs/hook-runtime-state.json}"
+out_json="${5:-outputs/token-management-gap-analysis.json}"
+out_md="${6:-outputs/token-management-gap-analysis.md}"
+
+[[ -f "$metrics_file" ]] || { echo "gap-analysis:error missing_metrics"; exit 1; }
+[[ -f "$policy_file" ]] || { echo "gap-analysis:error missing_policy"; exit 1; }
+
+mkdir -p outputs
+
+python3 - <<'PY' "$metrics_file" "$budget_report_file" "$policy_file" "$runtime_state_file" "$out_json" "$out_md"
+import csv
+import json
+import math
+import sys
+from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
+metrics_file, budget_report_file, policy_file, runtime_state_file, out_json, out_md = sys.argv[1:]
+
+def read_policy(path):
+    values = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#") or ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            values[key.strip()] = value.strip()
+    return {
+        "prompt_budget_high_utilization": float(values.get("prompt_budget_high_utilization", 0.85)),
+        "prompt_budget_low_utilization": float(values.get("prompt_budget_low_utilization", 0.45)),
+        "prompt_budget_adjustment_rate": float(values.get("prompt_budget_adjustment_rate", 0.5)),
+    }
+
+def load_json(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, (dict, list)) else default
+    except Exception:
+        return default
+
+def parse_float(value, default=0.0):
+    try:
+        if value in ("", None):
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+def parse_int(value, default=0):
+    try:
+        if value in ("", None):
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+def parse_bool(value):
+    return str(value).strip().lower() == "true"
+
+def non_empty(value):
+    return value not in ("", None)
+
+policy = read_policy(policy_file)
+budget_report = load_json(budget_report_file, {})
+runtime_state = load_json(runtime_state_file, {})
+
+with open(metrics_file, "r", encoding="utf-8", newline="") as f:
+    rows = list(csv.DictReader(f))
+
+fieldnames = rows[0].keys() if rows else []
+
+numeric_fields = [
+    "confidence",
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+    "retries",
+    "fallbacks",
+    "tools",
+    "elapsed_ms",
+    "memory_loaded",
+    "memory_chars",
+    "learning_loaded",
+    "learning_chars",
+    "failure_history_loaded",
+    "failure_history_chars",
+    "playbook_loaded",
+    "playbook_chars",
+    "search_hints_loaded",
+    "search_hints_chars",
+    "memory_write_count",
+    "memory_dedup_count",
+    "memory_compact_kept",
+    "output_compact_runs",
+    "output_compact_removed",
+    "output_compact_compacted",
+    "output_compact_kept",
+    "search_tool_count",
+    "search_query_count",
+    "search_source_count",
+    "search_reuse_hit",
+    "search_memory_write_count",
+    "skill_loaded_chars",
+    "pre_prompt_budget_soft",
+    "pre_prompt_budget_hard",
+    "pre_prompt_objective_chars",
+    "pre_prompt_context_chars",
+    "pre_prompt_est_tokens",
+    "pre_prompt_utilization",
+    "pre_prompt_margin_tokens",
+    "external_skill_discovery_runs",
+    "external_skill_install_attempts",
+    "external_skill_install_successes",
+]
+
+boolean_fields = [
+    "contract_valid",
+    "memory_write_count",
+    "pre_prompt_adjustment_warranted",
+]
+
+metric_coverage = []
+for field in fieldnames:
+    if field == "timestamp":
+        continue
+    present = sum(1 for row in rows if non_empty(row.get(field)))
+    metric_coverage.append({
+        "metric": field,
+        "non_empty": present,
+        "coverage": round((present / len(rows)) if rows else 0.0, 4),
+    })
+
+overall = {
+    "samples": len(rows),
+    "pass_count": 0,
+    "contract_invalid_count": 0,
+    "retries_sum": 0.0,
+    "fallbacks_sum": 0.0,
+    "tools_sum": 0.0,
+    "elapsed_ms_sum": 0.0,
+    "input_tokens_sum": 0.0,
+    "output_tokens_sum": 0.0,
+    "total_tokens_sum": 0.0,
+    "memory_loaded_count": 0,
+    "learning_loaded_count": 0,
+    "failure_history_loaded_count": 0,
+    "playbook_loaded_count": 0,
+    "search_hints_loaded_count": 0,
+    "skill_fallback_count": 0,
+    "pre_prompt_adjustment_count": 0,
+    "pre_prompt_utilization_sum": 0.0,
+    "pre_prompt_margin_tokens_sum": 0.0,
+    "pre_prompt_budget_soft_sum": 0.0,
+    "pre_prompt_budget_hard_sum": 0.0,
+    "pre_prompt_estimate_scale_sum": 0.0,
+    "pre_prompt_estimate_scale_pct_sum": 0.0,
+    "pre_prompt_est_tokens_sum": 0.0,
+    "pre_prompt_estimate_error_tokens_sum": 0.0,
+    "pre_prompt_estimate_error_rate_sum": 0.0,
+    "pre_prompt_objective_chars_sum": 0.0,
+    "pre_prompt_context_chars_sum": 0.0,
+    "budget_controller_estimate_scale_sum": 0.0,
+    "budget_controller_estimate_scale_pct_sum": 0.0,
+    "memory_chars_sum": 0.0,
+    "learning_chars_sum": 0.0,
+    "failure_history_chars_sum": 0.0,
+    "playbook_chars_sum": 0.0,
+    "search_hints_chars_sum": 0.0,
+    "skill_loaded_chars_sum": 0.0,
+    "external_skill_discovery_runs_sum": 0.0,
+    "external_skill_install_attempts_sum": 0.0,
+    "external_skill_install_successes_sum": 0.0,
+}
+
+workflow_stats = defaultdict(lambda: {
+    "samples": 0,
+    "pass_count": 0,
+    "contract_invalid_count": 0,
+    "retries_sum": 0.0,
+    "fallbacks_sum": 0.0,
+    "tools_sum": 0.0,
+    "elapsed_ms_sum": 0.0,
+    "input_tokens_sum": 0.0,
+    "output_tokens_sum": 0.0,
+    "total_tokens_sum": 0.0,
+    "memory_loaded_count": 0,
+    "learning_loaded_count": 0,
+    "failure_history_loaded_count": 0,
+    "playbook_loaded_count": 0,
+    "search_hints_loaded_count": 0,
+    "skill_fallback_count": 0,
+    "pre_prompt_adjustment_count": 0,
+    "pre_prompt_utilization_sum": 0.0,
+    "pre_prompt_margin_tokens_sum": 0.0,
+    "pre_prompt_budget_soft_sum": 0.0,
+    "pre_prompt_budget_hard_sum": 0.0,
+    "pre_prompt_estimate_scale_sum": 0.0,
+    "pre_prompt_estimate_scale_pct_sum": 0.0,
+    "pre_prompt_est_tokens_sum": 0.0,
+    "pre_prompt_estimate_error_tokens_sum": 0.0,
+    "pre_prompt_estimate_error_rate_sum": 0.0,
+    "pre_prompt_objective_chars_sum": 0.0,
+    "pre_prompt_context_chars_sum": 0.0,
+    "budget_controller_estimate_scale_sum": 0.0,
+    "budget_controller_estimate_scale_pct_sum": 0.0,
+    "memory_chars_sum": 0.0,
+    "learning_chars_sum": 0.0,
+    "failure_history_chars_sum": 0.0,
+    "playbook_chars_sum": 0.0,
+    "search_hints_chars_sum": 0.0,
+    "skill_loaded_chars_sum": 0.0,
+    "external_skill_discovery_runs_sum": 0.0,
+    "external_skill_install_attempts_sum": 0.0,
+    "external_skill_install_successes_sum": 0.0,
+})
+
+for row in rows:
+    wf = row.get("workflow", "unknown") or "unknown"
+    stats = workflow_stats[wf]
+    overall["samples"] += 1
+    stats["samples"] += 1
+    if str(row.get("status", "")).lower() == "pass":
+        overall["pass_count"] += 1
+        stats["pass_count"] += 1
+    if parse_bool(row.get("contract_valid")):
+        pass
+    else:
+        overall["contract_invalid_count"] += 1
+        stats["contract_invalid_count"] += 1
+
+    for field in ("retries", "fallbacks", "tools", "elapsed_ms", "input_tokens", "output_tokens", "total_tokens"):
+        value = parse_float(row.get(field))
+        overall[f"{field}_sum"] += value
+        stats[f"{field}_sum"] += value
+
+    for field, counter in (
+        ("memory_loaded", "memory_loaded_count"),
+        ("learning_loaded", "learning_loaded_count"),
+        ("failure_history_loaded", "failure_history_loaded_count"),
+        ("playbook_loaded", "playbook_loaded_count"),
+        ("search_hints_loaded", "search_hints_loaded_count"),
+    ):
+        if parse_int(row.get(field)):
+            overall[counter] += 1
+            stats[counter] += 1
+
+    if parse_bool(row.get("skill_fallback")):
+        overall["skill_fallback_count"] += 1
+        stats["skill_fallback_count"] += 1
+    if parse_bool(row.get("pre_prompt_adjustment_warranted")):
+        overall["pre_prompt_adjustment_count"] += 1
+        stats["pre_prompt_adjustment_count"] += 1
+
+    for field in (
+        "pre_prompt_utilization",
+        "pre_prompt_margin_tokens",
+        "pre_prompt_budget_soft",
+        "pre_prompt_budget_hard",
+        "pre_prompt_estimate_scale",
+        "pre_prompt_estimate_scale_pct",
+        "pre_prompt_est_tokens",
+        "pre_prompt_estimate_error_tokens",
+        "pre_prompt_estimate_error_rate",
+        "pre_prompt_objective_chars",
+        "pre_prompt_context_chars",
+        "budget_controller_estimate_scale",
+        "budget_controller_estimate_scale_pct",
+        "memory_chars",
+        "learning_chars",
+        "failure_history_chars",
+        "playbook_chars",
+        "search_hints_chars",
+        "skill_loaded_chars",
+        "external_skill_discovery_runs",
+        "external_skill_install_attempts",
+        "external_skill_install_successes",
+    ):
+        value = parse_float(row.get(field))
+        overall[f"{field}_sum"] += value
+        stats[f"{field}_sum"] += value
+
+def finalize(stats):
+    samples = max(1, stats["samples"])
+    pass_rate = stats["pass_count"] / samples
+    contract_invalid_rate = stats["contract_invalid_count"] / samples
+    retry_rate = stats["retries_sum"] / samples
+    fallback_rate = stats["fallbacks_sum"] / samples
+    avg_input_tokens = stats["input_tokens_sum"] / samples
+    avg_output_tokens = stats["output_tokens_sum"] / samples
+    avg_total_tokens = stats["total_tokens_sum"] / samples
+    avg_retries = stats["retries_sum"] / samples
+    avg_fallbacks = stats["fallbacks_sum"] / samples
+    avg_tools = stats["tools_sum"] / samples
+    avg_elapsed_ms = stats["elapsed_ms_sum"] / samples
+    avg_pre_prompt_utilization = stats["pre_prompt_utilization_sum"] / samples
+    avg_pre_prompt_margin_tokens = stats["pre_prompt_margin_tokens_sum"] / samples
+    avg_pre_prompt_budget_soft = stats["pre_prompt_budget_soft_sum"] / samples
+    avg_pre_prompt_budget_hard = stats["pre_prompt_budget_hard_sum"] / samples
+    avg_pre_prompt_estimate_scale = stats["pre_prompt_estimate_scale_sum"] / samples
+    avg_pre_prompt_estimate_scale_pct = stats["pre_prompt_estimate_scale_pct_sum"] / samples
+    avg_pre_prompt_est_tokens = stats["pre_prompt_est_tokens_sum"] / samples
+    avg_pre_prompt_estimate_error_tokens = stats["pre_prompt_estimate_error_tokens_sum"] / samples
+    avg_pre_prompt_estimate_error_rate = stats["pre_prompt_estimate_error_rate_sum"] / samples
+    avg_pre_prompt_objective_chars = stats["pre_prompt_objective_chars_sum"] / samples
+    avg_pre_prompt_context_chars = stats["pre_prompt_context_chars_sum"] / samples
+    avg_budget_controller_estimate_scale = stats["budget_controller_estimate_scale_sum"] / samples
+    avg_budget_controller_estimate_scale_pct = stats["budget_controller_estimate_scale_pct_sum"] / samples
+    avg_memory_chars = stats["memory_chars_sum"] / samples
+    avg_learning_chars = stats["learning_chars_sum"] / samples
+    avg_failure_history_chars = stats["failure_history_chars_sum"] / samples
+    avg_playbook_chars = stats["playbook_chars_sum"] / samples
+    avg_search_hints_chars = stats["search_hints_chars_sum"] / samples
+    avg_skill_loaded_chars = stats["skill_loaded_chars_sum"] / samples
+    avg_external_skill_discovery_runs = stats["external_skill_discovery_runs_sum"] / samples
+    avg_external_skill_install_attempts = stats["external_skill_install_attempts_sum"] / samples
+    avg_external_skill_install_successes = stats["external_skill_install_successes_sum"] / samples
+    avg_estimate_error_tokens = avg_input_tokens - avg_pre_prompt_est_tokens
+    avg_estimate_error_rate = (avg_estimate_error_tokens / avg_input_tokens) if avg_input_tokens else 0.0
+    avg_total_to_est_ratio = (avg_total_tokens / avg_pre_prompt_est_tokens) if avg_pre_prompt_est_tokens else 0.0
+    avg_input_to_soft_budget_ratio = (avg_input_tokens / avg_pre_prompt_budget_soft) if avg_pre_prompt_budget_soft else 0.0
+    return {
+        "samples": stats["samples"],
+        "pass_rate": round(pass_rate, 4),
+        "contract_invalid_rate": round(contract_invalid_rate, 4),
+        "retry_rate": round(retry_rate, 4),
+        "fallback_rate": round(fallback_rate, 4),
+        "avg_retries": round(avg_retries, 2),
+        "avg_fallbacks": round(avg_fallbacks, 2),
+        "avg_tools": round(avg_tools, 2),
+        "avg_elapsed_ms": round(avg_elapsed_ms, 2),
+        "avg_input_tokens": round(avg_input_tokens, 2),
+        "avg_output_tokens": round(avg_output_tokens, 2),
+        "avg_total_tokens": round(avg_total_tokens, 2),
+        "avg_pre_prompt_utilization": round(avg_pre_prompt_utilization, 4),
+        "avg_pre_prompt_margin_tokens": round(avg_pre_prompt_margin_tokens, 2),
+        "avg_pre_prompt_budget_soft": round(avg_pre_prompt_budget_soft, 2),
+        "avg_pre_prompt_budget_hard": round(avg_pre_prompt_budget_hard, 2),
+        "avg_pre_prompt_estimate_scale": round(avg_pre_prompt_estimate_scale, 4),
+        "avg_pre_prompt_estimate_scale_pct": round(avg_pre_prompt_estimate_scale_pct, 2),
+        "avg_pre_prompt_est_tokens": round(avg_pre_prompt_est_tokens, 2),
+        "avg_pre_prompt_estimate_error_tokens": round(avg_pre_prompt_estimate_error_tokens, 2),
+        "avg_pre_prompt_estimate_error_rate": round(avg_pre_prompt_estimate_error_rate, 4),
+        "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
+        "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+        "avg_budget_controller_estimate_scale": round(avg_budget_controller_estimate_scale, 4),
+        "avg_budget_controller_estimate_scale_pct": round(avg_budget_controller_estimate_scale_pct, 2),
+        "avg_memory_chars": round(avg_memory_chars, 2),
+        "avg_learning_chars": round(avg_learning_chars, 2),
+        "avg_failure_history_chars": round(avg_failure_history_chars, 2),
+        "avg_playbook_chars": round(avg_playbook_chars, 2),
+        "avg_search_hints_chars": round(avg_search_hints_chars, 2),
+        "avg_skill_loaded_chars": round(avg_skill_loaded_chars, 2),
+        "avg_external_skill_discovery_runs": round(avg_external_skill_discovery_runs, 2),
+        "avg_external_skill_install_attempts": round(avg_external_skill_install_attempts, 2),
+        "avg_external_skill_install_successes": round(avg_external_skill_install_successes, 2),
+        "memory_loaded_rate": round(stats["memory_loaded_count"] / samples, 4),
+        "learning_loaded_rate": round(stats["learning_loaded_count"] / samples, 4),
+        "failure_history_loaded_rate": round(stats["failure_history_loaded_count"] / samples, 4),
+        "playbook_loaded_rate": round(stats["playbook_loaded_count"] / samples, 4),
+        "search_hints_loaded_rate": round(stats["search_hints_loaded_count"] / samples, 4),
+        "skill_fallback_rate": round(stats["skill_fallback_count"] / samples, 4),
+        "pre_prompt_adjustment_rate": round(stats["pre_prompt_adjustment_count"] / samples, 4),
+        "avg_estimate_error_tokens": round(avg_estimate_error_tokens, 2),
+        "avg_estimate_error_rate": round(avg_estimate_error_rate, 4),
+        "avg_total_to_est_ratio": round(avg_total_to_est_ratio, 4),
+        "avg_input_to_soft_budget_ratio": round(avg_input_to_soft_budget_ratio, 4),
+    }
+
+overall_summary = finalize(overall)
+workflow_summaries = []
+for wf, stats in workflow_stats.items():
+    summary = finalize(stats)
+    summary["workflow"] = wf
+    summary["pressure_high"] = summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"]
+    summary["pressure_low"] = summary["avg_pre_prompt_utilization"] <= policy["prompt_budget_low_utilization"]
+    summary["adjustment_gap"] = bool(summary["pressure_high"] and summary["pre_prompt_adjustment_rate"] == 0)
+    summary["estimate_gap"] = bool(abs(summary["avg_estimate_error_rate"]) >= 0.15)
+    summary["calibration_gap"] = bool(summary["estimate_gap"] and abs(summary["avg_pre_prompt_estimate_scale"] - 1.0) < 0.01)
+    summary["learning_gap"] = bool(
+        summary["pressure_high"]
+        and summary["learning_loaded_rate"] < 0.5
+        and summary["playbook_loaded_rate"] < 0.5
+    )
+    summary["feedback_gap"] = bool(
+        summary["pressure_high"]
+        and (summary["contract_invalid_rate"] > 0 or summary["retry_rate"] > 0 or summary["fallback_rate"] > 0)
+    )
+    workflow_summaries.append(summary)
+
+workflow_summaries.sort(key=lambda r: (r["adjustment_gap"], r["pressure_high"], r["avg_pre_prompt_utilization"]), reverse=True)
+
+gap_matrix = []
+for row in workflow_summaries:
+    severity = "low"
+    if row["adjustment_gap"] or row["feedback_gap"]:
+        severity = "high"
+    elif row["estimate_gap"] or row["learning_gap"] or row["calibration_gap"]:
+        severity = "medium"
+    gap_matrix.append({
+        "workflow": row["workflow"],
+        "severity": severity,
+        "adjustment_gap": row["adjustment_gap"],
+        "estimate_gap": row["estimate_gap"],
+        "calibration_gap": row["calibration_gap"],
+        "learning_gap": row["learning_gap"],
+        "feedback_gap": row["feedback_gap"],
+        "avg_pre_prompt_utilization": row["avg_pre_prompt_utilization"],
+        "avg_pre_prompt_margin_tokens": row["avg_pre_prompt_margin_tokens"],
+        "avg_pre_prompt_budget_soft": row["avg_pre_prompt_budget_soft"],
+        "avg_pre_prompt_budget_hard": row["avg_pre_prompt_budget_hard"],
+        "avg_pre_prompt_estimate_scale": row["avg_pre_prompt_estimate_scale"],
+        "avg_pre_prompt_estimate_scale_pct": row["avg_pre_prompt_estimate_scale_pct"],
+        "avg_estimate_error_tokens": row["avg_estimate_error_tokens"],
+        "avg_estimate_error_rate": row["avg_estimate_error_rate"],
+        "avg_input_to_soft_budget_ratio": row["avg_input_to_soft_budget_ratio"],
+        "pass_rate": row["pass_rate"],
+        "retry_rate": row["retry_rate"],
+        "fallback_rate": row["fallback_rate"],
+    })
+
+overall_gap = {
+    "pressure_high": overall_summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"],
+    "pressure_low": overall_summary["avg_pre_prompt_utilization"] <= policy["prompt_budget_low_utilization"],
+    "adjustment_gap": bool(
+        overall_summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"]
+        and overall_summary["pre_prompt_adjustment_rate"] == 0
+    ),
+    "estimate_gap": bool(abs(overall_summary["avg_estimate_error_rate"]) >= 0.15),
+    "calibration_gap": bool(
+        abs(overall_summary["avg_estimate_error_rate"]) >= 0.15
+        and abs(overall_summary["avg_pre_prompt_estimate_scale"] - 1.0) < 0.01
+    ),
+    "learning_gap": bool(
+        overall_summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"]
+        and overall_summary["learning_loaded_rate"] < 0.5
+        and overall_summary["playbook_loaded_rate"] < 0.5
+    ),
+    "feedback_gap": bool(
+        overall_summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"]
+        and (overall_summary["contract_invalid_rate"] > 0 or overall_summary["retry_rate"] > 0 or overall_summary["fallback_rate"] > 0)
+    ),
+}
+
+report = {
+    "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    "sources": {
+        "metrics_file": str(Path(metrics_file).resolve()),
+        "budget_report_file": str(Path(budget_report_file).resolve()),
+        "policy_file": str(Path(policy_file).resolve()),
+        "runtime_state_file": str(Path(runtime_state_file).resolve()),
+    },
+    "policy": policy,
+    "integration_model": {
+        "nelson_package": "plugins/nelson",
+        "superpowers_overlay": str(Path("superpowers").resolve()),
+        "pre_prompt_learnable_inputs": [
+            "learning context",
+            "failure history",
+            "workflow/skill playbook snippets",
+            "search hints and provenance",
+            "budget controller history",
+        ],
+        "post_prompt_feedback_outputs": [
+            "token-metrics.csv",
+            "budget-report.json",
+            "budget-history.jsonl",
+            "tuning-proposals.json",
+            "budget-compare.json",
+        ],
+    },
+    "overall": overall_summary,
+    "overall_gap": overall_gap,
+    "metric_coverage": metric_coverage,
+    "workflow_summary": workflow_summaries,
+    "gap_matrix": gap_matrix,
+    "budget_report_summary": {
+        "proposal_count": int(budget_report.get("proposal_count", 0) or 0) if isinstance(budget_report, dict) else 0,
+        "workflow_count": len(budget_report.get("workflow_summary", []) or []) if isinstance(budget_report, dict) else 0,
+    },
+    "runtime_snapshot": {
+        "plugin_context": runtime_state.get("plugin_context"),
+        "plugin_package": runtime_state.get("plugin_package"),
+    } if isinstance(runtime_state, dict) else {},
+}
+
+with open(out_json, "w", encoding="utf-8") as f:
+    json.dump(report, f, indent=2, sort_keys=False)
+
+md = []
+md.append("# Token Management Gap Analysis")
+md.append("")
+md.append(f"Generated: {report['generated_at']}")
+md.append("")
+md.append("## Runtime Model")
+md.append("- Nelson and Superpowers are integrated as layered runtime inputs:")
+md.append("  - repo-local skills and plugin assets are loaded first")
+md.append("  - Superpowers overlays reusable skill behavior and patterns")
+md.append("  - pre-prompt hooks load learning, failure, playbook, search, and budget history")
+md.append("  - post-prompt hooks emit token metrics and tuning history for the next run")
+md.append("")
+md.append("## Overall Summary")
+md.append(f"- samples: {overall_summary['samples']}")
+md.append(f"- pass rate: {overall_summary['pass_rate']}")
+md.append(f"- contract invalid rate: {overall_summary['contract_invalid_rate']}")
+md.append(f"- retry rate: {overall_summary['retry_rate']}")
+md.append(f"- fallback rate: {overall_summary['fallback_rate']}")
+md.append(f"- avg retries: {overall_summary['avg_retries']}")
+md.append(f"- avg fallbacks: {overall_summary['avg_fallbacks']}")
+md.append(f"- avg tools: {overall_summary['avg_tools']}")
+md.append(f"- avg elapsed ms: {overall_summary['avg_elapsed_ms']}")
+md.append(f"- avg input tokens: {overall_summary['avg_input_tokens']}")
+md.append(f"- avg output tokens: {overall_summary['avg_output_tokens']}")
+md.append(f"- avg total tokens: {overall_summary['avg_total_tokens']}")
+md.append(f"- avg pre-prompt utilization: {overall_summary['avg_pre_prompt_utilization']}")
+md.append(f"- avg pre-prompt margin tokens: {overall_summary['avg_pre_prompt_margin_tokens']}")
+md.append(f"- avg pre-prompt budget soft: {overall_summary['avg_pre_prompt_budget_soft']}")
+md.append(f"- avg pre-prompt budget hard: {overall_summary['avg_pre_prompt_budget_hard']}")
+md.append(f"- avg pre-prompt estimate scale: {overall_summary['avg_pre_prompt_estimate_scale']}")
+md.append(f"- avg pre-prompt estimate scale pct: {overall_summary['avg_pre_prompt_estimate_scale_pct']}")
+md.append(f"- avg pre-prompt estimate tokens: {overall_summary['avg_pre_prompt_est_tokens']}")
+md.append(f"- avg pre-prompt estimate error tokens: {overall_summary['avg_pre_prompt_estimate_error_tokens']}")
+md.append(f"- avg pre-prompt estimate error rate: {overall_summary['avg_pre_prompt_estimate_error_rate']}")
+md.append(f"- avg budget controller estimate scale: {overall_summary['avg_budget_controller_estimate_scale']}")
+md.append(f"- avg budget controller estimate scale pct: {overall_summary['avg_budget_controller_estimate_scale_pct']}")
+md.append(f"- avg estimate error tokens: {overall_summary['avg_estimate_error_tokens']}")
+md.append(f"- avg estimate error rate: {overall_summary['avg_estimate_error_rate']}")
+md.append(f"- avg input-to-soft-budget ratio: {overall_summary['avg_input_to_soft_budget_ratio']}")
+md.append(f"- pre-prompt adjustment rate: {overall_summary['pre_prompt_adjustment_rate']}")
+md.append("")
+md.append("## Gap Summary")
+for key, value in overall_gap.items():
+    md.append(f"- {key}: {str(value).lower()}")
+md.append("")
+md.append("## Metric Coverage")
+for row in metric_coverage:
+    md.append(f"- `{row['metric']}` coverage={row['coverage']} non_empty={row['non_empty']}")
+md.append("")
+md.append("## Workflow Gaps")
+for row in gap_matrix:
+    md.append(
+        f"- `{row['workflow']}` severity={row['severity']} "
+        f"pressure_high={str(row['avg_pre_prompt_utilization'] >= policy['prompt_budget_high_utilization']).lower()} "
+        f"adjustment_gap={str(row['adjustment_gap']).lower()} "
+        f"estimate_gap={str(row['estimate_gap']).lower()} "
+        f"calibration_gap={str(row['calibration_gap']).lower()} "
+        f"learning_gap={str(row['learning_gap']).lower()} "
+        f"feedback_gap={str(row['feedback_gap']).lower()}"
+    )
+md.append("")
+md.append("## Budget Report Linkage")
+md.append(f"- proposal_count: {report['budget_report_summary']['proposal_count']}")
+md.append(f"- workflow_count: {report['budget_report_summary']['workflow_count']}")
+md.append("")
+md.append("## Output Files")
+md.append(f"- `{out_json}`")
+md.append(f"- `{out_md}`")
+
+with open(out_md, "w", encoding="utf-8") as f:
+    f.write("\n".join(md) + "\n")
+
+print(f"gap-analysis:ok json={out_json} md={out_md} samples={overall_summary['samples']}")
+PY
