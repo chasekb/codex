@@ -3,15 +3,47 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-
-import yaml
+import re
 
 
 def load_contracts(contracts_file: Path) -> dict:
-    data = yaml.safe_load(contracts_file.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError("contracts file must parse to a mapping")
-    return data
+    contracts: dict[str, dict[str, list[str]]] = {}
+    in_contracts = False
+    current_contract = ""
+    current_section = ""
+
+    for raw in contracts_file.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped == "contracts:":
+            in_contracts = True
+            current_contract = ""
+            current_section = ""
+            continue
+        if not in_contracts:
+            continue
+        if re.match(r"^\s{2}[A-Za-z0-9_\-]+:\s*$", line):
+            current_contract = line.strip().rstrip(":")
+            contracts[current_contract] = {}
+            current_section = ""
+            continue
+        if current_contract and re.match(r"^\s{4}required:\s*$", line):
+            current_section = "required"
+            contracts[current_contract][current_section] = []
+            continue
+        if current_contract and current_section == "required":
+            match = re.match(r"^\s{6}-\s*(.+?)\s*$", line)
+            if match:
+                contracts[current_contract][current_section].append(match.group(1).strip())
+                continue
+            if len(line) - len(line.lstrip()) <= 4:
+                current_section = ""
+
+    if not contracts:
+        raise ValueError("contracts file missing contracts mapping")
+    return {"contracts": contracts}
 
 
 def resolve_contract(data: dict, workflow: str) -> tuple[str, list[str]]:
@@ -137,17 +169,7 @@ def main() -> int:
     required_set = set(required_keys)
     present: set[str] = set()
 
-    parsed_output = None
-    try:
-        parsed_output = yaml.safe_load(output_text)
-    except Exception:
-        parsed_output = None
-
-    if isinstance(parsed_output, (dict, list)):
-        collect_yaml_keys(parsed_output, present, required_set)
-
-    if not present:
-        present = scan_text_output(output_text, required_set)
+    present = scan_text_output(output_text, required_set)
 
     missing = False
     for key in required_keys:

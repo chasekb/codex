@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dataset_file="${1:-validation/codex-runtime-eval-cases.jsonl}"
+out_json="${2:-outputs/codex-runtime-evals.json}"
+out_md="${3:-outputs/codex-runtime-evals.md}"
+workspace_root="${4:-$(pwd)}"
+
+[[ -f "$dataset_file" ]] || { echo "eval:error missing_dataset"; exit 1; }
+
+python3 - <<'PY' "$dataset_file" "$out_json" "$out_md" "$workspace_root"
+import json
+import sys
+from pathlib import Path
+
+dataset_file, out_json, out_md, workspace_root = sys.argv[1:]
+root = Path(workspace_root)
+sys.path.insert(0, str(root / "hooks" / "_internal" / "routing"))
+
+def run_selector(script_name, task_class, confidence, keywords):
+    import subprocess
+
+    proc = subprocess.run(
+        [str(root / "hooks" / "_internal" / "routing" / script_name), task_class, f"{confidence}", keywords, str(root)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    lines = [line.strip() for line in (proc.stdout or "").splitlines() if line.strip()]
+    return lines[-1] if lines else "", (proc.stdout or "") + (proc.stderr or "")
+
+cases = []
+with open(dataset_file, "r", encoding="utf-8") as f:
+    for raw in f:
+        line = raw.strip()
+        if not line:
+            continue
+        parsed = json.loads(line)
+        if isinstance(parsed, dict):
+            cases.append(parsed)
+
+results = []
+for case in cases:
+    task_class = str(case.get("task_class", "general"))
+    confidence = float(case.get("confidence", 0.9) or 0.9)
+    keywords = str(case.get("keywords", case.get("prompt", "")))
+    expected = {
+        "workflow": str(case.get("expected_workflow", "")),
+        "skill": str(case.get("expected_skill", "")),
+        "command": str(case.get("expected_command", "")),
+        "agent": str(case.get("expected_agent", "")),
+    }
+
+    actual_workflow, workflow_out = run_selector("select-workflow", task_class, confidence, keywords)
+    actual_skill, skill_out = run_selector("select-skill", task_class, confidence, keywords)
+    actual_command, command_out = run_selector("select-command", task_class, confidence, keywords)
+    actual_agent, agent_out = run_selector("select-agent", task_class, confidence, keywords)
+
+    status = "pass"
+    mismatches = []
+    for key, actual in (
+        ("workflow", actual_workflow),
+        ("skill", actual_skill),
+        ("command", actual_command),
+        ("agent", actual_agent),
+    ):
+        exp = expected[key]
+        if exp and exp != actual:
+            status = "fail"
+            mismatches.append({"field": key, "expected": exp, "actual": actual})
+
+    results.append({
+        "name": case.get("name", keywords[:60]),
+        "task_class": task_class,
+        "confidence": confidence,
+        "keywords": keywords,
+        "expected": expected,
+        "actual": {
+            "workflow": actual_workflow,
+            "skill": actual_skill,
+            "command": actual_command,
+            "agent": actual_agent,
+        },
+        "status": status,
+        "mismatches": mismatches,
+        "debug": {
+            "workflow_output": workflow_out,
+            "skill_output": skill_out,
+            "command_output": command_out,
+            "agent_output": agent_out,
+        },
+    })
+
+sample_count = len(results)
+passed = sum(1 for row in results if row["status"] == "pass")
+failed = sample_count - passed
+accuracy = round((passed / sample_count) if sample_count else 0.0, 4)
+
+report = {
+    "generated_at": __import__("datetime").datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+    "dataset_file": str(Path(dataset_file).resolve()),
+    "workspace_root": str(root.resolve()),
+    "sample_count": sample_count,
+    "passed": passed,
+    "failed": failed,
+    "accuracy": accuracy,
+    "results": results,
+}
+
+with open(out_json, "w", encoding="utf-8") as f:
+    json.dump(report, f, indent=2)
+
+lines = []
+lines.append("# Codex Runtime Eval Suite")
+lines.append("")
+lines.append(f"- samples: {sample_count}")
+lines.append(f"- passed: {passed}")
+lines.append(f"- failed: {failed}")
+lines.append(f"- accuracy: {accuracy}")
+lines.append("")
+lines.append("| case | status | workflow | skill | command | agent |")
+lines.append("| --- | --- | --- | --- | --- | --- |")
+for row in results:
+    lines.append(
+        f"| {row['name']} | {row['status']} | {row['actual']['workflow']} | {row['actual']['skill']} | {row['actual']['command']} | {row['actual']['agent']} |"
+    )
+
+with open(out_md, "w", encoding="utf-8") as f:
+    f.write("\n".join(lines) + "\n")
+
+print(json.dumps(report, separators=(",", ":")))
+print(f"eval:metrics samples={sample_count} passed={passed} failed={failed} accuracy={accuracy}")
+PY

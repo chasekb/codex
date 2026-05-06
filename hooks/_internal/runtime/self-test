@@ -114,6 +114,27 @@ hooks/_internal/routing/load-skill systematic-debugging metadata 200 "$ROOT/skil
 hooks/_internal/routing/load-skill backlog-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog_triage || fail load_skill_backlog_triage
 hooks/_internal/routing/load-skill task-decomposition metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_task_decomposition || fail load_skill_task_decomposition
 
+eval_cases="$tmpdir/codex-runtime-eval-cases.jsonl"
+cat > "$eval_cases" <<'JSONL'
+{"name":"nelson_integration","task_class":"implement","confidence":0.92,"keywords":"nelson plugin integration package conversion","expected_workflow":"nelson-conversion","expected_skill":"nelson-conversion","expected_command":"nelson-context","expected_agent":"nelson-coordinator"}
+{"name":"project_insights","task_class":"general","confidence":0.9,"keywords":"project insights backlog health aging items","expected_workflow":"project-insights","expected_skill":"project-insights"}
+{"name":"debug_deep_dive","task_class":"debug","confidence":0.9,"keywords":"repeated failure failing test","expected_workflow":"debug-deep-dive","expected_skill":"systematic-debugging"}
+JSONL
+eval_json="$tmpdir/codex-runtime-evals.json"
+eval_md="$tmpdir/codex-runtime-evals.md"
+bash hooks/_internal/metrics/codex-runtime-evals "$eval_cases" "$eval_json" "$eval_md" "$ROOT" >/dev/null && pass codex_runtime_evals || fail codex_runtime_evals
+python3 - <<'PY' "$eval_json"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+assert data["sample_count"] == 3
+assert data["passed"] == 3
+assert data["accuracy"] == 1.0
+print("codex_runtime_evals_json:ok")
+PY
+pass codex_runtime_evals_json
+grep -Fq '# Codex Runtime Eval Suite' "$eval_md" && pass codex_runtime_evals_md || fail codex_runtime_evals_md
+
 backlog_dir="$tmpdir/backlog"
 mkdir -p "$backlog_dir"
 backlog_file="$backlog_dir/backlog.json"
@@ -674,6 +695,7 @@ JSON
 pipeline_payload='{"task":{"class":"implement","objective":"pipeline resolver smoke"},"classification":{"confidence":0.91}}'
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$pipeline_payload" >/dev/null && pass hook_pipeline_smoke || fail hook_pipeline_smoke
 grep -Fq '"workflow": "implement-small"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow || fail hook_pipeline_state_workflow
+grep -Eq '"workflow_registry_label": "[^"]+"' outputs/hook-runtime-state.json && pass hook_pipeline_state_workflow_registry || fail hook_pipeline_state_workflow_registry
 grep -Fq '"skill_id": "plan-verify-execute"' outputs/hook-runtime-state.json && pass hook_pipeline_state_skill || fail hook_pipeline_state_skill
 grep -Fq '"playbook_loaded": 2' outputs/hook-runtime-state.json && pass hook_pipeline_state_playbook || fail hook_pipeline_state_playbook
 grep -Eq '"search_hints_loaded": [1-9]' outputs/hook-runtime-state.json && pass hook_pipeline_state_search_hints || fail hook_pipeline_state_search_hints
@@ -681,6 +703,8 @@ grep -Fq '"budget_controller_loaded": 1' outputs/hook-runtime-state.json && pass
 grep -Eq '"budget_controller_prompt_scale": 1\.[0-9]+' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller_scale || fail hook_pipeline_state_budget_controller_scale
 grep -Fq '"budget_controller_estimate_scale": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_budget_controller_estimate_scale || fail hook_pipeline_state_budget_controller_estimate_scale
 grep -Fq '"pre_prompt_estimate_scale": 1' outputs/hook-runtime-state.json && pass hook_pipeline_state_estimate_scale || fail hook_pipeline_state_estimate_scale
+grep -Eq '"prompt_cache_static_context_chars": [1-9]' outputs/hook-runtime-state.json && pass hook_pipeline_state_prompt_cache_static || fail hook_pipeline_state_prompt_cache_static
+grep -Eq '"prompt_cache_eligible": (true|false)' outputs/hook-runtime-state.json && pass hook_pipeline_state_prompt_cache_eligible || fail hook_pipeline_state_prompt_cache_eligible
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_event_workflow || fail hook_pipeline_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_event_skill || fail hook_pipeline_event_skill
 
@@ -688,6 +712,8 @@ nelson_pipeline_payload='{"task":{"class":"implement","objective":"nelson plugin
 python3 hooks/_internal/runtime/hook-pipeline TaskStart <<<"$nelson_pipeline_payload" >/dev/null && pass hook_pipeline_nelson_smoke || fail hook_pipeline_nelson_smoke
 python3 hooks/_internal/runtime/hook-pipeline TaskComplete <<<'{}' >/dev/null && pass hook_pipeline_nelson_task_complete || fail hook_pipeline_nelson_task_complete
 grep -Fq '"workflow": "nelson-conversion"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_workflow || fail hook_pipeline_nelson_workflow
+grep -Fq '"workflow_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_workflow_registry || fail hook_pipeline_nelson_workflow_registry
+grep -Fq '"workflow_source_file": "'"$ROOT"'/plugins/nelson/workflows/pipelines/conversion.yaml"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_workflow_source || fail hook_pipeline_nelson_workflow_source
 grep -Fq '"skill_id": "nelson-conversion"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_skill || fail hook_pipeline_nelson_skill
 grep -Fq '"skill_registry_label": "plugin:nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_skill_registry || fail hook_pipeline_nelson_skill_registry
 grep -Fq '"plugin_id": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_id || fail hook_pipeline_nelson_plugin_id
@@ -700,6 +726,7 @@ grep -Fq '"mcp_surface": "plugin:nelson:mcp"' outputs/hook-runtime-state.json &&
 grep -Fq '"app_surface": "plugin:nelson:app"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_app_surface || fail hook_pipeline_nelson_app_surface
 grep -Fq '"mission_scenarios": 9' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package || fail hook_pipeline_nelson_plugin_package
 grep -Fq '"public_vocabulary_count": 5' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_package_vocabulary || fail hook_pipeline_nelson_plugin_package_vocabulary
+grep -Eq '"prompt_cache_static_context_chars": [1-9]' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_prompt_cache_static || fail hook_pipeline_nelson_prompt_cache_static
 grep -Fq '"name": "nelson"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_name || fail hook_pipeline_nelson_plugin_name
 grep -Fq '"version": "0.1.0"' outputs/hook-runtime-state.json && pass hook_pipeline_nelson_plugin_version || fail hook_pipeline_nelson_plugin_version
 grep -Fq 'nelson plugin integration package conversion' plugins/nelson/validation/nelson-coordination-log.jsonl && pass hook_pipeline_nelson_coordination_log || fail hook_pipeline_nelson_coordination_log
@@ -1020,6 +1047,23 @@ rc=$?
 set -e
 [[ $rc -eq 1 ]] && pass validate_output_contract_rejects_prose || fail validate_output_contract_rejects_prose
 
+python3 - <<'PY' && pass structured_output_contract || fail structured_output_contract
+import sys
+from pathlib import Path
+
+root = Path.cwd()
+sys.path.insert(0, str(root / "hooks" / "_internal" / "runtime"))
+from structured_output import StructuredOutputError, require_json_object
+
+assert require_json_object('{"alpha":1}', "structured", required_keys=("alpha",))["alpha"] == 1
+try:
+    require_json_object("not-json", "structured", required_keys=("alpha",))
+except StructuredOutputError:
+    print("structured_output:ok")
+else:
+    raise SystemExit(1)
+PY
+
 hooks/_internal/output/enforce-budget 10 20 30 >/dev/null && pass enforce_budget_ok || fail enforce_budget_ok
 set +e
 hooks/_internal/output/enforce-budget 40 20 30 >/dev/null 2>&1
@@ -1066,9 +1110,9 @@ python3 hooks/_internal/runtime/hook-pipeline PreCompact <<'JSON' >/dev/null && 
 JSON
 grep -Fq 'event=outputs_compacted' outputs/hook-events.log && pass outputs_compact_event_logged || fail outputs_compact_event_logged
 
-hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 1.0 100 600 false 1 1 1 1 3800 11800 12 534 1.0 100 134 -124 -12.4 0.0353 3666 false 1 1 1 external-debugger github >/dev/null && pass postrun_metrics || fail postrun_metrics
-tail -n1 outputs/token-metrics.csv | grep -Fq '1.0,100,600,false,1,1,1,1,3800,11800,12,534,1.0,100,134,-124,-12.4,0.0353,3666,false,1,1,1,external-debugger,github' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
-head -n1 outputs/token-metrics.csv | grep -Fq 'skill_fallback,budget_controller_estimate_scale,budget_controller_estimate_scale_pct,output_compact_runs,output_compact_removed,output_compact_compacted,output_compact_kept,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_estimate_scale,pre_prompt_estimate_scale_pct,pre_prompt_est_tokens,pre_prompt_estimate_error_tokens,pre_prompt_estimate_error_rate,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted' && pass postrun_metrics_header || fail postrun_metrics_header
+hooks/_internal/metrics/postrun-metrics debug debug-rca 0.9 10 5 0 0 3 120 pass true 2 200 1 34 1 44 2 172 1 120 0 2 4 1 1 1 1 5 6 7 8 9 TaskStart postrun debug-rca plan-verify-execute 150 false 1.0 100 3800 11800 12 534 1.0 100 134 -124 -12.4 0.0353 3666 false 1 1 1 external-debugger github core workflows/pipelines/debug-rca.yaml 1200 12 1212 0.99 true >/dev/null && pass postrun_metrics || fail postrun_metrics
+tail -n1 outputs/token-metrics.csv | grep -Fq 'external-debugger,github,core,workflows/pipelines/debug-rca.yaml,1200,12,1212,0.99,true' && pass postrun_metrics_preprompt || fail postrun_metrics_preprompt
+head -n1 outputs/token-metrics.csv | grep -Fq 'skill_fallback,budget_controller_estimate_scale,budget_controller_estimate_scale_pct,pre_prompt_budget_soft,pre_prompt_budget_hard,pre_prompt_objective_chars,pre_prompt_context_chars,pre_prompt_estimate_scale,pre_prompt_estimate_scale_pct,pre_prompt_est_tokens,pre_prompt_estimate_error_tokens,pre_prompt_estimate_error_rate,pre_prompt_utilization,pre_prompt_margin_tokens,pre_prompt_adjustment_warranted,external_skill_discovery_runs,external_skill_install_attempts,external_skill_install_successes,external_skill_id,external_skill_source,workflow_registry_label,workflow_source_file,prompt_cache_static_context_chars,prompt_cache_dynamic_objective_chars,prompt_cache_total_chars,prompt_cache_static_ratio,prompt_cache_eligible' && pass postrun_metrics_header || fail postrun_metrics_header
 
 base="$tmpdir/baseline.csv"
 hooks/_internal/metrics/regression-guard debug-rca 100 10 "$base" >/dev/null && pass regression_bootstrap || fail regression_bootstrap
@@ -1107,6 +1151,7 @@ budgets:
   debug_rca:
     input_soft: 1000
     output_soft: 1000
+    estimate_scale_pct: 100
     memory_read_soft: 500
     skill_read_soft: 700
 YAML

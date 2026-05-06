@@ -32,6 +32,8 @@ compaction:
     - tuning-open-request.json
     - budget-summary.md
     - budget-summary.json
+    - codex-runtime-evals.md
+    - codex-runtime-evals.json
     - external-skill-discovery.md
     - external-skill-discovery.json
     - external-origin-intake.md

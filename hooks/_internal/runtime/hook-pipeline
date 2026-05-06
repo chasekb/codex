@@ -25,7 +25,9 @@ def find_repo_root(start: str) -> str:
 
 ROOT = find_repo_root(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(ROOT, "hooks", "_internal", "routing"))
+sys.path.insert(0, os.path.join(ROOT, "hooks", "_internal", "runtime"))
 from skill_registry import registry_candidates as skill_registry_candidates
+from structured_output import StructuredOutputError, extract_json_object, require_json_object
 
 STATE_PATH = os.path.join(ROOT, "outputs", "hook-runtime-state.json")
 SESSION_PATH = os.path.join(ROOT, "MCP", "memory", "session.json")
@@ -162,6 +164,8 @@ def default_state():
             "plugin_source": "",
             "plugin_context": "",
             "plugin_package": {},
+            "workflow_registry_label": "",
+            "workflow_source_file": "",
             "confidence": 0.0,
             "objective": "",
             "pending_searches": [],
@@ -237,6 +241,11 @@ def default_state():
             "search_memory_write_count": 0,
             "skill_loaded_chars": 0,
             "skill_fallback": False,
+            "prompt_cache_static_context_chars": 0,
+            "prompt_cache_dynamic_objective_chars": 0,
+            "prompt_cache_total_chars": 0,
+            "prompt_cache_static_ratio": 0.0,
+            "prompt_cache_eligible": False,
             "contract_valid": True,
         },
         "tools_used": [],
@@ -575,16 +584,13 @@ def parse_playbook_metrics(output):
     results = []
     for line in output.splitlines():
         if line.startswith("{") and not results:
-            try:
-                parsed = json.loads(line)
-                if isinstance(parsed, dict):
-                    loaded = to_int(parsed.get("playbook_loaded", loaded))
-                    chars = to_int(parsed.get("chars", chars))
-                    maybe_results = parsed.get("results", [])
-                    if isinstance(maybe_results, list):
-                        results = maybe_results
-            except Exception:
-                pass
+            parsed = extract_json_object(line)
+            if parsed:
+                loaded = to_int(parsed.get("playbook_loaded", loaded))
+                chars = to_int(parsed.get("chars", chars))
+                maybe_results = parsed.get("results", [])
+                if isinstance(maybe_results, list):
+                    results = maybe_results
         if line.startswith("playbook:metrics"):
             loaded = parse_kv_metric(line, "loaded")
             chars = parse_kv_metric(line, "chars")
@@ -629,22 +635,19 @@ def parse_budget_controller_metrics(output):
     }
     for line in output.splitlines():
         if line.startswith("{"):
-            try:
-                parsed = json.loads(line)
-                if isinstance(parsed, dict):
-                    report["loaded"] = to_int(parsed.get("budget_controller_loaded", report["loaded"]))
-                    report["prompt_scale"] = to_float(parsed.get("prompt_scale", report["prompt_scale"]), report["prompt_scale"])
-                    report["memory_scale"] = to_float(parsed.get("memory_scale", report["memory_scale"]), report["memory_scale"])
-                    report["learning_scale"] = to_float(parsed.get("learning_scale", report["learning_scale"]), report["learning_scale"])
-                    report["failure_scale"] = to_float(parsed.get("failure_scale", report["failure_scale"]), report["failure_scale"])
-                    report["playbook_scale"] = to_float(parsed.get("playbook_scale", report["playbook_scale"]), report["playbook_scale"])
-                    report["search_scale"] = to_float(parsed.get("search_scale", report["search_scale"]), report["search_scale"])
-                    report["skill_scale"] = to_float(parsed.get("skill_scale", report["skill_scale"]), report["skill_scale"])
-                    report["estimate_scale"] = to_float(parsed.get("estimate_scale", report["estimate_scale"]), report["estimate_scale"])
-                    report["estimate_scale_pct"] = to_float(parsed.get("estimate_scale_pct", report["estimate_scale_pct"]), report["estimate_scale_pct"])
-                    report["reason"] = text(parsed.get("reason", report["reason"]))
-            except Exception:
-                pass
+            parsed = extract_json_object(line)
+            if parsed:
+                report["loaded"] = to_int(parsed.get("budget_controller_loaded", report["loaded"]))
+                report["prompt_scale"] = to_float(parsed.get("prompt_scale", report["prompt_scale"]), report["prompt_scale"])
+                report["memory_scale"] = to_float(parsed.get("memory_scale", report["memory_scale"]), report["memory_scale"])
+                report["learning_scale"] = to_float(parsed.get("learning_scale", report["learning_scale"]), report["learning_scale"])
+                report["failure_scale"] = to_float(parsed.get("failure_scale", report["failure_scale"]), report["failure_scale"])
+                report["playbook_scale"] = to_float(parsed.get("playbook_scale", report["playbook_scale"]), report["playbook_scale"])
+                report["search_scale"] = to_float(parsed.get("search_scale", report["search_scale"]), report["search_scale"])
+                report["skill_scale"] = to_float(parsed.get("skill_scale", report["skill_scale"]), report["skill_scale"])
+                report["estimate_scale"] = to_float(parsed.get("estimate_scale", report["estimate_scale"]), report["estimate_scale"])
+                report["estimate_scale_pct"] = to_float(parsed.get("estimate_scale_pct", report["estimate_scale_pct"]), report["estimate_scale_pct"])
+                report["reason"] = text(parsed.get("reason", report["reason"]))
         if line.startswith("budget_controller:metrics"):
             report["loaded"] = parse_kv_metric(line, "loaded")
             report["prompt_scale"] = to_float(re.search(r"\bprompt_scale=([0-9.]+)", line).group(1), 1.0) if re.search(r"\bprompt_scale=([0-9.]+)", line) else 1.0
@@ -672,9 +675,10 @@ def estimate_prompt_tokens(chars):
     return max(0, (chars + 3) // 4)
 
 
-def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, playbook_chars, search_hint_chars, skill_chars, estimate_scale=1.0):
+def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_chars, playbook_chars, search_hint_chars, skill_chars, plugin_context_chars=0, estimate_scale=1.0):
     token_defaults = load_token_defaults()
     objective_chars = len(text(objective))
+    plugin_context_chars = max(0, to_int(plugin_context_chars))
     context_chars = (
         objective_chars
         + max(0, to_int(memory_chars))
@@ -683,6 +687,7 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         + max(0, to_int(playbook_chars))
         + max(0, to_int(search_hint_chars))
         + max(0, to_int(skill_chars))
+        + plugin_context_chars
     )
     estimate_scale = max(0.1, to_float(estimate_scale, 1.0))
     scaled_context_chars = int(round(context_chars * estimate_scale))
@@ -712,6 +717,11 @@ def build_pre_prompt_metrics(objective, memory_chars, learning_chars, failure_ch
         "pre_prompt_utilization": utilization,
         "pre_prompt_margin_tokens": margin_tokens,
         "pre_prompt_adjustment_warranted": warranted,
+        "prompt_cache_static_context_chars": max(0, to_int(memory_chars) + to_int(learning_chars) + to_int(failure_chars) + to_int(playbook_chars) + to_int(search_hint_chars) + to_int(skill_chars) + plugin_context_chars),
+        "prompt_cache_dynamic_objective_chars": objective_chars,
+        "prompt_cache_total_chars": context_chars,
+        "prompt_cache_static_ratio": round((max(0, to_int(memory_chars) + to_int(learning_chars) + to_int(failure_chars) + to_int(playbook_chars) + to_int(search_hint_chars) + to_int(skill_chars) + plugin_context_chars) / context_chars) if context_chars else 0.0, 4),
+        "prompt_cache_eligible": bool(context_chars > objective_chars and (to_int(memory_chars) + to_int(learning_chars) + to_int(failure_chars) + to_int(playbook_chars) + to_int(search_hint_chars) + to_int(skill_chars) + plugin_context_chars) > 0),
     }
 
 
@@ -1788,7 +1798,10 @@ def main():
 
         _, load_skill_out = run_internal("load-skill", [skill_id, "metadata", "700", resolve_skills_registry()])
         skill_loaded_chars = parse_skill_loaded_chars(load_skill_out)
-        skill_load_report = parse_skill_load_report(load_skill_out)
+        try:
+            skill_load_report = require_json_object(load_skill_out, "skill_load", required_keys=("registry_label", "source_file"))
+        except StructuredOutputError:
+            skill_load_report = parse_skill_load_report(load_skill_out)
         skill_registry_label = text(skill_load_report.get("registry_label", ""))
         plugin_id = ""
         plugin_source = ""
@@ -1798,7 +1811,10 @@ def main():
             plugin_id = skill_registry_label.split(":", 1)[1]
             plugin_source = skill_registry_label
             _, plugin_context_out = run_internal(os.path.join("plugins", plugin_id, "scripts", "package-context.sh"))
-            plugin_context = parse_first_json_object(plugin_context_out)
+            try:
+                plugin_context = require_json_object(plugin_context_out, "plugin_context", required_keys=("package",))
+            except StructuredOutputError:
+                plugin_context = parse_first_json_object(plugin_context_out)
             plugin_context_text = text(plugin_context.get("additionalContext", "")) if plugin_context else ""
         mcp_surface = ""
         app_surface = ""
@@ -1810,7 +1826,12 @@ def main():
             "load-budget-controller",
             [workflow, str(task_class), "outputs/budget-summary.json", "MCP/budgets/tuning-policy.yaml", "MCP/budgets/token-budgets.yaml"],
         )
-        budget_controller = parse_budget_controller_metrics(controller_out)
+        try:
+            budget_controller = require_json_object(controller_out, "budget_controller", required_keys=("budget_controller_loaded",))
+        except StructuredOutputError:
+            budget_controller = parse_budget_controller_metrics(controller_out)
+        else:
+            budget_controller = parse_budget_controller_metrics(controller_out)
 
         token_defaults = load_token_defaults()
         prompt_budget_chars = max(1, (token_defaults["max_input_tokens"] - token_defaults["reserve_output_tokens"]) * 4)
@@ -1870,6 +1891,10 @@ def main():
             "load-playbook-snippet",
             ["workflow", workflow, str(playbook_max_chars), ROOT],
         )
+        try:
+            workflow_playbook_report = require_json_object(workflow_playbook_out, "workflow_playbook", required_keys=("results", "chars"))
+        except StructuredOutputError:
+            workflow_playbook_report = parse_first_json_object(workflow_playbook_out)
         workflow_playbook_loaded, workflow_playbook_chars, workflow_playbook_results = parse_playbook_metrics(workflow_playbook_out)
         remaining_prompt_chars = max(0, remaining_prompt_chars - workflow_playbook_chars)
         skill_playbook_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(700 * budget_controller["skill_scale"]), int(180 * budget_controller["skill_scale"]), 0.20 * budget_controller["skill_scale"])
@@ -1881,6 +1906,8 @@ def main():
         playbook_loaded = workflow_playbook_loaded + skill_playbook_loaded
         playbook_chars = workflow_playbook_chars + skill_playbook_chars
         playbook_results = workflow_playbook_results + skill_playbook_results
+        workflow_registry_label = text(workflow_playbook_results[0].get("registry_label", "")) if workflow_playbook_results else ""
+        workflow_source_file = text(workflow_playbook_results[0].get("source_file", "")) if workflow_playbook_results else ""
         remaining_prompt_chars = max(0, remaining_prompt_chars - skill_playbook_chars)
 
         search_hint_max_chars = prompt_stage_char_cap(remaining_prompt_chars, int(500 * budget_controller["search_scale"]), int(120 * budget_controller["search_scale"]), 0.12 * budget_controller["search_scale"])
@@ -1890,7 +1917,7 @@ def main():
             [str(task_class), context_keywords, str(search_hint_max_chars), str(search_hint_max_results), "MCP/memory"],
         )
         search_hint_loaded, search_hint_chars, search_hint_results = parse_search_hints_metrics(search_hint_out)
-        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, search_hint_chars, skill_loaded_chars, budget_controller["estimate_scale"])
+        pre_prompt_metrics = build_pre_prompt_metrics(objective, mem_chars, learning_chars, failure_history_chars, playbook_chars, search_hint_chars, skill_loaded_chars, len(plugin_context_text), budget_controller["estimate_scale"])
 
         state["session"].update(
             {
@@ -1912,6 +1939,8 @@ def main():
                 "plugin_source": plugin_source,
                 "plugin_context": text(plugin_context.get("additionalContext", "")),
                 "plugin_package": plugin_context.get("package", {}),
+                "workflow_registry_label": workflow_registry_label,
+                "workflow_source_file": workflow_source_file,
                 "mcp_surface": mcp_surface,
                 "app_surface": app_surface,
                 "confidence": confidence,
@@ -1942,6 +1971,11 @@ def main():
         state["metrics"]["skill_loaded_chars"] = skill_loaded_chars
         state["metrics"]["skill_fallback"] = bool(skill_fallback)
         state["metrics"].update(pre_prompt_metrics)
+        state["metrics"]["prompt_cache_static_context_chars"] = to_int(pre_prompt_metrics.get("prompt_cache_static_context_chars", 0))
+        state["metrics"]["prompt_cache_dynamic_objective_chars"] = to_int(pre_prompt_metrics.get("prompt_cache_dynamic_objective_chars", 0))
+        state["metrics"]["prompt_cache_total_chars"] = to_int(pre_prompt_metrics.get("prompt_cache_total_chars", 0))
+        state["metrics"]["prompt_cache_static_ratio"] = to_float(pre_prompt_metrics.get("prompt_cache_static_ratio", 0.0), 0.0)
+        state["metrics"]["prompt_cache_eligible"] = bool(pre_prompt_metrics.get("prompt_cache_eligible", False))
         state["metrics"]["pre_prompt_estimate_error_tokens"] = to_int(state["tokens"].get("input", 0)) - to_int(state["metrics"].get("pre_prompt_est_tokens", 0))
         input_tokens_for_error = max(0, to_int(state["tokens"].get("input", 0)))
         state["metrics"]["pre_prompt_estimate_error_rate"] = round(
@@ -2361,6 +2395,13 @@ def main():
                 str(state["metrics"].get("external_skill_install_successes", 0)),
                 str(state["metrics"].get("external_skill_id", "")),
                 str(state["metrics"].get("external_skill_source", "")),
+                str(state["session"].get("workflow_registry_label", "")),
+                str(state["session"].get("workflow_source_file", "")),
+                str(state["metrics"].get("prompt_cache_static_context_chars", 0)),
+                str(state["metrics"].get("prompt_cache_dynamic_objective_chars", 0)),
+                str(state["metrics"].get("prompt_cache_total_chars", 0)),
+                str(state["metrics"].get("prompt_cache_static_ratio", 0.0)),
+                str(state["metrics"].get("prompt_cache_eligible", False)).lower(),
             ],
         )
         run_internal(

@@ -909,6 +909,139 @@
       "title": "Add codex token-budget regression coverage and docs",
       "updated_at": "2026-05-06T15:14:28Z",
       "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "The codex runtime exposes cache-hit or cached-token metrics for representative runs.",
+        "Static prefix content is separated from per-request prompt data.",
+        "Regression coverage proves the prompt-cache telemetry stays available."
+      ],
+      "created_at": "2026-05-06T15:38:32Z",
+      "details": "Use OpenAI prompt-caching guidance together with Claude Code hook patterns to make codex sessions cheaper and more deterministic. Separate the stable pre-prompt prefix from per-request context, log cache-friendly metrics, and validate structured hook outputs so malformed payloads fail closed instead of propagating downstream.",
+      "execution_checklist": [
+        "Split the codex pre-prompt into stable prefix content and request-specific payloads.",
+        "Emit prompt-cache and prefix-size telemetry alongside existing budget metrics.",
+        "Update the runtime docs and smoke tests so the cache signals are exercised and visible."
+      ],
+      "id": "TASK-20260506-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-004",
+      "related_id": "REC-20260506-004",
+      "source": "web_research",
+      "status": "completed",
+      "summary": "Make codex prompt prefixes cache-friendly and observable",
+      "tags": [
+        "codex",
+        "hooks",
+        "prompt-caching",
+        "telemetry"
+      ],
+      "title": "Add prompt-cache telemetry and prefix segmentation",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "updated_at": "2026-05-06T16:06:04Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Invalid JSON or schema drift is rejected before downstream use.",
+        "Valid structured outputs round-trip through the hook/runtime boundary without manual cleanup.",
+        "The schema contract is documented and covered by regression tests."
+      ],
+      "created_at": "2026-05-06T15:38:32Z",
+      "details": "Define explicit JSON schemas for hook outputs and other runtime artifacts that cross boundaries. Validate those payloads before downstream consumers use them so the runtime follows Claude Code hook best practices and keeps malformed or ambiguous output from silently affecting behavior.",
+      "execution_checklist": [
+        "Define schemas for the hook outputs and runtime artifacts that cross process boundaries.",
+        "Validate hook and workflow output before downstream consumers accept it.",
+        "Add fail-closed tests that prove malformed payloads are rejected."
+      ],
+      "id": "TASK-20260506-002",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-004",
+      "related_id": "REC-20260506-004",
+      "source": "web_research",
+      "status": "completed",
+      "summary": "Enforce structured-output contracts for codex hooks and artifacts",
+      "tags": [
+        "codex",
+        "hooks",
+        "schemas",
+        "structured-outputs"
+      ],
+      "title": "Add structured-output schemas for hooks and runtime artifacts",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "updated_at": "2026-05-06T16:06:04Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Representative routing, workflow, and tool-call evals run repeatably and save comparable scores.",
+        "The eval set includes representative positive and edge cases for codex runtime behavior.",
+        "Regression deltas are visible without ad hoc manual inspection."
+      ],
+      "created_at": "2026-05-06T15:38:32Z",
+      "details": "Add an eval-driven regression loop for codex using the same principle OpenAI recommends for workflow architectures and nondeterministic systems. Build a small but representative dataset for routing, workflow selection, and tool-call behavior, then run it continuously so prompt or hook changes do not quietly degrade behavior.",
+      "execution_checklist": [
+        "Assemble a dataset from representative codex routing, workflow, and tool-call examples.",
+        "Define metrics or pass/fail criteria that make the eval results comparable over time.",
+        "Wire a repeatable eval command or CI target that records the baseline and current score."
+      ],
+      "id": "TASK-20260506-003",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-005",
+      "related_id": "REC-20260506-005",
+      "source": "web_research",
+      "status": "completed",
+      "summary": "Add repeatable eval coverage for codex routing and workflow behavior",
+      "tags": [
+        "codex",
+        "evals",
+        "routing",
+        "workflows"
+      ],
+      "title": "Add eval suite for routing, workflow, and tool-call regressions",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "updated_at": "2026-05-06T16:06:04Z",
+      "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Every loaded skill, rule, and workflow has a visible source label or provenance record.",
+        "Missing or malformed overlay entries are reported clearly at session start.",
+        "Health-check tests prove registry loading is working and failures are not silent."
+      ],
+      "created_at": "2026-05-06T15:38:32Z",
+      "details": "Record provenance for repo-local, Superpowers overlay, and external skills or workflows so codex can explain where operational behavior came from. Add startup health checks for registries and overlays so missing or malformed sources are surfaced immediately instead of being discovered later in a session.",
+      "execution_checklist": [
+        "Record source labels for repo-local, Superpowers overlay, and external skill or workflow registries.",
+        "Add session-start health checks that validate the registries and overlays load cleanly.",
+        "Surface missing or malformed provenance in the runtime output and add tests for the failure cases."
+      ],
+      "id": "TASK-20260506-004",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-005",
+      "related_id": "REC-20260506-005",
+      "source": "web_research",
+      "status": "completed",
+      "summary": "Add provenance and health checks for codex skills, rules, and workflows",
+      "tags": [
+        "codex",
+        "provenance",
+        "registry",
+        "skills",
+        "workflows"
+      ],
+      "title": "Add skill/rule/workflow provenance and registry health checks",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "updated_at": "2026-05-06T16:06:04Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -977,7 +1110,9 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "status": "open",
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "status": "completed",
       "summary": "complete implementation of open project backlog tasks",
       "tags": [
         "backlog",
@@ -995,7 +1130,9 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "status": "open",
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "status": "completed",
       "summary": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and assign the appropritate priority",
       "tags": [
         "backlog",
@@ -1049,7 +1186,9 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "status": "open",
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "status": "completed",
       "summary": "show project backlog open recommendations",
       "tags": [
         "backlog",
@@ -1732,14 +1871,112 @@
       ],
       "title": "implement incomplete codex project backlog tasks",
       "updated_at": "2026-05-06T14:50:44Z"
+    },
+    {
+      "created_at": "2026-05-06T15:26:24Z",
+      "details": "show the current codex project backlog",
+      "id": "REC-20260506-002",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show the current codex project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show the current codex project backlog",
+      "updated_at": "2026-05-06T15:26:24Z"
+    },
+    {
+      "created_at": "2026-05-06T15:30:15Z",
+      "details": "The runtime classified this prompt as a reusable skill gap.\n\nTarget: discover_external\nSource prompt:\nreview codex project. search online for best practices related to existing project functionality and extending current functionality\n\nPromote the reusable behavior into a skill or install an existing external skill.",
+      "id": "REC-20260506-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "related_id": "FEAT-20260506-562",
+      "source": "self-improvement",
+      "status": "open",
+      "summary": "Discover/install external skill from a reusable skill gap.",
+      "tags": [
+        "discover_external",
+        "self-improvement",
+        "skill-gap",
+        "skill-promotion"
+      ],
+      "title": "Promote reusable skill gap: review codex project. search online for best practices related to existing project functionality and",
+      "updated_at": "2026-05-06T15:30:15Z"
+    },
+    {
+      "created_at": "2026-05-06T15:35:53Z",
+      "details": "Use OpenAI prompt caching, eval, and structured-output guidance together with Claude Code hook/settings patterns and ClawHub/OpenClaw skill registry conventions to close codex operational maturity gaps. The recommendation is split into commit-sized tasks covering prompt-cache observability, schema validation, eval coverage, and provenance/health checks so the runtime becomes more measurable and easier to trust.",
+      "id": "REC-20260506-004",
+      "implementation_tasks": [
+        "TASK-20260506-001",
+        "TASK-20260506-002"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "web_research",
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "status": "completed",
+      "summary": "Close codex operational maturity gaps with prompt-cache, schema, eval, and provenance improvements.",
+      "tags": [
+        "codex",
+        "hooks",
+        "recommendation",
+        "runtime",
+        "skills",
+        "workflows"
+      ],
+      "title": "Harden codex prompt and output contracts",
+      "updated_at": "2026-05-06T16:06:04Z"
+    },
+    {
+      "closeout_criteria": [
+        "Representative evals run repeatably and produce comparable scores for routing, workflow, and tool-call behavior.",
+        "Skill, rule, and workflow provenance is visible in runtime selection or bootstrap output.",
+        "Registry health checks fail closed when overlays are missing or malformed instead of silently degrading behavior.",
+        "Regression checks make the runtime changes reviewable before release."
+      ],
+      "created_at": "2026-05-06T15:38:32Z",
+      "details": "Use eval-driven improvement and provenance/registry patterns from OpenAI Agents, Claude Code, and ClawHub/OpenClaw examples to harden codex operational maturity. This recommendation closes the remaining gaps in continuous regression coverage and source tracking so the runtime can prove what behavior it loaded and whether it still works after changes.",
+      "id": "REC-20260506-005",
+      "implementation_tasks": [
+        "TASK-20260506-003",
+        "TASK-20260506-004"
+      ],
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "web_research",
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
+      "status": "completed",
+      "summary": "Add continuous eval coverage and source provenance checks for codex routing and overlays.",
+      "tags": [
+        "codex",
+        "evals",
+        "provenance",
+        "recommendation",
+        "skills",
+        "workflows"
+      ],
+      "title": "Harden codex eval and provenance governance",
+      "updated_at": "2026-05-06T16:06:04Z"
     }
   ],
   "stats": {
-    "completed_tasks": 0,
+    "completed_tasks": 32,
     "open_recommendations": 30,
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-05-06T15:14:28Z",
+  "updated_at": "2026-05-06T16:06:04Z",
   "version": 1
 }

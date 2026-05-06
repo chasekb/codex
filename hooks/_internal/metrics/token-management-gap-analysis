@@ -157,6 +157,7 @@ overall = {
     "search_hints_loaded_count": 0,
     "skill_fallback_count": 0,
     "pre_prompt_adjustment_count": 0,
+    "prompt_cache_eligible_count": 0,
     "pre_prompt_utilization_sum": 0.0,
     "pre_prompt_margin_tokens_sum": 0.0,
     "pre_prompt_budget_soft_sum": 0.0,
@@ -168,6 +169,10 @@ overall = {
     "pre_prompt_estimate_error_rate_sum": 0.0,
     "pre_prompt_objective_chars_sum": 0.0,
     "pre_prompt_context_chars_sum": 0.0,
+    "prompt_cache_static_context_chars_sum": 0.0,
+    "prompt_cache_dynamic_objective_chars_sum": 0.0,
+    "prompt_cache_total_chars_sum": 0.0,
+    "prompt_cache_static_ratio_sum": 0.0,
     "budget_controller_estimate_scale_sum": 0.0,
     "budget_controller_estimate_scale_pct_sum": 0.0,
     "memory_chars_sum": 0.0,
@@ -199,6 +204,7 @@ workflow_stats = defaultdict(lambda: {
     "search_hints_loaded_count": 0,
     "skill_fallback_count": 0,
     "pre_prompt_adjustment_count": 0,
+    "prompt_cache_eligible_count": 0,
     "pre_prompt_utilization_sum": 0.0,
     "pre_prompt_margin_tokens_sum": 0.0,
     "pre_prompt_budget_soft_sum": 0.0,
@@ -210,6 +216,10 @@ workflow_stats = defaultdict(lambda: {
     "pre_prompt_estimate_error_rate_sum": 0.0,
     "pre_prompt_objective_chars_sum": 0.0,
     "pre_prompt_context_chars_sum": 0.0,
+    "prompt_cache_static_context_chars_sum": 0.0,
+    "prompt_cache_dynamic_objective_chars_sum": 0.0,
+    "prompt_cache_total_chars_sum": 0.0,
+    "prompt_cache_static_ratio_sum": 0.0,
     "budget_controller_estimate_scale_sum": 0.0,
     "budget_controller_estimate_scale_pct_sum": 0.0,
     "memory_chars_sum": 0.0,
@@ -259,6 +269,9 @@ for row in rows:
     if parse_bool(row.get("pre_prompt_adjustment_warranted")):
         overall["pre_prompt_adjustment_count"] += 1
         stats["pre_prompt_adjustment_count"] += 1
+    if parse_bool(row.get("prompt_cache_eligible")):
+        overall["prompt_cache_eligible_count"] += 1
+        stats["prompt_cache_eligible_count"] += 1
 
     for field in (
         "pre_prompt_utilization",
@@ -272,6 +285,10 @@ for row in rows:
         "pre_prompt_estimate_error_rate",
         "pre_prompt_objective_chars",
         "pre_prompt_context_chars",
+        "prompt_cache_static_context_chars",
+        "prompt_cache_dynamic_objective_chars",
+        "prompt_cache_total_chars",
+        "prompt_cache_static_ratio",
         "budget_controller_estimate_scale",
         "budget_controller_estimate_scale_pct",
         "memory_chars",
@@ -312,6 +329,10 @@ def finalize(stats):
     avg_pre_prompt_estimate_error_rate = stats["pre_prompt_estimate_error_rate_sum"] / samples
     avg_pre_prompt_objective_chars = stats["pre_prompt_objective_chars_sum"] / samples
     avg_pre_prompt_context_chars = stats["pre_prompt_context_chars_sum"] / samples
+    avg_prompt_cache_static_context_chars = stats["prompt_cache_static_context_chars_sum"] / samples
+    avg_prompt_cache_dynamic_objective_chars = stats["prompt_cache_dynamic_objective_chars_sum"] / samples
+    avg_prompt_cache_total_chars = stats["prompt_cache_total_chars_sum"] / samples
+    avg_prompt_cache_static_ratio = stats["prompt_cache_static_ratio_sum"] / samples
     avg_budget_controller_estimate_scale = stats["budget_controller_estimate_scale_sum"] / samples
     avg_budget_controller_estimate_scale_pct = stats["budget_controller_estimate_scale_pct_sum"] / samples
     avg_memory_chars = stats["memory_chars_sum"] / samples
@@ -323,6 +344,7 @@ def finalize(stats):
     avg_external_skill_discovery_runs = stats["external_skill_discovery_runs_sum"] / samples
     avg_external_skill_install_attempts = stats["external_skill_install_attempts_sum"] / samples
     avg_external_skill_install_successes = stats["external_skill_install_successes_sum"] / samples
+    prompt_cache_eligible_rate = stats["prompt_cache_eligible_count"] / samples
     avg_estimate_error_tokens = avg_input_tokens - avg_pre_prompt_est_tokens
     avg_estimate_error_rate = (avg_estimate_error_tokens / avg_input_tokens) if avg_input_tokens else 0.0
     avg_total_to_est_ratio = (avg_total_tokens / avg_pre_prompt_est_tokens) if avg_pre_prompt_est_tokens else 0.0
@@ -351,6 +373,10 @@ def finalize(stats):
         "avg_pre_prompt_estimate_error_rate": round(avg_pre_prompt_estimate_error_rate, 4),
         "avg_pre_prompt_objective_chars": round(avg_pre_prompt_objective_chars, 2),
         "avg_pre_prompt_context_chars": round(avg_pre_prompt_context_chars, 2),
+        "avg_prompt_cache_static_context_chars": round(avg_prompt_cache_static_context_chars, 2),
+        "avg_prompt_cache_dynamic_objective_chars": round(avg_prompt_cache_dynamic_objective_chars, 2),
+        "avg_prompt_cache_total_chars": round(avg_prompt_cache_total_chars, 2),
+        "avg_prompt_cache_static_ratio": round(avg_prompt_cache_static_ratio, 4),
         "avg_budget_controller_estimate_scale": round(avg_budget_controller_estimate_scale, 4),
         "avg_budget_controller_estimate_scale_pct": round(avg_budget_controller_estimate_scale_pct, 2),
         "avg_memory_chars": round(avg_memory_chars, 2),
@@ -362,6 +388,7 @@ def finalize(stats):
         "avg_external_skill_discovery_runs": round(avg_external_skill_discovery_runs, 2),
         "avg_external_skill_install_attempts": round(avg_external_skill_install_attempts, 2),
         "avg_external_skill_install_successes": round(avg_external_skill_install_successes, 2),
+        "prompt_cache_eligible_rate": round(prompt_cache_eligible_rate, 4),
         "memory_loaded_rate": round(stats["memory_loaded_count"] / samples, 4),
         "learning_loaded_rate": round(stats["learning_loaded_count"] / samples, 4),
         "failure_history_loaded_rate": round(stats["failure_history_loaded_count"] / samples, 4),
@@ -385,6 +412,7 @@ for wf, stats in workflow_stats.items():
     summary["adjustment_gap"] = bool(summary["pressure_high"] and summary["pre_prompt_adjustment_rate"] == 0)
     summary["estimate_gap"] = bool(abs(summary["avg_estimate_error_rate"]) >= 0.15)
     summary["calibration_gap"] = bool(summary["estimate_gap"] and abs(summary["avg_pre_prompt_estimate_scale"] - 1.0) < 0.01)
+    summary["prompt_cache_gap"] = bool(summary["avg_prompt_cache_total_chars"] > 0 and summary["avg_prompt_cache_static_ratio"] < 0.5)
     summary["learning_gap"] = bool(
         summary["pressure_high"]
         and summary["learning_loaded_rate"] < 0.5
@@ -403,7 +431,7 @@ for row in workflow_summaries:
     severity = "low"
     if row["adjustment_gap"] or row["feedback_gap"]:
         severity = "high"
-    elif row["estimate_gap"] or row["learning_gap"] or row["calibration_gap"]:
+    elif row["estimate_gap"] or row["learning_gap"] or row["calibration_gap"] or row["prompt_cache_gap"]:
         severity = "medium"
     gap_matrix.append({
         "workflow": row["workflow"],
@@ -411,6 +439,7 @@ for row in workflow_summaries:
         "adjustment_gap": row["adjustment_gap"],
         "estimate_gap": row["estimate_gap"],
         "calibration_gap": row["calibration_gap"],
+        "prompt_cache_gap": row["prompt_cache_gap"],
         "learning_gap": row["learning_gap"],
         "feedback_gap": row["feedback_gap"],
         "avg_pre_prompt_utilization": row["avg_pre_prompt_utilization"],
@@ -422,6 +451,10 @@ for row in workflow_summaries:
         "avg_estimate_error_tokens": row["avg_estimate_error_tokens"],
         "avg_estimate_error_rate": row["avg_estimate_error_rate"],
         "avg_input_to_soft_budget_ratio": row["avg_input_to_soft_budget_ratio"],
+        "avg_prompt_cache_static_context_chars": row["avg_prompt_cache_static_context_chars"],
+        "avg_prompt_cache_dynamic_objective_chars": row["avg_prompt_cache_dynamic_objective_chars"],
+        "avg_prompt_cache_total_chars": row["avg_prompt_cache_total_chars"],
+        "avg_prompt_cache_static_ratio": row["avg_prompt_cache_static_ratio"],
         "pass_rate": row["pass_rate"],
         "retry_rate": row["retry_rate"],
         "fallback_rate": row["fallback_rate"],
@@ -438,6 +471,10 @@ overall_gap = {
     "calibration_gap": bool(
         abs(overall_summary["avg_estimate_error_rate"]) >= 0.15
         and abs(overall_summary["avg_pre_prompt_estimate_scale"] - 1.0) < 0.01
+    ),
+    "prompt_cache_gap": bool(
+        overall_summary["avg_prompt_cache_total_chars"] > 0
+        and overall_summary["avg_prompt_cache_static_ratio"] < 0.5
     ),
     "learning_gap": bool(
         overall_summary["avg_pre_prompt_utilization"] >= policy["prompt_budget_high_utilization"]
@@ -476,6 +513,16 @@ report = {
             "tuning-proposals.json",
             "budget-compare.json",
         ],
+        "workflow_provenance_fields": [
+            "workflow_registry_label",
+            "workflow_source_file",
+        ],
+        "prompt_cache_fields": [
+            "prompt_cache_static_context_chars",
+            "prompt_cache_dynamic_objective_chars",
+            "prompt_cache_total_chars",
+            "prompt_cache_static_ratio",
+        ],
     },
     "overall": overall_summary,
     "overall_gap": overall_gap,
@@ -489,6 +536,8 @@ report = {
     "runtime_snapshot": {
         "plugin_context": runtime_state.get("plugin_context"),
         "plugin_package": runtime_state.get("plugin_package"),
+        "workflow_registry_label": runtime_state.get("workflow_registry_label"),
+        "workflow_source_file": runtime_state.get("workflow_source_file"),
     } if isinstance(runtime_state, dict) else {},
 }
 
@@ -529,6 +578,11 @@ md.append(f"- avg pre-prompt estimate scale pct: {overall_summary['avg_pre_promp
 md.append(f"- avg pre-prompt estimate tokens: {overall_summary['avg_pre_prompt_est_tokens']}")
 md.append(f"- avg pre-prompt estimate error tokens: {overall_summary['avg_pre_prompt_estimate_error_tokens']}")
 md.append(f"- avg pre-prompt estimate error rate: {overall_summary['avg_pre_prompt_estimate_error_rate']}")
+md.append(f"- avg prompt-cache static context chars: {overall_summary['avg_prompt_cache_static_context_chars']}")
+md.append(f"- avg prompt-cache dynamic objective chars: {overall_summary['avg_prompt_cache_dynamic_objective_chars']}")
+md.append(f"- avg prompt-cache total chars: {overall_summary['avg_prompt_cache_total_chars']}")
+md.append(f"- avg prompt-cache static ratio: {overall_summary['avg_prompt_cache_static_ratio']}")
+md.append(f"- prompt-cache eligible rate: {overall_summary['prompt_cache_eligible_rate']}")
 md.append(f"- avg budget controller estimate scale: {overall_summary['avg_budget_controller_estimate_scale']}")
 md.append(f"- avg budget controller estimate scale pct: {overall_summary['avg_budget_controller_estimate_scale_pct']}")
 md.append(f"- avg estimate error tokens: {overall_summary['avg_estimate_error_tokens']}")
@@ -552,6 +606,7 @@ for row in gap_matrix:
         f"adjustment_gap={str(row['adjustment_gap']).lower()} "
         f"estimate_gap={str(row['estimate_gap']).lower()} "
         f"calibration_gap={str(row['calibration_gap']).lower()} "
+        f"prompt_cache_gap={str(row['prompt_cache_gap']).lower()} "
         f"learning_gap={str(row['learning_gap']).lower()} "
         f"feedback_gap={str(row['feedback_gap']).lower()}"
     )

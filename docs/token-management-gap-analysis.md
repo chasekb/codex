@@ -59,6 +59,18 @@ This analysis folds those artifacts into one repeatable report so the runtime ca
 - `budget_controller_estimate_scale`
 - `budget_controller_estimate_scale_pct`
 
+### Provenance
+
+- `workflow_registry_label`
+- `workflow_source_file`
+
+### Prompt Cache
+
+- `prompt_cache_static_context_chars`
+- `prompt_cache_dynamic_objective_chars`
+- `prompt_cache_total_chars`
+- `prompt_cache_static_ratio`
+
 ### Post-prompt
 
 - `input_tokens`
@@ -114,5 +126,6 @@ This analysis folds those artifacts into one repeatable report so the runtime ca
 - `learning_gap`: the run is pressure-heavy but learning/playbook context is not being loaded
 - `feedback_gap`: pressure-heavy runs still show retries, fallbacks, or invalid contracts
 - `calibration_gap`: estimate error remains high while the controller does not adjust the estimate scale
+- `prompt_cache_gap`: cacheable prefix context exists but the static share is too thin to be meaningfully reusable
 
 The generated report also computes per-workflow summaries and coverage for every metric column in the CSV.

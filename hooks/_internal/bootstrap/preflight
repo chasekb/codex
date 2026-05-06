@@ -67,6 +67,7 @@ required_rel=(
   "hooks/_internal/backlog/backlog-manager"
   "hooks/_internal/metrics/tune-from-metrics"
   "hooks/_internal/metrics/load-budget-controller"
+  "hooks/_internal/metrics/codex-runtime-evals"
   "hooks/_internal/metrics/apply-tuning-canary"
   "hooks/_internal/metrics/promote-tuning"
   "hooks/_internal/metrics/rollback-tuning"
@@ -74,6 +75,7 @@ required_rel=(
   "hooks/_internal/logging/event-logger"
   "hooks/_internal/bootstrap/ensure-outputs-writable"
   "hooks/_internal/output/compact-outputs"
+  "hooks/_internal/runtime/structured_output.py"
   "skills/core/skill-promotion/SKILL.md"
   "plugins/registry.yaml"
   "plugins/nelson/.codex-plugin/plugin.json"
@@ -81,6 +83,7 @@ required_rel=(
   "plugins/nelson/skills/registry.yaml"
   "plugins/nelson/rules/registry.yaml"
   "plugins/nelson/workflows/registry.yaml"
+  "validation/codex-runtime-eval-cases.jsonl"
 )
 
 bootstrap_file() {

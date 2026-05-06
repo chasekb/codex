@@ -123,13 +123,14 @@ The runtime now tries to improve the next prompt in this order:
 - `select-skill-catalog`, `sync-installed-skills-registry`, `discover-external-skills`: registry-aware skill matching and optional external skill acquisition
   - `CODEX_EXTERNAL_SKILL_DISCOVERY=auto` enables the external acquisition path
 - `load-learning-context`, `load-failure-history`, `load-playbook-snippet`, `load-search-hints`, `load-budget-controller`: ranks learnings, recent runtime errors, skill/workflow playbooks, search hints, and recent budget history for pre-prompt retrieval and adaptive loading
+- `codex-runtime-evals`: runs a repeatable routing and workflow eval suite over a JSONL case set and records baseline/current accuracy
 - `load-memory`, `write-memory`, `compact-memory`: memory retrieval, append, dedupe/TTL compaction
   - `load-memory` now carries compact session objective, active files, latest decisions, and blockers in addition to ranked facts/decisions
 - `validate-output-contract`: required-key contract checks for workflow outputs
-- `postrun-metrics`: appends normalized run metrics row
+- `postrun-metrics`: appends normalized run metrics row, including prompt-cache and provenance telemetry
 - `regression-guard`: token regression baseline checks
 - `tune-from-metrics`: generate budget proposals from historical metrics
-- `token-management-gap-analysis`: generate a pre/post token budget gap report with metric coverage and workflow-level remediation signals
+- `token-management-gap-analysis`: generate a pre/post token budget gap report with metric coverage, prompt-cache telemetry, and workflow-level remediation signals
 - `apply-tuning-canary`: apply bounded proposal changes to canary budgets
 - `promote-tuning`, `rollback-tuning`: canary promotion/rollback helpers
 - `compact-outputs`: prune unknown `outputs/` artifacts and truncate retention windows
@@ -214,6 +215,8 @@ Runtime tuning artifacts in `outputs/`:
 - `tuning-open-request.json`
 - `budget-summary.md`
 - `budget-summary.json`
+- `codex-runtime-evals.md`
+- `codex-runtime-evals.json`
 - `external-skill-discovery.md`
 - `external-skill-discovery.json`
 - `canary-token-budgets.yaml`

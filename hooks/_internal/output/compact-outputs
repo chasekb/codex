@@ -3,11 +3,10 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-
-import yaml
 
 
 def find_repo_root(start: Path) -> Path:
@@ -28,12 +27,56 @@ DEFAULT_CONFIG = ROOT / "workflows" / "shared" / "output-handling.yaml"
 def load_config(config_path: Path) -> dict:
     if not config_path.is_file():
         raise FileNotFoundError(config_path)
-    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError("output handling config must parse to a mapping")
-    compaction = data.get("compaction", {})
-    if not isinstance(compaction, dict):
-        raise ValueError("compaction config must be a mapping")
+    compaction: dict[str, object] = {"enabled": True, "prune_unlisted": True, "keep_files": [], "line_limits": {}, "row_limits": {}}
+    section = ""
+    collection = ""
+
+    def parse_scalar(value: str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "false"}:
+            return lowered == "true"
+        if re.fullmatch(r"-?\d+", value.strip()):
+            return int(value.strip())
+        return value.strip()
+
+    for raw in config_path.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped == "compaction:":
+            section = "compaction"
+            collection = ""
+            continue
+        if section != "compaction":
+            continue
+        if re.match(r"^\s{2}[A-Za-z0-9_\-]+:\s*$", line):
+            key = line.strip().rstrip(":")
+            if key in {"keep_files", "line_limits", "row_limits"}:
+                collection = key
+                if key == "keep_files":
+                    compaction[key] = []
+                else:
+                    compaction[key] = {}
+            else:
+                collection = ""
+                compaction[key] = parse_scalar(line.split(":", 1)[1])
+            continue
+        if collection == "keep_files":
+            m = re.match(r"^\s{4}-\s*(.+?)\s*$", line)
+            if m:
+                cast = compaction["keep_files"]
+                if isinstance(cast, list):
+                    cast.append(m.group(1).strip())
+            continue
+        if collection in {"line_limits", "row_limits"}:
+            m = re.match(r"^\s{4}([A-Za-z0-9_\-./]+):\s*(.+?)\s*$", line)
+            if m:
+                cast = compaction[collection]
+                if isinstance(cast, dict):
+                    cast[m.group(1).strip()] = parse_scalar(m.group(2))
+            continue
+
     return compaction
 
 
