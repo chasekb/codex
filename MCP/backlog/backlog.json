@@ -916,6 +916,7 @@
         "Static prefix content is separated from per-request prompt data.",
         "Regression coverage proves the prompt-cache telemetry stays available."
       ],
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:38:32Z",
       "details": "Use OpenAI prompt-caching guidance together with Claude Code hook patterns to make codex sessions cheaper and more deterministic. Separate the stable pre-prompt prefix from per-request context, log cache-friendly metrics, and validate structured hook outputs so malformed payloads fail closed instead of propagating downstream.",
       "execution_checklist": [
@@ -939,7 +940,6 @@
         "telemetry"
       ],
       "title": "Add prompt-cache telemetry and prefix segmentation",
-      "completed_at": "2026-05-06T16:06:04Z",
       "updated_at": "2026-05-06T16:06:04Z",
       "verified": true
     },
@@ -949,6 +949,7 @@
         "Valid structured outputs round-trip through the hook/runtime boundary without manual cleanup.",
         "The schema contract is documented and covered by regression tests."
       ],
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:38:32Z",
       "details": "Define explicit JSON schemas for hook outputs and other runtime artifacts that cross boundaries. Validate those payloads before downstream consumers use them so the runtime follows Claude Code hook best practices and keeps malformed or ambiguous output from silently affecting behavior.",
       "execution_checklist": [
@@ -972,7 +973,6 @@
         "structured-outputs"
       ],
       "title": "Add structured-output schemas for hooks and runtime artifacts",
-      "completed_at": "2026-05-06T16:06:04Z",
       "updated_at": "2026-05-06T16:06:04Z",
       "verified": true
     },
@@ -982,6 +982,7 @@
         "The eval set includes representative positive and edge cases for codex runtime behavior.",
         "Regression deltas are visible without ad hoc manual inspection."
       ],
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:38:32Z",
       "details": "Add an eval-driven regression loop for codex using the same principle OpenAI recommends for workflow architectures and nondeterministic systems. Build a small but representative dataset for routing, workflow selection, and tool-call behavior, then run it continuously so prompt or hook changes do not quietly degrade behavior.",
       "execution_checklist": [
@@ -1005,7 +1006,6 @@
         "workflows"
       ],
       "title": "Add eval suite for routing, workflow, and tool-call regressions",
-      "completed_at": "2026-05-06T16:06:04Z",
       "updated_at": "2026-05-06T16:06:04Z",
       "verified": true
     },
@@ -1015,6 +1015,7 @@
         "Missing or malformed overlay entries are reported clearly at session start.",
         "Health-check tests prove registry loading is working and failures are not silent."
       ],
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:38:32Z",
       "details": "Record provenance for repo-local, Superpowers overlay, and external skills or workflows so codex can explain where operational behavior came from. Add startup health checks for registries and overlays so missing or malformed sources are surfaced immediately instead of being discovered later in a session.",
       "execution_checklist": [
@@ -1039,7 +1040,6 @@
         "workflows"
       ],
       "title": "Add skill/rule/workflow provenance and registry health checks",
-      "completed_at": "2026-05-06T16:06:04Z",
       "updated_at": "2026-05-06T16:06:04Z",
       "verified": true
     }
@@ -1103,6 +1103,8 @@
       "updated_at": "2026-04-21T16:10:59Z"
     },
     {
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-04-21T15:55:48Z",
       "details": "complete implementation of open project backlog tasks",
       "id": "REC-20260421-004",
@@ -1110,8 +1112,6 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "closed_at": "2026-05-06T16:06:04Z",
-      "completed_at": "2026-05-06T16:06:04Z",
       "status": "completed",
       "summary": "complete implementation of open project backlog tasks",
       "tags": [
@@ -1123,6 +1123,8 @@
       "updated_at": "2026-04-21T15:55:48Z"
     },
     {
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-04-21T16:43:37Z",
       "details": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and assign the appropritate priority",
       "id": "REC-20260421-005",
@@ -1130,8 +1132,6 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "closed_at": "2026-05-06T16:06:04Z",
-      "completed_at": "2026-05-06T16:06:04Z",
       "status": "completed",
       "summary": "develop the concrete gap matrix and remediation plan as a recommendation in the project backlog and assign the appropritate priority",
       "tags": [
@@ -1179,6 +1179,8 @@
       "updated_at": "2026-04-22T16:03:09Z"
     },
     {
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-04-22T14:39:12Z",
       "details": "show project backlog open recommendations",
       "id": "REC-20260422-001",
@@ -1186,8 +1188,6 @@
       "priority": "medium",
       "project_id": "global",
       "source": "user_prompt",
-      "closed_at": "2026-05-06T16:06:04Z",
-      "completed_at": "2026-05-06T16:06:04Z",
       "status": "completed",
       "summary": "show project backlog open recommendations",
       "tags": [
@@ -1911,6 +1911,8 @@
       "updated_at": "2026-05-06T15:30:15Z"
     },
     {
+      "closed_at": "2026-05-06T16:06:04Z",
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:35:53Z",
       "details": "Use OpenAI prompt caching, eval, and structured-output guidance together with Claude Code hook/settings patterns and ClawHub/OpenClaw skill registry conventions to close codex operational maturity gaps. The recommendation is split into commit-sized tasks covering prompt-cache observability, schema validation, eval coverage, and provenance/health checks so the runtime becomes more measurable and easier to trust.",
       "id": "REC-20260506-004",
@@ -1922,8 +1924,6 @@
       "priority": "high",
       "project_id": "codex",
       "source": "web_research",
-      "closed_at": "2026-05-06T16:06:04Z",
-      "completed_at": "2026-05-06T16:06:04Z",
       "status": "completed",
       "summary": "Close codex operational maturity gaps with prompt-cache, schema, eval, and provenance improvements.",
       "tags": [
@@ -1938,12 +1938,14 @@
       "updated_at": "2026-05-06T16:06:04Z"
     },
     {
+      "closed_at": "2026-05-06T16:06:04Z",
       "closeout_criteria": [
         "Representative evals run repeatably and produce comparable scores for routing, workflow, and tool-call behavior.",
         "Skill, rule, and workflow provenance is visible in runtime selection or bootstrap output.",
         "Registry health checks fail closed when overlays are missing or malformed instead of silently degrading behavior.",
         "Regression checks make the runtime changes reviewable before release."
       ],
+      "completed_at": "2026-05-06T16:06:04Z",
       "created_at": "2026-05-06T15:38:32Z",
       "details": "Use eval-driven improvement and provenance/registry patterns from OpenAI Agents, Claude Code, and ClawHub/OpenClaw examples to harden codex operational maturity. This recommendation closes the remaining gaps in continuous regression coverage and source tracking so the runtime can prove what behavior it loaded and whether it still works after changes.",
       "id": "REC-20260506-005",
@@ -1955,8 +1957,6 @@
       "priority": "high",
       "project_id": "codex",
       "source": "web_research",
-      "closed_at": "2026-05-06T16:06:04Z",
-      "completed_at": "2026-05-06T16:06:04Z",
       "status": "completed",
       "summary": "Add continuous eval coverage and source provenance checks for codex routing and overlays.",
       "tags": [
@@ -1969,14 +1969,52 @@
       ],
       "title": "Harden codex eval and provenance governance",
       "updated_at": "2026-05-06T16:06:04Z"
+    },
+    {
+      "created_at": "2026-05-06T16:35:25Z",
+      "details": "turn that missing capability into a codex project backlog recommencation with execution and closeout criteria checklists. describe pros and cons of making superpowers optional in ci",
+      "id": "REC-20260506-006",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "turn that missing capability into a codex project backlog recommencation with execution and closeout criteria checklists. describe pros and cons of making superpowers optional in ci",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "turn that missing capability into a codex project backlog recommencation with execution and closeout",
+      "updated_at": "2026-05-06T16:35:25Z"
+    },
+    {
+      "created_at": "2026-05-06T16:36:10Z",
+      "details": "Codex currently validates and consumes superpowers as an external overlay repo, but it lacks a first-class mechanism to maintain the source repository from the codex workspace. This recommendation covers cross-repo authentication, update publishing, and sync validation so superpowers can be maintained in its original repo without weakening the core/runtime boundary.",
+      "id": "REC-20260506-007",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "conversation",
+      "status": "open",
+      "summary": "Create an explicit maintenance path that lets Codex update and publish changes back to the original Superpowers repository instead of only consuming it as a submodule.",
+      "tags": [
+        "ci",
+        "cross-repo",
+        "maintenance",
+        "submodule",
+        "superpowers"
+      ],
+      "title": "Add a maintained superpowers source-repo update path",
+      "updated_at": "2026-05-06T16:36:10Z"
     }
   ],
   "stats": {
-    "completed_tasks": 32,
-    "open_recommendations": 30,
+    "completed_tasks": 29,
+    "open_recommendations": 1,
     "open_tasks": 0
   },
-  "stats_scope": "global",
-  "updated_at": "2026-05-06T16:06:04Z",
+  "stats_scope": "project",
+  "updated_at": "2026-05-06T16:36:10Z",
   "version": 1
 }

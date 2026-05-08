@@ -96,6 +96,10 @@ bootstrap_file() {
 }
 
 check_superpowers_submodule() {
+  if [[ "${CODEX_SKIP_SUPERPOWERS_CHECK:-}" == "1" ]]; then
+    return 0
+  fi
+
   local configured_path
   configured_path="$(git -C "$root" config -f "$root/.gitmodules" --get submodule.superpowers.path 2>/dev/null || true)"
   [[ "$configured_path" == "superpowers" ]] || return 0

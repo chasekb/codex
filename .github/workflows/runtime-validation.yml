@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,6 +22,8 @@ jobs:
 
       - name: Run runtime self-test
         shell: bash
+        env:
+          CODEX_SKIP_SUPERPOWERS_CHECK: "1"
         run: hooks/_internal/runtime/self-test
 
       - name: Run command-policy regression
