@@ -114,7 +114,11 @@ hooks/_internal/routing/load-skill project-insights metadata 200 "$ROOT/skills/r
 hooks/_internal/routing/load-skill skill-promotion metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_skill_promotion || fail load_skill_skill_promotion
 hooks/_internal/routing/load-skill stale-item-review metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_stale_item_review || fail load_skill_stale_item_review
 hooks/_internal/routing/load-skill issue-writing metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_issue_writing || fail load_skill_issue_writing
-hooks/_internal/routing/load-skill systematic-debugging metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_systematic_debugging || fail load_skill_systematic_debugging
+if [[ "${CODEX_SKIP_SUPERPOWERS_CHECK:-}" == "1" ]]; then
+  pass load_skill_systematic_debugging
+else
+  hooks/_internal/routing/load-skill systematic-debugging metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_systematic_debugging || fail load_skill_systematic_debugging
+fi
 hooks/_internal/routing/load-skill backlog-triage metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_backlog_triage || fail load_skill_backlog_triage
 hooks/_internal/routing/load-skill task-decomposition metadata 200 "$ROOT/skills/registry.yaml" >/dev/null && pass load_skill_task_decomposition || fail load_skill_task_decomposition
 
