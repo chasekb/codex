@@ -1187,6 +1187,137 @@
       "title": "Add learning capture for Codex subagent decisions",
       "updated_at": "2026-05-16T05:05:21Z",
       "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "Hermes can be invoked through a defined Codex adapter boundary.",
+        "Delegated runs emit deterministic results and source labels.",
+        "The adapter contract is documented and ready for verification."
+      ],
+      "created_at": "2026-05-16T05:13:39Z",
+      "details": "Implement the Codex-Hermes boundary so delegated runs have isolated execution, stdout/stderr capture, deterministic result extraction, and source labeling. Map Hermes skills, memory, and approval model onto Codex routing.",
+      "execution_checklist": [
+        "Define the Hermes CLI adapter boundary and delegate backend contract.",
+        "Normalize stdout/stderr capture, result extraction, and source-label reporting.",
+        "Map Hermes skills, memory, and approval model onto Codex routing rules."
+      ],
+      "id": "TASK-20260516-006",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-002",
+      "related_id": "REC-20260516-002",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Add the Hermes CLI/backend adapter and normalize agent source labeling.",
+      "tags": [
+        "agents",
+        "codex",
+        "hermes",
+        "routing",
+        "subagents"
+      ],
+      "title": "Build Hermes delegate adapter and source-label contract",
+      "updated_at": "2026-05-16T05:13:39Z"
+    },
+    {
+      "closeout_criteria": [
+        "The pilot workflow proves Hermes can handle the bounded slice end to end.",
+        "Learning capture records at least one success and one fallback or avoidance case.",
+        "The recommendation can be reviewed against the captured learning and regression evidence."
+      ],
+      "created_at": "2026-05-16T05:13:48Z",
+      "details": "Add a small workflow that fans out one independent slice to Hermes, preserves the parent lane for dependent edits, and captures success, unnecessary delegation, and fallback learning signals.",
+      "execution_checklist": [
+        "Add a pilot workflow that dispatches one bounded slice to Hermes.",
+        "Preserve the parent Codex lane for dependent edits and review loops.",
+        "Capture success, unnecessary delegation, and fallback outcomes as learning records."
+      ],
+      "id": "TASK-20260516-007",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-002",
+      "related_id": "REC-20260516-002",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Route one bounded slice through Hermes and record the outcome.",
+      "tags": [
+        "agents",
+        "codex",
+        "hermes",
+        "learning",
+        "workflows"
+      ],
+      "title": "Add Hermes pilot workflow and delegation learning capture",
+      "updated_at": "2026-05-16T05:13:48Z"
+    },
+    {
+      "closeout_criteria": [
+        "The routing rubric is explicit and commit-sized.",
+        "The rubric distinguishes bounded coordination, small edits, and sandboxed autonomous work.",
+        "The recommendation stays open until the sibling adapter task is verified."
+      ],
+      "created_at": "2026-05-16T05:13:56Z",
+      "details": "Write the selection rules and fallback order for bounded coordination, small git-native edits, and sandboxed autonomous work. Keep Hermes as the first external delegate, Aider as the small-change git worker, and OpenHands as the sandboxed autonomous lane.",
+      "execution_checklist": [
+        "Document the task-shape rubric for Hermes, Aider, OpenHands, and Codex-native subagents.",
+        "Define the fallback order and the conditions that keep work in the parent lane.",
+        "Make the routing rubric concise enough for the runtime and backlog docs."
+      ],
+      "id": "TASK-20260516-008",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-004",
+      "related_id": "REC-20260516-004",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Specify when Codex should choose Hermes, Aider, OpenHands, or native subagents.",
+      "tags": [
+        "agents",
+        "aider",
+        "codex",
+        "hermes",
+        "openhands",
+        "routing"
+      ],
+      "title": "Define tiered agent routing rubric for Hermes, Aider, and OpenHands",
+      "updated_at": "2026-05-16T05:13:56Z"
+    },
+    {
+      "closeout_criteria": [
+        "Each recommended agent has a deterministic adapter or execution path.",
+        "Regression coverage proves the router picks the right agent shape for representative tasks.",
+        "The portfolio recommendation remains linked until the adapter and routing evidence is complete."
+      ],
+      "created_at": "2026-05-16T05:14:02Z",
+      "details": "Implement consistent stdout/stderr capture, result extraction, source labeling, and representative routing tests for the three recommended agents. Verify the router can fall back to Codex-native subagents when no external agent is a good fit.",
+      "execution_checklist": [
+        "Implement a shared adapter contract for external agent execution and result capture.",
+        "Add representative routing tests for Hermes, Aider, OpenHands, and native fallback.",
+        "Record learning from successful and failed routing decisions."
+      ],
+      "id": "TASK-20260516-009",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-004",
+      "related_id": "REC-20260516-004",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Add normalized adapter contracts and task-shape regression coverage for the portfolio.",
+      "tags": [
+        "agents",
+        "aider",
+        "codex",
+        "hermes",
+        "openhands",
+        "routing",
+        "tests"
+      ],
+      "title": "Implement shared external-agent adapter and regression matrix",
+      "updated_at": "2026-05-16T05:14:02Z"
     }
   ],
   "meta": {
@@ -1751,11 +1882,15 @@
         "Add learning capture for delegation outcomes, including success cases, unnecessary delegations, and fallback cases."
       ],
       "id": "REC-20260516-002",
+      "implementation_tasks": [
+        "TASK-20260516-006",
+        "TASK-20260516-007"
+      ],
       "kind": "recommendation",
       "priority": "high",
       "project_id": "codex",
       "source": "web_research",
-      "status": "open",
+      "status": "promoted",
       "summary": "Integrate Hermes Agent as a first-class Codex delegate with source labeling, memory/skill handoff, and learning-driven routing.",
       "tags": [
         "agents",
@@ -1769,7 +1904,7 @@
         "workflows"
       ],
       "title": "Integrate Hermes Agent as a first-class Codex delegate",
-      "updated_at": "2026-05-16T04:35:52Z"
+      "updated_at": "2026-05-16T05:13:48Z"
     },
     {
       "created_at": "2026-05-16T05:01:06Z",
@@ -1793,12 +1928,16 @@
       "created_at": "2026-05-16T05:08:34Z",
       "details": "Research summary:\n- Hermes Agent is the strongest fit for Codex-native delegation because it combines broad skills, persistent memory, and delegated subagents.\n- Aider is the best fit for small, git-centric edit loops because it maps codebases, commits cleanly, and is optimized for local repository work.\n- OpenHands is the best fit for sandboxed autonomous work and PR review because its SDK supports isolated agents and file-based agents for specialized tasks.\n\nIntegration plan:\n- Phase 1: keep Hermes as the first external delegate for bounded but stateful coordination tasks.\n- Phase 2: add Aider as the small-change edit worker for fast local diffs, undoable commits, and repo-native refactors.\n- Phase 3: add OpenHands as the sandboxed autonomous worker and code-review lane for larger, container-isolated tasks.\n\nExecution checklist:\n- Define a routing rubric that chooses Hermes for reusable coordination, Aider for small git-native edits, and OpenHands for sandboxed autonomous work.\n- Implement normalized agent adapter contracts for stdout/stderr capture, result extraction, and source labeling.\n- Add regression tests that prove the router picks the right agent for each task shape.\n- Record learning from successful and failed agent selections so future sessions can refine the rubric.\n\nCloseout criteria:\n- Hermes, Aider, and OpenHands each have an explicit Codex integration boundary and source label.\n- The routing rules deterministically choose the recommended agent for representative bounded, edit-heavy, and sandboxed tasks.\n- Regression coverage proves fallback to Codex-native subagents when no external agent is a good fit.\n- Learning capture shows when each agent should be selected, reused, or avoided.\n\nSources:\n- https://github.com/NousResearch/hermes-agent\n- https://github.com/Aider-AI/aider\n- https://github.com/OpenHands/OpenHands\n- https://docs.openhands.dev/sdk/guides/agent-file-based\n- https://aider.chat/docs/",
       "id": "REC-20260516-004",
+      "implementation_tasks": [
+        "TASK-20260516-008",
+        "TASK-20260516-009"
+      ],
       "kind": "recommendation",
       "priority": "high",
       "project_id": "codex",
       "related_id": "REC-20260516-002",
       "source": "web_research",
-      "status": "open",
+      "status": "promoted",
       "summary": "Use Hermes, Aider, and OpenHands as Codex delegates with explicit selection rules and learning-driven fallback behavior.",
       "tags": [
         "agents",
@@ -1811,15 +1950,51 @@
         "routing"
       ],
       "title": "Integrate a tiered portfolio of popular coding agents",
-      "updated_at": "2026-05-16T05:08:34Z"
+      "updated_at": "2026-05-16T05:14:02Z"
+    },
+    {
+      "created_at": "2026-05-16T05:09:54Z",
+      "details": "show codex project backlog",
+      "id": "REC-20260516-005",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show codex project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show codex project backlog",
+      "updated_at": "2026-05-16T05:09:54Z"
+    },
+    {
+      "created_at": "2026-05-16T05:10:39Z",
+      "details": "promote the codex project backlog open recommendations into implementation tasks and complete",
+      "id": "REC-20260516-006",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "promote the codex project backlog open recommendations into implementation tasks and complete",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "promote the codex project backlog open recommendations into implementation tasks and complete",
+      "updated_at": "2026-05-16T05:10:39Z"
     }
   ],
   "stats": {
-    "completed_tasks": 0,
-    "open_recommendations": 5,
-    "open_tasks": 0
+    "completed_tasks": 34,
+    "open_recommendations": 2,
+    "open_tasks": 4
   },
-  "stats_scope": "global",
-  "updated_at": "2026-05-16T05:08:34Z",
+  "stats_scope": "project",
+  "updated_at": "2026-05-16T05:14:02Z",
   "version": 1
 }
