@@ -1124,6 +1124,8 @@
         "The guidance states when to create a new subagent versus reuse an existing one.",
         "The recommendation remains linked until the sibling task is complete and reviewed."
       ],
+      "commit_sha": "536f698",
+      "completed_at": "2026-05-16T05:05:21Z",
       "created_at": "2026-05-16T04:57:40Z",
       "details": "Define the lifecycle states, spawn criteria, reuse criteria, and retirement criteria for Codex subagents, then write the rubric into the runtime guidance.",
       "execution_checklist": [
@@ -1138,7 +1140,7 @@
       "recommendation_id": "REC-20260516-001",
       "related_id": "REC-20260516-001",
       "source": "web_research",
-      "status": "pending",
+      "status": "completed",
       "summary": "Specify when Codex should create a new subagent versus reuse an existing one.",
       "tags": [
         "agents",
@@ -1148,7 +1150,8 @@
         "subagents"
       ],
       "title": "Define Codex subagent lifecycle states and creation rubric",
-      "updated_at": "2026-05-16T04:57:40Z"
+      "updated_at": "2026-05-16T05:05:21Z",
+      "verified": true
     },
     {
       "closeout_criteria": [
@@ -1156,6 +1159,8 @@
         "The regression proves the learning is stored and retrievable.",
         "The recommendation can be closed only after both tasks are complete and reviewed."
       ],
+      "commit_sha": "536f698",
+      "completed_at": "2026-05-16T05:05:21Z",
       "created_at": "2026-05-16T04:57:43Z",
       "details": "Add structured learning capture for spawn versus reuse decisions, and cover at least one positive and one negative selection path in regression tests.",
       "execution_checklist": [
@@ -1170,7 +1175,7 @@
       "recommendation_id": "REC-20260516-001",
       "related_id": "REC-20260516-001",
       "source": "web_research",
-      "status": "pending",
+      "status": "completed",
       "summary": "Record successful and failed subagent creation choices so the rubric improves over time.",
       "tags": [
         "agents",
@@ -1180,7 +1185,8 @@
         "tests"
       ],
       "title": "Add learning capture for Codex subagent decisions",
-      "updated_at": "2026-05-16T04:57:43Z"
+      "updated_at": "2026-05-16T05:05:21Z",
+      "verified": true
     }
   ],
   "meta": {
@@ -1688,6 +1694,7 @@
       "verified": true
     },
     {
+      "closed_at": "2026-05-16T05:05:21Z",
       "closeout_criteria": [
         "A documented rubric exists for when Codex should create a new subagent and when the parent lane should keep the work.",
         "At least one validated independent slice routes through a fresh subagent without breaking existing workflows.",
@@ -1712,7 +1719,7 @@
       "priority": "high",
       "project_id": "codex",
       "source": "web_research",
-      "status": "promoted",
+      "status": "completed",
       "summary": "Add a Codex-native subagent lifecycle with explicit creation criteria, routing, and learning capture for reusable parallel work.",
       "tags": [
         "agents",
@@ -1725,7 +1732,7 @@
         "workflows"
       ],
       "title": "Define Codex subagent lifecycle and creation rubric",
-      "updated_at": "2026-05-16T04:57:43Z"
+      "updated_at": "2026-05-16T05:05:21Z"
     },
     {
       "closeout_criteria": [
@@ -1763,14 +1770,32 @@
       ],
       "title": "Integrate Hermes Agent as a first-class Codex delegate",
       "updated_at": "2026-05-16T04:35:52Z"
+    },
+    {
+      "created_at": "2026-05-16T05:01:06Z",
+      "details": "complete the open tasks in the codex project backlog. commit and push all changes",
+      "id": "REC-20260516-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "complete the open tasks in the codex project backlog. commit and push all changes",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "complete the open tasks in the codex project backlog. commit and push all changes",
+      "updated_at": "2026-05-16T05:01:06Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 4,
+    "open_recommendations": 5,
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-05-16T04:57:43Z",
+  "updated_at": "2026-05-16T05:05:21Z",
   "version": 1
 }
