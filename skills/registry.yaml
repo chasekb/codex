@@ -12,6 +12,10 @@ skills:
     file: core/tool-minimization/SKILL.md
     tags: [routing, tools, token-efficiency]
     priority: 1
+  - id: systematic-debugging
+    file: ../superpowers/skills/systematic-debugging/SKILL.md
+    tags: [debug, failures, root-cause, recovery]
+    priority: 2
   - id: plan-verify-execute
     file: core/plan-verify-execute/SKILL.md
     tags: [planning, implementation, verification]

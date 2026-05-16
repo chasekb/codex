@@ -141,3 +141,10 @@
 - create a new subagent only when the slice is bounded, independently reviewable, and likely to recur as a reusable pattern
 - record the spawn-or-reuse decision so future sessions can learn which boundary was correct
 - require spec review before quality review before closeout
+
+## external_agent_portfolio
+- route bounded coordination tasks to Hermes when reusable memory or multi-step delegation matters
+- route small git-native edits to Aider when the expected output is a compact, patchable diff
+- route sandboxed autonomous work to OpenHands when isolation and self-contained execution matter
+- keep dependent edits in the parent lane or a Codex-native subagent when shared state dominates
+- record the selected agent source label and execution mode in learning/memory so the routing rubric can improve

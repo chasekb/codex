@@ -10,6 +10,7 @@ This repository is a global Codex runtime with:
 ## Directory Map
 - `hooks/`: Hook entrypoints executed by Codex hook events
 - `hooks/_internal/{bootstrap,logging,routing,memory,metrics,output,runtime}/`: Internal automation scripts used by `hook-pipeline`
+- `agents/`: Core agent registry and profile docs for Hermes, Aider, OpenHands, and Codex-native fallback
 - `skills/core/`: Core routing and runtime skills
 - `skills/github/`: GitHub-focused skills
 - `skills/ops/`: Maintenance and container workflow skills
@@ -43,6 +44,14 @@ Use the existing agent registry and workflow routing to decide whether to reuse 
 - Reuse an existing subagent when the work is still inside the same bounded coordination loop or needs shared state from an in-flight lifecycle.
 - Create a new subagent only for an independent slice that can be reviewed on its own and is likely to stay reusable across future sessions.
 - Record the decision in learning/memory so later sessions can tell whether the boundary was correct.
+
+## External Agent Portfolio
+Use the agent registry to route between Hermes, Aider, OpenHands, and the Codex-native fallback:
+- Use Hermes for bounded coordination, reusable memory-heavy work, and other multi-step delegation that benefits from shared context.
+- Use Aider for small git-native edit loops, localized refactors, and patch-friendly work.
+- Use OpenHands for sandboxed autonomous tasks and review-heavy execution.
+- Use Codex-native subagents when the work should stay in the parent lane or when a fresh isolated slice is the better fit.
+- Record both the registry source and the agent source label so learning can distinguish the runtime catalog from the selected execution profile.
 
 Hook usage records are split across:
 - `outputs/hook-events.log`: hook invocations plus workflow/skill selection and post-run summary lines

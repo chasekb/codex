@@ -98,10 +98,13 @@ print(json.dumps(
     separators=(",", ":"),
 ))
 PY
-  extract_metadata | awk -v m="$max_chars" '
-    { out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } }
-    END { if (length(out) < m) print out }
-  '
+  metadata_preview="$(
+    extract_metadata | awk -v m="$max_chars" '
+      { out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } }
+      END { if (length(out) < m) print out }
+    '
+  )" || true
+  printf '%s' "$metadata_preview"
 else
   awk -v m="$max_chars" '{ out = out $0 "\n"; if (length(out) >= m) { print substr(out,1,m); exit } } END { if (length(out) < m) print out }' "$skill_file"
 fi

@@ -29,6 +29,11 @@ def parse_registry(path):
                     "id": stripped.split(":", 1)[1].strip(),
                     "file": "",
                     "tags": [],
+                    "source_label": "",
+                    "execution_mode": "",
+                    "stdout_capture": "",
+                    "stderr_capture": "",
+                    "result_extraction": "",
                     "priority": 99,
                     "registry": str(path),
                 }
@@ -46,6 +51,16 @@ def parse_registry(path):
                 value = stripped.split(":", 1)[1].strip()
                 if value.startswith("[") and value.endswith("]"):
                     current["tags"] = [part.strip().strip("'\"") for part in value[1:-1].split(",") if part.strip()]
+            elif stripped.startswith("source_label:"):
+                current["source_label"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("execution_mode:"):
+                current["execution_mode"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("stdout_capture:"):
+                current["stdout_capture"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("stderr_capture:"):
+                current["stderr_capture"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("result_extraction:"):
+                current["result_extraction"] = stripped.split(":", 1)[1].strip()
         if current:
             entries.append(current)
     return entries
@@ -64,7 +79,14 @@ def agent_registry_candidates(root=None, code_home=None):
 
 def score_entry(entry, task_class, terms):
     agent_id = entry.get("id", "")
-    haystack = " ".join([agent_id, entry.get("file", ""), " ".join(entry.get("tags", []) or [])]).lower()
+    haystack = " ".join([
+        agent_id,
+        entry.get("file", ""),
+        entry.get("source_label", ""),
+        entry.get("execution_mode", ""),
+        entry.get("result_extraction", ""),
+        " ".join(entry.get("tags", []) or []),
+    ]).lower()
     tokens = set(tokenize(haystack))
     score = 0.0
 
@@ -102,5 +124,6 @@ def resolve_agent_entry(agent_id, root=None, code_home=None):
                 resolved["file"] = agent_file
                 resolved["registry"] = str(registry)
                 resolved["registry_label"] = "core" if registry == root / "agents" / "registry.yaml" else "plugin:nelson"
+                resolved["source_label"] = resolved.get("source_label", "")
                 return resolved
     return None

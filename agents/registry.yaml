@@ -1,0 +1,41 @@
+version: 1
+selection:
+  low_confidence_agent: codex-native-subagent
+  metadata_only_default: true
+agents:
+  - id: hermes-delegate
+    file: hermes-delegate.md
+    source_label: hermes
+    execution_mode: delegate
+    stdout_capture: true
+    stderr_capture: true
+    result_extraction: last_json_object_then_summary_block
+    tags: [hermes, delegate, memory, coordination, multi-step, subagent]
+    priority: 1
+  - id: aider-edit-worker
+    file: aider-edit-worker.md
+    source_label: aider
+    execution_mode: edit
+    stdout_capture: true
+    stderr_capture: true
+    result_extraction: git_diff_or_commit_summary
+    tags: [aider, edit, git-native, patch, commit, refactor]
+    priority: 2
+  - id: openhands-sandbox-worker
+    file: openhands-sandbox-worker.md
+    source_label: openhands
+    execution_mode: sandbox
+    stdout_capture: true
+    stderr_capture: true
+    result_extraction: workspace_summary
+    tags: [openhands, sandbox, autonomous, container, review, isolated]
+    priority: 3
+  - id: codex-native-subagent
+    file: codex-native-subagent.md
+    source_label: codex-native
+    execution_mode: parent-lane
+    stdout_capture: true
+    stderr_capture: true
+    result_extraction: parent_lane_summary
+    tags: [codex, subagent, parent, fallback, reuse, lifecycle]
+    priority: 4

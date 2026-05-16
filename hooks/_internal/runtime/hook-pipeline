@@ -154,6 +154,7 @@ def default_state():
             "command_registry_label": "",
             "agent_id": "",
             "agent_registry_label": "",
+            "agent_source_label": "",
             "mcp_surface": "",
             "app_surface": "",
             "skill_id": "none",
@@ -1265,7 +1266,28 @@ AGENT_ROUTING_PHRASES = (
     "mission state",
     "mission history",
     "subagent",
+    "hermes",
+    "aider",
+    "openhands",
+    "delegate",
+    "sandbox",
+    "edit worker",
+    "git-native",
+    "external agent",
+    "agent portfolio",
 )
+
+EXTERNAL_AGENT_SOURCE_LABELS = {"hermes", "aider", "openhands", "codex-native"}
+
+
+def infer_agent_source_label(agent_id):
+    agent_id = text(agent_id)
+    return {
+        "hermes-delegate": "hermes",
+        "aider-edit-worker": "aider",
+        "openhands-sandbox-worker": "openhands",
+        "codex-native-subagent": "codex-native",
+    }.get(agent_id, "")
 
 
 def agent_routing_requested(text_value):
@@ -1273,53 +1295,92 @@ def agent_routing_requested(text_value):
     return bool(prompt_text) and any(phrase in prompt_text for phrase in AGENT_ROUTING_PHRASES)
 
 
-def log_agent_lifecycle_learning(state, task_class, confidence, keywords, objective, agent_id, agent_registry_label):
+def log_agent_lifecycle_learning(state, task_class, confidence, keywords, objective, agent_id, agent_registry_label, agent_source_label=""):
     objective_text = text(objective)
     if not objective_text:
         return None
 
     agent_id = text(agent_id)
     agent_registry_label = text(agent_registry_label)
+    agent_source_label = text(agent_source_label) or infer_agent_source_label(agent_id)
     task_class_text = text(task_class) or "general"
     confidence_text = f"{to_float(confidence, 0.0):.3f}"
     prompt_excerpt = objective_text[:220]
     requested = agent_routing_requested(objective_text) or agent_routing_requested(keywords)
-    if not agent_id and not requested:
+    external_requested = any(
+        phrase in f"{objective_text.lower()} {text(keywords).lower()}"
+        for phrase in ("hermes", "aider", "openhands", "delegate", "sandbox", "git-native", "external agent", "agent portfolio")
+    )
+    if not agent_id and not requested and not external_requested:
         return None
 
+    is_external_agent = agent_source_label in EXTERNAL_AGENT_SOURCE_LABELS
     if agent_id:
-        decision = "reuse_existing_subagent"
-        summary = f"Reused existing subagent {agent_id} for a bounded coordination request"
-        details = (
-            "The runtime selected an existing agent registry entry instead of creating a new subagent.\n\n"
-            f"Task class: {task_class_text}\n"
-            f"Confidence: {confidence_text}\n"
-            f"Agent ID: {agent_id}\n"
-            f"Agent registry: {agent_registry_label or 'none'}\n\n"
-            f"Source objective:\n{prompt_excerpt}"
-        )
-        suggested_action = (
-            "Reuse the same subagent when the work still fits the same bounded coordination loop; "
-            "create a new subagent only when the slice is independent, reviewable, and worth isolating."
-        )
-        tags = ["subagent", "routing", "reuse", agent_id]
-        if agent_registry_label:
-            tags.append(agent_registry_label)
+        if is_external_agent:
+            decision = "route_to_external_agent"
+            summary = f"Routed to external agent {agent_source_label} ({agent_id}) for a bounded coordination request"
+            details = (
+                "The runtime selected a shared external-agent profile instead of keeping the work in the parent lane.\n\n"
+                f"Task class: {task_class_text}\n"
+                f"Confidence: {confidence_text}\n"
+                f"Agent ID: {agent_id}\n"
+                f"Agent source: {agent_source_label}\n"
+                f"Agent registry: {agent_registry_label or 'none'}\n\n"
+                f"Source objective:\n{prompt_excerpt}"
+            )
+            suggested_action = (
+                "Use the external-agent profile when the task shape matches its contract; "
+                "keep dependent edits in the parent lane and reserve new subagents for reusable isolated slices."
+            )
+            tags = ["external-agent", "routing", "reuse", agent_id, agent_source_label]
+        else:
+            decision = "reuse_existing_subagent"
+            summary = f"Reused existing subagent {agent_id} for a bounded coordination request"
+            details = (
+                "The runtime selected an existing agent registry entry instead of creating a new subagent.\n\n"
+                f"Task class: {task_class_text}\n"
+                f"Confidence: {confidence_text}\n"
+                f"Agent ID: {agent_id}\n"
+                f"Agent registry: {agent_registry_label or 'none'}\n\n"
+                f"Source objective:\n{prompt_excerpt}"
+            )
+            suggested_action = (
+                "Reuse the same subagent when the work still fits the same bounded coordination loop; "
+                "create a new subagent only when the slice is independent, reviewable, and worth isolating."
+            )
+            tags = ["subagent", "routing", "reuse", agent_id]
+            if agent_registry_label:
+                tags.append(agent_registry_label)
     else:
         decision = "stay_in_parent_lane"
-        summary = "No reusable subagent matched a subagent-routing request"
-        details = (
-            "The runtime saw a subagent-routing request but no registry entry matched it.\n\n"
-            f"Task class: {task_class_text}\n"
-            f"Confidence: {confidence_text}\n"
-            f"Keywords: {text(keywords)[:120]}\n\n"
-            f"Source objective:\n{prompt_excerpt}"
-        )
-        suggested_action = (
-            "Keep the work in the parent lane unless the slice is independently reviewable and "
-            "a new subagent would reduce coupling or repeated context loading."
-        )
-        tags = ["subagent", "routing", "avoidance", "parent-lane"]
+        if external_requested:
+            summary = "No reusable external agent matched an external-agent-routing request"
+            details = (
+                "The runtime saw an external-agent-routing request but no registry entry matched it.\n\n"
+                f"Task class: {task_class_text}\n"
+                f"Confidence: {confidence_text}\n"
+                f"Keywords: {text(keywords)[:120]}\n\n"
+                f"Source objective:\n{prompt_excerpt}"
+            )
+            suggested_action = (
+                "Keep the work in the parent lane unless the slice is independently reviewable and "
+                "an external agent would reduce coupling, repeated context loading, or sandbox risk."
+            )
+            tags = ["external-agent", "routing", "avoidance", "parent-lane"]
+        else:
+            summary = "No reusable subagent matched a subagent-routing request"
+            details = (
+                "The runtime saw a subagent-routing request but no registry entry matched it.\n\n"
+                f"Task class: {task_class_text}\n"
+                f"Confidence: {confidence_text}\n"
+                f"Keywords: {text(keywords)[:120]}\n\n"
+                f"Source objective:\n{prompt_excerpt}"
+            )
+            suggested_action = (
+                "Keep the work in the parent lane unless the slice is independently reviewable and "
+                "a new subagent would reduce coupling or repeated context loading."
+            )
+            tags = ["subagent", "routing", "avoidance", "parent-lane"]
 
     write_memory(
         state,
@@ -1810,11 +1871,18 @@ def main():
         agent_lines = [l for l in agent_out.splitlines() if text(l)]
         agent_id = text(agent_lines[-1]) if agent_lines and agent_lines[-1] != "none" else ""
         agent_registry_label = ""
+        agent_source_label = ""
         for line in agent_lines:
             if "source=" in line:
                 match = re.search(r"source=([^\s]+)", line)
                 if match:
                     agent_registry_label = text(match.group(1))
+                    break
+        for line in agent_lines:
+            if "agent_source=" in line:
+                match = re.search(r"agent_source=([^\s]+)", line)
+                if match:
+                    agent_source_label = text(match.group(1))
                     break
         log_agent_lifecycle_learning(
             state,
@@ -1824,6 +1892,7 @@ def main():
             objective,
             agent_id,
             agent_registry_label,
+            agent_source_label,
         )
         _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
@@ -2042,6 +2111,7 @@ def main():
                 "command_registry_label": command_registry_label,
                 "agent_id": agent_id,
                 "agent_registry_label": agent_registry_label,
+                "agent_source_label": agent_source_label,
                 "skill_id": skill_id,
                 "skill_registry_label": skill_registry_label,
                 "external_skill_id": text(external_skill_report.get("selected", {}).get("name", "")),

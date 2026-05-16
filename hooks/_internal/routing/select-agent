@@ -29,16 +29,31 @@ def main():
             "captain log",
             "action state",
             "coordination history",
-            "mission lifecycle",
-            "mission state",
-            "mission history",
-            "subagent",
+        "mission lifecycle",
+        "mission state",
+        "mission history",
+        "subagent",
+        "hermes",
+        "aider",
+        "openhands",
+        "codex-native",
+        "delegate",
+        "sandbox",
+        "edit worker",
+        "git-native",
+        "external agent",
+        "agent portfolio",
+        "parent lane",
+        "shared state",
+        "fallback",
+        "reuse",
         )
     ):
         print("none")
         return 0
 
     best = None
+    best_entry = None
     best_score = -1.0
     best_index = 10**6
     best_registry = ""
@@ -49,13 +64,20 @@ def main():
                 continue
             if score > best_score or (score == best_score and index < best_index):
                 best = entry.get("id", "")
+                best_entry = dict(entry)
                 best_score = score
                 best_index = index
                 best_registry = str(registry_path)
 
     if best:
         source = "core" if best_registry == str(workspace_root / "agents" / "registry.yaml") else "plugin:nelson"
-        print(f"agent:selected id={best} source={source} confidence={confidence}")
+        agent_source = ""
+        if best_entry:
+            agent_source = str(best_entry.get("source_label", "") or best_entry.get("source", ""))
+        if agent_source:
+            print(f"agent:selected id={best} source={source} agent_source={agent_source} confidence={confidence}")
+        else:
+            print(f"agent:selected id={best} source={source} confidence={confidence}")
         print(best)
     else:
         print("none")
