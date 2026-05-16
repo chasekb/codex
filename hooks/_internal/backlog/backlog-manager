@@ -444,6 +444,20 @@ def promote(state, recommendation_id_value, payload):
         "related_id": recommendation_id_value,
         "recommendation_id": recommendation_id_value,
     }
+    execution_checklist = payload.get("execution_checklist")
+    if isinstance(execution_checklist, list) and execution_checklist:
+        task["execution_checklist"] = [
+            normalize_text(item)
+            for item in execution_checklist
+            if normalize_text(item)
+        ]
+    closeout_criteria = payload.get("closeout_criteria")
+    if isinstance(closeout_criteria, list) and closeout_criteria:
+        task["closeout_criteria"] = [
+            normalize_text(item)
+            for item in closeout_criteria
+            if normalize_text(item)
+        ]
     task_commit = normalize_text(payload.get("commit_sha"))
     if task_commit:
         task["commit_sha"] = task_commit

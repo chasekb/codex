@@ -187,6 +187,28 @@ print("backlog_state:ok")
 PY
 pass backlog_state
 
+checklist_backlog="$tmpdir/checklist-backlog.json"
+checklist_payload='{"kind":"recommendation","title":"Add checklist preservation coverage","summary":"Verify promoted tasks retain execution and closeout criteria","details":"Exercise backlog promotion with explicit checklist fields so task metadata survives the promotion step.","source":"self-test","priority":"high","tags":["backlog","test"]}'
+CODEX_BACKLOG_FILE="$checklist_backlog" hooks/_internal/backlog/backlog-manager intake <<<"$checklist_payload" >/dev/null && pass backlog_checklist_intake || fail backlog_checklist_intake
+checklist_rec_id="$(python3 - <<'PY' "$checklist_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+print(data["recommendations"][0]["id"])
+PY
+)"
+CODEX_BACKLOG_FILE="$checklist_backlog" hooks/_internal/backlog/backlog-manager promote "$checklist_rec_id" <<<'{"title":"Add checklist preservation coverage","summary":"Verify promoted tasks retain execution and closeout criteria","details":"Exercise backlog promotion with explicit checklist fields so task metadata survives the promotion step.","priority":"high","execution_checklist":["Draft the execution checklist.","Store it on the promoted task."],"closeout_criteria":["The task keeps its closeout criteria.","The task stays linked to the source recommendation."],"tags":["backlog","test"]}' >/dev/null && pass backlog_checklist_promote || fail backlog_checklist_promote
+python3 - <<'PY' "$checklist_backlog"
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+task = data["implementation_tasks"][0]
+assert task["execution_checklist"] == ["Draft the execution checklist.", "Store it on the promoted task."]
+assert task["closeout_criteria"] == ["The task keeps its closeout criteria.", "The task stays linked to the source recommendation."]
+print("backlog_checklist_state:ok")
+PY
+pass backlog_checklist_state
+
 delete_backlog="$tmpdir/delete-backlog.json"
 cat > "$delete_backlog" <<'JSON'
 {

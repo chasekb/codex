@@ -1117,6 +1117,70 @@
       "title": "Add a superpowers source-maintenance helper",
       "updated_at": "2026-05-16T04:47:46Z",
       "verified": true
+    },
+    {
+      "closeout_criteria": [
+        "The lifecycle rubric is explicit and commit-sized.",
+        "The guidance states when to create a new subagent versus reuse an existing one.",
+        "The recommendation remains linked until the sibling task is complete and reviewed."
+      ],
+      "created_at": "2026-05-16T04:57:40Z",
+      "details": "Define the lifecycle states, spawn criteria, reuse criteria, and retirement criteria for Codex subagents, then write the rubric into the runtime guidance.",
+      "execution_checklist": [
+        "Inventory the current agent-routing decisions and lifecycle touchpoints.",
+        "Define lifecycle states, spawn criteria, reuse criteria, and retirement criteria.",
+        "Write the rubric into the Codex runtime docs and routing guidance."
+      ],
+      "id": "TASK-20260516-004",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-001",
+      "related_id": "REC-20260516-001",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Specify when Codex should create a new subagent versus reuse an existing one.",
+      "tags": [
+        "agents",
+        "codex",
+        "learning",
+        "routing",
+        "subagents"
+      ],
+      "title": "Define Codex subagent lifecycle states and creation rubric",
+      "updated_at": "2026-05-16T04:57:40Z"
+    },
+    {
+      "closeout_criteria": [
+        "The runtime records subagent creation and avoidance decisions.",
+        "The regression proves the learning is stored and retrievable.",
+        "The recommendation can be closed only after both tasks are complete and reviewed."
+      ],
+      "created_at": "2026-05-16T04:57:43Z",
+      "details": "Add structured learning capture for spawn versus reuse decisions, and cover at least one positive and one negative selection path in regression tests.",
+      "execution_checklist": [
+        "Add structured learning capture for spawn and reuse decisions.",
+        "Add regression coverage for at least one positive and one negative subagent selection case.",
+        "Verify the captured learning is readable in the next session."
+      ],
+      "id": "TASK-20260516-005",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260516-001",
+      "related_id": "REC-20260516-001",
+      "source": "web_research",
+      "status": "pending",
+      "summary": "Record successful and failed subagent creation choices so the rubric improves over time.",
+      "tags": [
+        "agents",
+        "codex",
+        "learning",
+        "subagents",
+        "tests"
+      ],
+      "title": "Add learning capture for Codex subagent decisions",
+      "updated_at": "2026-05-16T04:57:43Z"
     }
   ],
   "meta": {
@@ -1274,168 +1338,6 @@
       "updated_at": "2026-04-22T14:39:12Z"
     },
     {
-      "created_at": "2026-04-22T14:40:46Z",
-      "details": "promote the next highest project backlog open recommendation into closeout checklist of itemized, individual, commitable tasks",
-      "id": "REC-20260422-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "promote the next highest project backlog open recommendation into closeout checklist of itemized, individual, commitable tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "promote the next highest project backlog open recommendation into closeout checklist of itemized, in",
-      "updated_at": "2026-04-22T14:40:46Z"
-    },
-    {
-      "created_at": "2026-04-22T14:46:47Z",
-      "details": "prioritize project backlog open tasks",
-      "id": "REC-20260422-003",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "prioritize project backlog open tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "prioritize project backlog open tasks",
-      "updated_at": "2026-04-22T14:46:47Z"
-    },
-    {
-      "created_at": "2026-04-22T15:18:15Z",
-      "details": "implement next highest priority project backlog open task",
-      "id": "REC-20260422-004",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "implement next highest priority project backlog open task",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "implement next highest priority project backlog open task",
-      "updated_at": "2026-04-22T15:18:15Z"
-    },
-    {
-      "created_at": "2026-04-22T15:19:19Z",
-      "details": "make a recommendation and follow it",
-      "id": "REC-20260422-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "make a recommendation and follow it",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "make a recommendation and follow it",
-      "updated_at": "2026-04-22T15:19:19Z"
-    },
-    {
-      "created_at": "2026-04-22T15:30:11Z",
-      "details": "implement the next highest priority project backlog open task",
-      "id": "REC-20260422-006",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "implement the next highest priority project backlog open task",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "implement the next highest priority project backlog open task",
-      "updated_at": "2026-04-22T15:30:11Z"
-    },
-    {
-      "created_at": "2026-04-22T15:42:46Z",
-      "details": "make a recommendation and implement the recommendation",
-      "id": "REC-20260422-007",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "make a recommendation and implement the recommendation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "make a recommendation and implement the recommendation",
-      "updated_at": "2026-04-22T15:42:46Z"
-    },
-    {
-      "created_at": "2026-04-22T16:03:59Z",
-      "details": "show current project backlog",
-      "id": "REC-20260422-008",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show current project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show current project backlog",
-      "updated_at": "2026-04-22T16:03:59Z"
-    },
-    {
-      "created_at": "2026-04-22T16:05:58Z",
-      "details": "reprioritize project backlog open recommendations then promote next highest priority open recommendation to itemizable, commitable task execution checklists with closure criteria",
-      "id": "REC-20260422-009",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "reprioritize project backlog open recommendations then promote next highest priority open recommendation to itemizable, commitable task execution checklists with closure criteria",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "reprioritize project backlog open recommendations then promote next highest priority open recommenda",
-      "updated_at": "2026-04-22T16:05:58Z"
-    },
-    {
-      "created_at": "2026-04-22T16:26:19Z",
-      "details": "delete the remaining project backlog open recommendations as noise",
-      "id": "REC-20260422-010",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "delete the remaining project backlog open recommendations as noise",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "delete the remaining project backlog open recommendations as noise",
-      "updated_at": "2026-04-22T16:26:19Z"
-    },
-    {
       "closed_at": "2026-04-23T15:44:01Z",
       "closeout_criteria": [
         "The Nelson parity contract is documented, reviewable, and mapped to Codex primitives.",
@@ -1467,78 +1369,6 @@
       ],
       "title": "Close Nelson behavioral parity gaps",
       "updated_at": "2026-04-23T15:44:01Z"
-    },
-    {
-      "created_at": "2026-04-22T16:43:26Z",
-      "details": "make a recommendation and implement it",
-      "id": "REC-20260422-012",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "make a recommendation and implement it",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "make a recommendation and implement it",
-      "updated_at": "2026-04-22T16:43:26Z"
-    },
-    {
-      "created_at": "2026-04-23T14:44:43Z",
-      "details": "show project backlog",
-      "id": "REC-20260423-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show project backlog",
-      "updated_at": "2026-04-23T14:44:43Z"
-    },
-    {
-      "created_at": "2026-04-23T15:39:22Z",
-      "details": "show project backlog filtered to only codex project",
-      "id": "REC-20260423-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show project backlog filtered to only codex project",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show project backlog filtered to only codex project",
-      "updated_at": "2026-04-23T15:39:22Z"
-    },
-    {
-      "created_at": "2026-04-23T15:40:20Z",
-      "details": "complete pending codex project backlog tasks",
-      "id": "REC-20260423-003",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "complete pending codex project backlog tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "complete pending codex project backlog tasks",
-      "updated_at": "2026-04-23T15:40:20Z"
     },
     {
       "closed_at": "2026-04-23T16:03:16Z",
@@ -1576,24 +1406,6 @@
       "verified": true
     },
     {
-      "created_at": "2026-04-23T15:53:32Z",
-      "details": "complete the pending codex project backlog tasks",
-      "id": "REC-20260423-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "complete the pending codex project backlog tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "complete the pending codex project backlog tasks",
-      "updated_at": "2026-04-23T15:53:32Z"
-    },
-    {
       "created_at": "2026-04-23T16:01:08Z",
       "details": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable transform project backlog tasks with execution and completion criteria checklists to derive sql questions for the existing metabase instance to present the most meaningful data calculated for the last day for which complete data exists",
       "id": "REC-20260423-006",
@@ -1610,24 +1422,6 @@
       ],
       "title": "review the data calculated in the daily options valuation snapshot and create itemizable, commitable",
       "updated_at": "2026-04-23T16:01:08Z"
-    },
-    {
-      "created_at": "2026-04-23T16:22:04Z",
-      "details": "show codex project backlog",
-      "id": "REC-20260423-007",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show codex project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show codex project backlog",
-      "updated_at": "2026-04-23T16:22:04Z"
     },
     {
       "closed_at": "2026-04-23T16:42:30Z",
@@ -1654,60 +1448,6 @@
       ],
       "title": "Define Metabase questions for the last complete options valuation day",
       "updated_at": "2026-04-23T16:42:30Z"
-    },
-    {
-      "created_at": "2026-04-23T16:40:38Z",
-      "details": "complete the transform project backlog open tasks",
-      "id": "REC-20260423-009",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "complete the transform project backlog open tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "complete the transform project backlog open tasks",
-      "updated_at": "2026-04-23T16:40:38Z"
-    },
-    {
-      "created_at": "2026-04-27T15:36:35Z",
-      "details": "show project backlog for this project",
-      "id": "REC-20260427-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show project backlog for this project",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show project backlog for this project",
-      "updated_at": "2026-04-27T15:36:35Z"
-    },
-    {
-      "created_at": "2026-04-27T18:03:31Z",
-      "details": "show project backlog for project id = codex",
-      "id": "REC-20260427-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show project backlog for project id = codex",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show project backlog for project id = codex",
-      "updated_at": "2026-04-27T18:03:31Z"
     },
     {
       "closed_at": "2026-05-06T15:14:28Z",
@@ -1743,24 +1483,6 @@
       "updated_at": "2026-05-06T15:14:28Z"
     },
     {
-      "created_at": "2026-04-27T18:09:34Z",
-      "details": "promote the highest priority open recommendation for the codex project backlog to itemizable, commitable tasks with execution and completion closeout criteria",
-      "id": "REC-20260427-004",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "promote the highest priority open recommendation for the codex project backlog to itemizable, commitable tasks with execution and completion closeout criteria",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "promote the highest priority open recommendation for the codex project backlog to itemizable, commit",
-      "updated_at": "2026-04-27T18:09:34Z"
-    },
-    {
       "created_at": "2026-04-29T14:30:23Z",
       "details": "optimize the names/descriptions for a trader-facing dashboard. develop recommendations to add to the transform project backlog for relevant analyst/qa names/descriptions commonly viewed as relatively relevant",
       "id": "REC-20260429-001",
@@ -1777,24 +1499,6 @@
       ],
       "title": "optimize the names/descriptions for a trader-facing dashboard. develop recommendations to add to the",
       "updated_at": "2026-04-29T14:30:23Z"
-    },
-    {
-      "created_at": "2026-04-29T14:36:32Z",
-      "details": "continue with the recommendation",
-      "id": "REC-20260429-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "continue with the recommendation",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "continue with the recommendation",
-      "updated_at": "2026-04-29T14:36:32Z"
     },
     {
       "created_at": "2026-04-29T14:41:58Z",
@@ -1815,42 +1519,6 @@
       ],
       "title": "Add analyst/QA snapshot completeness and validation saved questions",
       "updated_at": "2026-04-29T14:41:58Z"
-    },
-    {
-      "created_at": "2026-04-29T14:43:28Z",
-      "details": "add the backlog rcommendation but ensure the project id is the same as the project parent directory name",
-      "id": "REC-20260429-004",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add the backlog rcommendation but ensure the project id is the same as the project parent directory name",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add the backlog rcommendation but ensure the project id is the same as the project parent directory",
-      "updated_at": "2026-04-29T14:43:28Z"
-    },
-    {
-      "created_at": "2026-04-29T14:44:49Z",
-      "details": "add the backlog recommendation but set the project id to the project directory name",
-      "id": "REC-20260429-005",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "add the backlog recommendation but set the project id to the project directory name",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "add the backlog recommendation but set the project id to the project directory name",
-      "updated_at": "2026-04-29T14:44:49Z"
     },
     {
       "created_at": "2026-04-29T14:45:31Z",
@@ -1910,60 +1578,6 @@
       ],
       "title": "Drop and recreate the options valuation snapshot table before each snapshot run",
       "updated_at": "2026-04-29T15:18:40Z"
-    },
-    {
-      "created_at": "2026-04-30T14:52:04Z",
-      "details": "implement recommendation and test for success",
-      "id": "REC-20260430-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "implement recommendation and test for success",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "implement recommendation and test for success",
-      "updated_at": "2026-04-30T14:52:04Z"
-    },
-    {
-      "created_at": "2026-05-06T14:50:44Z",
-      "details": "implement incomplete codex project backlog tasks",
-      "id": "REC-20260506-001",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "implement incomplete codex project backlog tasks",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "implement incomplete codex project backlog tasks",
-      "updated_at": "2026-05-06T14:50:44Z"
-    },
-    {
-      "created_at": "2026-05-06T15:26:24Z",
-      "details": "show the current codex project backlog",
-      "id": "REC-20260506-002",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show the current codex project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show the current codex project backlog",
-      "updated_at": "2026-05-06T15:26:24Z"
     },
     {
       "created_at": "2026-05-06T15:30:15Z",
@@ -2046,24 +1660,6 @@
       "updated_at": "2026-05-06T16:06:04Z"
     },
     {
-      "created_at": "2026-05-06T16:35:25Z",
-      "details": "turn that missing capability into a codex project backlog recommencation with execution and closeout criteria checklists. describe pros and cons of making superpowers optional in ci",
-      "id": "REC-20260506-006",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "turn that missing capability into a codex project backlog recommencation with execution and closeout criteria checklists. describe pros and cons of making superpowers optional in ci",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "turn that missing capability into a codex project backlog recommencation with execution and closeout",
-      "updated_at": "2026-05-06T16:35:25Z"
-    },
-    {
       "closed_at": "2026-05-16T04:47:52Z",
       "commit_sha": "15861fb",
       "created_at": "2026-05-06T16:36:10Z",
@@ -2108,11 +1704,15 @@
         "Add learning capture that records when a subagent was useful, unnecessary, or over-scoped."
       ],
       "id": "REC-20260516-001",
+      "implementation_tasks": [
+        "TASK-20260516-004",
+        "TASK-20260516-005"
+      ],
       "kind": "recommendation",
       "priority": "high",
       "project_id": "codex",
       "source": "web_research",
-      "status": "open",
+      "status": "promoted",
       "summary": "Add a Codex-native subagent lifecycle with explicit creation criteria, routing, and learning capture for reusable parallel work.",
       "tags": [
         "agents",
@@ -2125,7 +1725,7 @@
         "workflows"
       ],
       "title": "Define Codex subagent lifecycle and creation rubric",
-      "updated_at": "2026-05-16T04:30:43Z"
+      "updated_at": "2026-05-16T04:57:43Z"
     },
     {
       "closeout_criteria": [
@@ -2163,50 +1763,14 @@
       ],
       "title": "Integrate Hermes Agent as a first-class Codex delegate",
       "updated_at": "2026-05-16T04:35:52Z"
-    },
-    {
-      "created_at": "2026-05-16T04:37:24Z",
-      "details": "show the codex project backlog",
-      "id": "REC-20260516-003",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "show the codex project backlog",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "show the codex project backlog",
-      "updated_at": "2026-05-16T04:37:24Z"
-    },
-    {
-      "created_at": "2026-05-16T04:39:19Z",
-      "details": "prioritize the codex project backlog open recommendations. take the highest priority open recommendation, break it into tasks, and complete the tasks and recommendation. commit and push all changes",
-      "id": "REC-20260516-004",
-      "kind": "recommendation",
-      "priority": "medium",
-      "project_id": "global",
-      "source": "user_prompt",
-      "status": "open",
-      "summary": "prioritize the codex project backlog open recommendations. take the highest priority open recommendation, break it into tasks, and complete the tasks and recommendation. commit and push all changes",
-      "tags": [
-        "backlog",
-        "project-management",
-        "recommendation"
-      ],
-      "title": "prioritize the codex project backlog open recommendations. take the highest priority open recommenda",
-      "updated_at": "2026-05-16T04:39:19Z"
     }
   ],
   "stats": {
     "completed_tasks": 0,
-    "open_recommendations": 32,
+    "open_recommendations": 4,
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-05-16T04:47:52Z",
+  "updated_at": "2026-05-16T04:57:43Z",
   "version": 1
 }
