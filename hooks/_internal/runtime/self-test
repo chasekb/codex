@@ -839,6 +839,72 @@ grep -Fq '"stage":"intake"' "$ROOT/outputs/external-origin-validation.jsonl" && 
 grep -Fq '"name":"github-debug-helper"' "$ROOT/outputs/external-origin-provenance.jsonl" && pass external_origin_provenance_record || fail external_origin_provenance_record
 grep -Fq '"stage":"drift"' "$ROOT/outputs/external-origin-drift.jsonl" && pass external_origin_drift_record || fail external_origin_drift_record
 
+python3 - "$ROOT" <<'PY'
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / "hooks" / "_internal" / "routing"))
+from superpowers_source_maintenance import build_plan, repo_status
+
+
+def git(*args, cwd):
+    proc = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True, check=True)
+    return (proc.stdout or "").strip()
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    tmp = Path(tmp)
+    remote = tmp / "superpowers-remote.git"
+    source = tmp / "superpowers-source"
+    parent = tmp / "codex-root"
+
+    git("init", "--bare", str(remote), cwd=tmp)
+    git("clone", str(remote), str(source), cwd=tmp)
+    git("config", "user.email", "codex@example.com", cwd=source)
+    git("config", "user.name", "Codex", cwd=source)
+    (source / "README.md").write_text("seed\n", encoding="utf-8")
+    git("add", "README.md", cwd=source)
+    git("commit", "-m", "seed", cwd=source)
+    git("branch", "-M", "main", cwd=source)
+    git("push", "-u", "origin", "main", cwd=source)
+
+    parent.mkdir()
+    git("init", cwd=parent)
+    git("config", "user.email", "codex@example.com", cwd=parent)
+    git("config", "user.name", "Codex", cwd=parent)
+    git("clone", str(remote), "superpowers", cwd=parent)
+    git("checkout", "-B", "main", "origin/main", cwd=parent / "superpowers")
+
+    clean = repo_status(parent)
+    assert clean["initialized"] is True
+    assert clean["dirty"] is False
+    assert clean["detached_head"] is False
+    assert clean["origin"]
+
+    clean_plan = build_plan(parent, commit_message="feat: publish superpowers", parent_message="chore: bump superpowers submodule")
+    assert clean_plan["ready"] is True
+    assert clean_plan["blocking_reasons"] == []
+    assert clean_plan["steps"] == []
+
+    (parent / "superpowers" / "README.md").write_text("dirty\n", encoding="utf-8")
+    dirty = repo_status(parent)
+    assert dirty["dirty"] is True
+    dirty_plan = build_plan(parent, commit_message="feat: publish superpowers", parent_message="chore: bump superpowers submodule")
+    assert dirty_plan["ready"] is True
+    assert dirty_plan["mode"] == "publish"
+    assert any("git -C superpowers add -A" in step for step in dirty_plan["steps"])
+    assert any("git -C superpowers push -u origin HEAD" in step for step in dirty_plan["steps"])
+
+    git("checkout", "--detach", cwd=parent / "superpowers")
+    detached = repo_status(parent)
+    assert detached["detached_head"] is True
+    assert "detached_head" in detached["blocking_reasons"]
+PY
+pass superpowers_source_maintenance_helper || fail superpowers_source_maintenance_helper
+
 external_origin_json="$tmpdir/external-origin-intake.json"
 external_origin_md="$tmpdir/external-origin-intake.md"
 : > "$external_origin_json"

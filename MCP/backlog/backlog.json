@@ -1042,10 +1042,76 @@
       "title": "Add skill/rule/workflow provenance and registry health checks",
       "updated_at": "2026-05-06T16:06:04Z",
       "verified": true
+    },
+    {
+      "created_at": "2026-05-16T04:41:51Z",
+      "details": "Extend runtime self-tests to exercise the new maintenance helper against simulated submodule states so the update path fails closed when the source repo is missing or not publishable.",
+      "id": "TASK-20260516-001",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-007",
+      "related_id": "REC-20260506-007",
+      "source": "recommendation",
+      "status": "pending",
+      "summary": "Add self-tests for initialized, dirty, detached, and publish-plan states of the superpowers helper.",
+      "tags": [
+        "codex",
+        "maintenance",
+        "superpowers",
+        "tests",
+        "validation"
+      ],
+      "title": "Add superpowers maintenance regression coverage",
+      "updated_at": "2026-05-16T04:41:51Z"
+    },
+    {
+      "created_at": "2026-05-16T04:41:57Z",
+      "details": "Update Codex documentation with the supported maintenance flow, including initialization checks, publish prerequisites, and the boundary between Codex runtime policy and superpowers content maintenance.",
+      "id": "TASK-20260516-002",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-007",
+      "related_id": "REC-20260506-007",
+      "source": "recommendation",
+      "status": "pending",
+      "summary": "Document how Codex operators should use the new maintenance helper to keep superpowers in sync.",
+      "tags": [
+        "codex",
+        "docs",
+        "maintenance",
+        "superpowers",
+        "workflow"
+      ],
+      "title": "Document the superpowers source-repo update flow",
+      "updated_at": "2026-05-16T04:41:57Z"
+    },
+    {
+      "created_at": "2026-05-16T04:41:59Z",
+      "details": "Implement a first-class maintenance command for the superpowers submodule so Codex can report status, detect dirty or detached states, and produce a publish plan for maintaining the upstream source repository from the Codex workspace.",
+      "id": "TASK-20260516-003",
+      "kind": "task",
+      "priority": "high",
+      "project_id": "codex",
+      "recommendation_id": "REC-20260506-007",
+      "related_id": "REC-20260506-007",
+      "source": "recommendation",
+      "status": "pending",
+      "summary": "Provide a Codex-side helper that inspects the superpowers submodule, validates publish readiness, and emits an update plan.",
+      "tags": [
+        "codex",
+        "maintenance",
+        "routing",
+        "submodule",
+        "superpowers"
+      ],
+      "title": "Add a superpowers source-maintenance helper",
+      "updated_at": "2026-05-16T04:41:59Z"
     }
   ],
   "meta": {
-    "last_weekly_review_at": "2026-05-02T15:47:31Z"
+    "last_weekly_review_at": "2026-05-16T04:18:17Z"
   },
   "recommendations": [
     {
@@ -1992,11 +2058,16 @@
       "created_at": "2026-05-06T16:36:10Z",
       "details": "Codex currently validates and consumes superpowers as an external overlay repo, but it lacks a first-class mechanism to maintain the source repository from the codex workspace. This recommendation covers cross-repo authentication, update publishing, and sync validation so superpowers can be maintained in its original repo without weakening the core/runtime boundary.",
       "id": "REC-20260506-007",
+      "implementation_tasks": [
+        "TASK-20260516-001",
+        "TASK-20260516-002",
+        "TASK-20260516-003"
+      ],
       "kind": "recommendation",
       "priority": "high",
       "project_id": "codex",
       "source": "conversation",
-      "status": "open",
+      "status": "promoted",
       "summary": "Create an explicit maintenance path that lets Codex update and publish changes back to the original Superpowers repository instead of only consuming it as a submodule.",
       "tags": [
         "ci",
@@ -2006,15 +2077,124 @@
         "superpowers"
       ],
       "title": "Add a maintained superpowers source-repo update path",
-      "updated_at": "2026-05-06T16:36:10Z"
+      "updated_at": "2026-05-16T04:41:59Z"
+    },
+    {
+      "closeout_criteria": [
+        "A documented rubric exists for when Codex should create a new subagent and when the parent lane should keep the work.",
+        "At least one validated independent slice routes through a fresh subagent without breaking existing workflows.",
+        "Regression tests prove dependent edits stay in the parent lane and that subagent selection falls back cleanly when the rubric is not met.",
+        "Learning capture records when a subagent helped, was unnecessary, or was over-scoped, and that learning is visible in project guidance."
+      ],
+      "created_at": "2026-05-16T04:29:53Z",
+      "details": "Research-backed recommendation: current OpenAI guidance favors small bounded tasks, Ask Mode for larger changes, the task queue as a lightweight backlog, persistent AGENTS.md context, and fresh subagents for independent work slices. Codex already has parallel_dispatch and subagent_development workflow primitives, but it does not yet have a first-class, explicit lifecycle for when to create a new subagent, how to hand off only the minimum necessary context, or how to capture the learning afterward. This recommendation makes subagent creation a deliberate Codex backlog capability: create a new subagent only when the work is independent, reviewable, and reusable; otherwise keep it in the parent lane.",
+      "execution_checklist": [
+        "Define the Codex subagent creation rubric: independent, bounded, reusable, and context-isolatable work only.",
+        "Add a Codex subagent playbook to AGENTS.md or the workflow step library that covers handoff, context minimization, and review order.",
+        "Add at least one pilot subagent workflow path and make sure parallel_dispatch and subagent_development can select it.",
+        "Add regression coverage proving fresh subagents are used for independent slices and the parent execution path remains the fallback for dependent edits.",
+        "Add learning capture that records when a subagent was useful, unnecessary, or over-scoped."
+      ],
+      "id": "REC-20260516-001",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "web_research",
+      "status": "open",
+      "summary": "Add a Codex-native subagent lifecycle with explicit creation criteria, routing, and learning capture for reusable parallel work.",
+      "tags": [
+        "agents",
+        "backlog",
+        "codex",
+        "learning",
+        "recommendation",
+        "routing",
+        "subagents",
+        "workflows"
+      ],
+      "title": "Define Codex subagent lifecycle and creation rubric",
+      "updated_at": "2026-05-16T04:30:43Z"
+    },
+    {
+      "closeout_criteria": [
+        "Hermes is selectable as a first-class external delegate with source labeling and explicit fallback behavior.",
+        "A Hermes-backed workflow proves subagent delegation, memory continuity, and skill loading work in Codex without breaking existing core routing.",
+        "Regression tests show Hermes can handle independent slices while dependent edits remain in the parent Codex lane.",
+        "Learning capture records when Hermes is the right delegate target versus when Codex-native subagents are the better choice."
+      ],
+      "created_at": "2026-05-16T04:35:13Z",
+      "details": "Hermes Agent is a fast-moving open-source CLI agent with a broad built-in skills ecosystem, persistent memory, automatic skill creation, and synchronous delegated subagents (`delegate_task`) that are isolated by design. The current state of the art is strong for bounded delegation, skills, and memory, but weaker for cross-agent orchestration: Hermes community and maintainer discussions explicitly call out the gap between one-shot subagents and richer workflows that mix external agent backends, parallel fan-out, and inter-agent handoff. Codex should integrate Hermes as a first-class external delegate instead of a shell-only escape hatch: add source-labeled Hermes routing, a Hermes backend for delegated work, a contract for memory/skill handoff, and learning capture that records when Hermes is the right delegate target versus when Codex-native subagents are the better fit.",
+      "execution_checklist": [
+        "Define the Hermes integration boundary: CLI adapter, delegate backend, and source-label contract.",
+        "Map Hermes skills, memory, and approval model onto Codex routing so Hermes is chosen only when the task benefits from its ecosystem.",
+        "Implement a Hermes external-agent backend with isolated execution, stdout/stderr capture, and deterministic result extraction.",
+        "Add a pilot workflow that fans out a bounded independent slice to Hermes and preserves the parent lane for dependent edits.",
+        "Add learning capture for delegation outcomes, including success cases, unnecessary delegations, and fallback cases."
+      ],
+      "id": "REC-20260516-002",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "source": "web_research",
+      "status": "open",
+      "summary": "Integrate Hermes Agent as a first-class Codex delegate with source labeling, memory/skill handoff, and learning-driven routing.",
+      "tags": [
+        "agents",
+        "backlog",
+        "codex",
+        "hermes",
+        "learning",
+        "recommendation",
+        "routing",
+        "subagents",
+        "workflows"
+      ],
+      "title": "Integrate Hermes Agent as a first-class Codex delegate",
+      "updated_at": "2026-05-16T04:35:52Z"
+    },
+    {
+      "created_at": "2026-05-16T04:37:24Z",
+      "details": "show the codex project backlog",
+      "id": "REC-20260516-003",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "show the codex project backlog",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "show the codex project backlog",
+      "updated_at": "2026-05-16T04:37:24Z"
+    },
+    {
+      "created_at": "2026-05-16T04:39:19Z",
+      "details": "prioritize the codex project backlog open recommendations. take the highest priority open recommendation, break it into tasks, and complete the tasks and recommendation. commit and push all changes",
+      "id": "REC-20260516-004",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "prioritize the codex project backlog open recommendations. take the highest priority open recommendation, break it into tasks, and complete the tasks and recommendation. commit and push all changes",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "prioritize the codex project backlog open recommendations. take the highest priority open recommenda",
+      "updated_at": "2026-05-16T04:39:19Z"
     }
   ],
   "stats": {
-    "completed_tasks": 29,
-    "open_recommendations": 1,
+    "completed_tasks": 0,
+    "open_recommendations": 32,
     "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-05-06T16:36:10Z",
+  "stats_scope": "global",
+  "updated_at": "2026-05-16T04:41:59Z",
   "version": 1
 }

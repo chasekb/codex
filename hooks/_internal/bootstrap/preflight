@@ -55,6 +55,7 @@ required_rel=(
   "hooks/_internal/routing/agent_registry.py"
   "hooks/_internal/routing/sync-installed-skills-registry"
   "hooks/_internal/routing/discover-external-skills"
+  "hooks/_internal/routing/superpowers_source_maintenance.py"
   "hooks/_internal/routing/load-skill"
   "hooks/_internal/routing/validate-skill"
   "hooks/_internal/memory/load-memory"

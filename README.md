@@ -285,6 +285,16 @@ If `superpowers/` is missing or uninitialized in a fresh clone, initialize it wi
 git submodule update --init --recursive superpowers
 ```
 
+To inspect or publish Superpowers source-repo changes from the Codex workspace, use:
+
+```bash
+python3 hooks/_internal/routing/superpowers_source_maintenance.py status
+python3 hooks/_internal/routing/superpowers_source_maintenance.py plan --commit-message "feat: update superpowers skill"
+python3 hooks/_internal/routing/superpowers_source_maintenance.py publish --commit-message "feat: update superpowers skill" --execute
+```
+
+`status` reports the submodule state, `plan` shows the publish/sync steps without changing anything, and `publish --execute` runs the helper only when you are ready to commit and push the Superpowers repo changes.
+
 Repo-local skill registry:
 
 ```bash

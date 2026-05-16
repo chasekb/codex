@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/TaskStart",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/TaskStart\"",
             "timeout": 30,
             "statusMessage": "Loading global workflow state"
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/TaskResume",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/TaskResume\"",
             "timeout": 30,
             "statusMessage": "Restoring global workflow state"
           }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/PreToolUse",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/PreToolUse\"",
             "timeout": 30
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/PreCompact",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/PreCompact\"",
             "timeout": 30
           }
         ]
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/PostToolUse",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/PostToolUse\"",
             "timeout": 30
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/Notification",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/Notification\"",
             "timeout": 30
           }
         ]
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/UserPromptSubmit",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/UserPromptSubmit\"",
             "timeout": 30
           }
         ]
@@ -84,7 +84,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/TaskCancel",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/TaskCancel\"",
             "timeout": 30
           }
         ]
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/env bash /Users/bernardchase/.codex/hooks/TaskComplete",
+            "command": "/usr/bin/env bash \"$HOME/.codex/hooks/TaskComplete\"",
             "timeout": 45
           }
         ]
