@@ -38,6 +38,8 @@ grep -q 'Separate backlog recommendations from implementation tasks in the canon
 grep -q 'Default skill loading to metadata-only; load full skill bodies only when a workflow explicitly needs deeper context\.' "$ROOT/rules/01-core.md" && pass metadata_only_rule || fail metadata_only_rule
 grep -q 'Prefer metadata-only skill loads in default runtime paths; request full skill bodies only in workflows that explicitly need them\.' "$ROOT/rules/00-index.md" && pass metadata_only_index || fail metadata_only_index
 grep -q 'request full skill bodies only when a workflow explicitly needs deeper context' "$ROOT/workflows/shared/step-library.md" && pass metadata_only_step_library || fail metadata_only_step_library
+grep -q 'reuse an existing subagent when the work depends on shared context, shared state, or an in-flight lifecycle' "$ROOT/workflows/shared/step-library.md" && pass subagent_lifecycle_step_library || fail subagent_lifecycle_step_library
+grep -q '## Subagent Lifecycle' "$ROOT/README.md" && pass subagent_lifecycle_readme || fail subagent_lifecycle_readme
 
 [[ "$(hooks/_internal/routing/select-workflow debug 0.9)" == "debug-rca" ]] && pass select_workflow_debug || fail select_workflow_debug
 [[ "$(hooks/_internal/routing/select-workflow implement 0.2)" == "plan-only" ]] && pass select_workflow_low_conf || fail select_workflow_low_conf
@@ -764,6 +766,86 @@ grep -Fq '"hook_name": "TaskComplete"' plugins/nelson/validation/nelson-action-s
 grep -Fq '"status": "pass"' plugins/nelson/validation/nelson-action-state.json && pass hook_pipeline_nelson_action_state_status || fail hook_pipeline_nelson_action_state_status
 grep -Fq 'workflow_selected' outputs/hook-events.log && pass hook_pipeline_nelson_event_workflow || fail hook_pipeline_nelson_event_workflow
 grep -Fq 'skill_selected' outputs/hook-events.log && pass hook_pipeline_nelson_event_skill || fail hook_pipeline_nelson_event_skill
+
+python3 - "$ROOT" <<'PY'
+import importlib.machinery
+import importlib.util
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+root = Path(sys.argv[1])
+loader = importlib.machinery.SourceFileLoader("hook_pipeline", str(root / "hooks" / "_internal" / "runtime" / "hook-pipeline"))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+hook_pipeline = importlib.util.module_from_spec(spec)
+loader.exec_module(hook_pipeline)
+
+with tempfile.TemporaryDirectory() as tmp:
+    tmp = Path(tmp)
+    learnings = tmp / ".learnings"
+    learnings.mkdir(parents=True, exist_ok=True)
+    (learnings / "LEARNINGS.md").write_text("# Learnings\n\n", encoding="utf-8")
+    (learnings / "ERRORS.md").write_text("# Errors\n\n", encoding="utf-8")
+    (learnings / "FEATURE_REQUESTS.md").write_text("# Feature Requests\n\n", encoding="utf-8")
+
+    hook_pipeline.LEARNINGS_DIR = str(learnings)
+    hook_pipeline.LEARNINGS_PATH = str(learnings / "LEARNINGS.md")
+    hook_pipeline.ERRORS_PATH = str(learnings / "ERRORS.md")
+    hook_pipeline.FEATURE_REQUESTS_PATH = str(learnings / "FEATURE_REQUESTS.md")
+
+    memory_writes = []
+
+    def fake_write_memory(*args, **kwargs):
+        memory_writes.append((args, kwargs))
+        return "memory:write_ok type=decision id=stub\nmemory:metrics writes=1 dedups=0"
+
+    hook_pipeline.write_memory = fake_write_memory
+    hook_pipeline.ensure_learning_store()
+
+    state = hook_pipeline.default_state()
+    hook_pipeline.log_agent_lifecycle_learning(
+        state,
+        "implement",
+        0.92,
+        "nelson orchestration background work",
+        "nelson plugin integration package conversion",
+        "nelson-coordinator",
+        "plugin:nelson",
+    )
+    hook_pipeline.log_agent_lifecycle_learning(
+        state,
+        "general",
+        0.81,
+        "subagent lifecycle rubric",
+        "subagent lifecycle rubric",
+        "",
+        "",
+    )
+
+    learnings_text = (learnings / "LEARNINGS.md").read_text(encoding="utf-8")
+    assert "Reused existing subagent nelson-coordinator for a bounded coordination request" in learnings_text
+    assert "No reusable subagent matched a subagent-routing request" in learnings_text
+    assert len(memory_writes) == 2
+
+    loaded = subprocess.run(
+        [
+            "python3",
+            str(root / "hooks" / "_internal" / "memory" / "load-learning-context"),
+            "general",
+            "subagent",
+            "2000",
+            "6",
+            str(learnings),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "Reused existing subagent nelson-coordinator" in loaded.stdout
+    assert "No reusable subagent matched a subagent-routing request" in loaded.stdout
+PY
+pass agent_lifecycle_learning_capture || fail agent_lifecycle_learning_capture
 
 pretool_payload='{"preToolUse":{"toolName":"resolve-library-id","parameters":{"query":"codex runtime"}}}'
 hooks/PreToolUse <<<"$pretool_payload" >/dev/null && pass pretool_use_wrapper || fail pretool_use_wrapper

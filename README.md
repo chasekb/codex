@@ -38,6 +38,12 @@ Each hook wrapper:
 3. Runs `hooks/_internal/runtime/hook-pipeline` for state/memory/metrics updates
 4. Always returns `{}` to keep host hook contracts stable
 
+## Subagent Lifecycle
+Use the existing agent registry and workflow routing to decide whether to reuse a subagent or stay in the parent lane:
+- Reuse an existing subagent when the work is still inside the same bounded coordination loop or needs shared state from an in-flight lifecycle.
+- Create a new subagent only for an independent slice that can be reviewed on its own and is likely to stay reusable across future sessions.
+- Record the decision in learning/memory so later sessions can tell whether the boundary was correct.
+
 Hook usage records are split across:
 - `outputs/hook-events.log`: hook invocations plus workflow/skill selection and post-run summary lines
 - `MCP/memory/decisions.jsonl`: durable workflow and skill routing decisions

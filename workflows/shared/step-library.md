@@ -137,4 +137,7 @@
 ## subagent_development
 - load subagent-driven-development metadata only
 - use a fresh subagent per independent task
+- reuse an existing subagent when the work depends on shared context, shared state, or an in-flight lifecycle
+- create a new subagent only when the slice is bounded, independently reviewable, and likely to recur as a reusable pattern
+- record the spawn-or-reuse decision so future sessions can learn which boundary was correct
 - require spec review before quality review before closeout

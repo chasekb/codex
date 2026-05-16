@@ -1250,6 +1250,108 @@ def log_skill_gap(state, prompt, signal):
     return entry
 
 
+AGENT_ROUTING_PHRASES = (
+    "nelson",
+    "orchestration",
+    "background work",
+    "agent coordination",
+    "sailing orders",
+    "battle plan",
+    "action station",
+    "captain log",
+    "action state",
+    "coordination history",
+    "mission lifecycle",
+    "mission state",
+    "mission history",
+    "subagent",
+)
+
+
+def agent_routing_requested(text_value):
+    prompt_text = text(text_value).lower()
+    return bool(prompt_text) and any(phrase in prompt_text for phrase in AGENT_ROUTING_PHRASES)
+
+
+def log_agent_lifecycle_learning(state, task_class, confidence, keywords, objective, agent_id, agent_registry_label):
+    objective_text = text(objective)
+    if not objective_text:
+        return None
+
+    agent_id = text(agent_id)
+    agent_registry_label = text(agent_registry_label)
+    task_class_text = text(task_class) or "general"
+    confidence_text = f"{to_float(confidence, 0.0):.3f}"
+    prompt_excerpt = objective_text[:220]
+    requested = agent_routing_requested(objective_text) or agent_routing_requested(keywords)
+    if not agent_id and not requested:
+        return None
+
+    if agent_id:
+        decision = "reuse_existing_subagent"
+        summary = f"Reused existing subagent {agent_id} for a bounded coordination request"
+        details = (
+            "The runtime selected an existing agent registry entry instead of creating a new subagent.\n\n"
+            f"Task class: {task_class_text}\n"
+            f"Confidence: {confidence_text}\n"
+            f"Agent ID: {agent_id}\n"
+            f"Agent registry: {agent_registry_label or 'none'}\n\n"
+            f"Source objective:\n{prompt_excerpt}"
+        )
+        suggested_action = (
+            "Reuse the same subagent when the work still fits the same bounded coordination loop; "
+            "create a new subagent only when the slice is independent, reviewable, and worth isolating."
+        )
+        tags = ["subagent", "routing", "reuse", agent_id]
+        if agent_registry_label:
+            tags.append(agent_registry_label)
+    else:
+        decision = "stay_in_parent_lane"
+        summary = "No reusable subagent matched a subagent-routing request"
+        details = (
+            "The runtime saw a subagent-routing request but no registry entry matched it.\n\n"
+            f"Task class: {task_class_text}\n"
+            f"Confidence: {confidence_text}\n"
+            f"Keywords: {text(keywords)[:120]}\n\n"
+            f"Source objective:\n{prompt_excerpt}"
+        )
+        suggested_action = (
+            "Keep the work in the parent lane unless the slice is independently reviewable and "
+            "a new subagent would reduce coupling or repeated context loading."
+        )
+        tags = ["subagent", "routing", "avoidance", "parent-lane"]
+
+    write_memory(
+        state,
+        "decision",
+        "agents",
+        ",".join(tags),
+        f"Subagent lifecycle decision: {decision}; agent={agent_id or 'none'}; task_class={task_class_text}",
+        source="hook-pipeline",
+        confidence="0.88",
+        ttl_days="30",
+    )
+    return append_learning_entry(
+        "learning",
+        "routing" if agent_id else "routing_gap",
+        "agents",
+        summary,
+        details,
+        suggested_action,
+        "hook-pipeline",
+        tags=tags,
+        priority="medium",
+        status="pending",
+        metadata_extra=[
+            f"Decision: {decision}",
+            f"Agent-ID: {agent_id or 'none'}",
+            f"Agent-Registry: {agent_registry_label or 'none'}",
+            f"Task-Class: {task_class_text}",
+            f"Confidence: {confidence_text}",
+        ],
+    )
+
+
 def queue_skill_candidate(state, prompt_excerpt, target):
     if not prompt_excerpt:
         return None
@@ -1714,6 +1816,15 @@ def main():
                 if match:
                     agent_registry_label = text(match.group(1))
                     break
+        log_agent_lifecycle_learning(
+            state,
+            task_class,
+            confidence,
+            keywords,
+            objective,
+            agent_id,
+            agent_registry_label,
+        )
         _, skill_out = run_internal("select-skill", [str(task_class), f"{confidence:.3f}", keywords, ROOT])
         skill_lines = [l for l in skill_out.splitlines() if text(l)]
         skill_id = text(skill_lines[-1]) if skill_lines else "tool-minimization"
