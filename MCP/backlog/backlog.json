@@ -1788,6 +1788,30 @@
       ],
       "title": "complete the open tasks in the codex project backlog. commit and push all changes",
       "updated_at": "2026-05-16T05:01:06Z"
+    },
+    {
+      "created_at": "2026-05-16T05:08:34Z",
+      "details": "Research summary:\n- Hermes Agent is the strongest fit for Codex-native delegation because it combines broad skills, persistent memory, and delegated subagents.\n- Aider is the best fit for small, git-centric edit loops because it maps codebases, commits cleanly, and is optimized for local repository work.\n- OpenHands is the best fit for sandboxed autonomous work and PR review because its SDK supports isolated agents and file-based agents for specialized tasks.\n\nIntegration plan:\n- Phase 1: keep Hermes as the first external delegate for bounded but stateful coordination tasks.\n- Phase 2: add Aider as the small-change edit worker for fast local diffs, undoable commits, and repo-native refactors.\n- Phase 3: add OpenHands as the sandboxed autonomous worker and code-review lane for larger, container-isolated tasks.\n\nExecution checklist:\n- Define a routing rubric that chooses Hermes for reusable coordination, Aider for small git-native edits, and OpenHands for sandboxed autonomous work.\n- Implement normalized agent adapter contracts for stdout/stderr capture, result extraction, and source labeling.\n- Add regression tests that prove the router picks the right agent for each task shape.\n- Record learning from successful and failed agent selections so future sessions can refine the rubric.\n\nCloseout criteria:\n- Hermes, Aider, and OpenHands each have an explicit Codex integration boundary and source label.\n- The routing rules deterministically choose the recommended agent for representative bounded, edit-heavy, and sandboxed tasks.\n- Regression coverage proves fallback to Codex-native subagents when no external agent is a good fit.\n- Learning capture shows when each agent should be selected, reused, or avoided.\n\nSources:\n- https://github.com/NousResearch/hermes-agent\n- https://github.com/Aider-AI/aider\n- https://github.com/OpenHands/OpenHands\n- https://docs.openhands.dev/sdk/guides/agent-file-based\n- https://aider.chat/docs/",
+      "id": "REC-20260516-004",
+      "kind": "recommendation",
+      "priority": "high",
+      "project_id": "codex",
+      "related_id": "REC-20260516-002",
+      "source": "web_research",
+      "status": "open",
+      "summary": "Use Hermes, Aider, and OpenHands as Codex delegates with explicit selection rules and learning-driven fallback behavior.",
+      "tags": [
+        "agents",
+        "aider",
+        "codex",
+        "hermes",
+        "learning",
+        "openhands",
+        "recommendation",
+        "routing"
+      ],
+      "title": "Integrate a tiered portfolio of popular coding agents",
+      "updated_at": "2026-05-16T05:08:34Z"
     }
   ],
   "stats": {
@@ -1796,6 +1820,6 @@
     "open_tasks": 0
   },
   "stats_scope": "global",
-  "updated_at": "2026-05-16T05:05:21Z",
+  "updated_at": "2026-05-16T05:08:34Z",
   "version": 1
 }
