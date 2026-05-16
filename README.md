@@ -53,6 +53,13 @@ Use the agent registry to route between Hermes, Aider, OpenHands, and the Codex-
 - Use Codex-native subagents when the work should stay in the parent lane or when a fresh isolated slice is the better fit.
 - Record both the registry source and the agent source label so learning can distinguish the runtime catalog from the selected execution profile.
 
+### Hermes Trigger Example
+Use a prompt like this when you want the runtime to select Hermes:
+
+> Hermes, coordinate a multi-step delegation plan for the subagent lifecycle, preserve memory continuity, and return a handoff summary for the bounded coordination slice.
+
+That prompt includes `hermes`, `coordinate`, `multi-step`, `delegation`, and `memory`, which are all strong Hermes-routing cues in the current selector.
+
 Hook usage records are split across:
 - `outputs/hook-events.log`: hook invocations plus workflow/skill selection and post-run summary lines
 - `MCP/memory/decisions.jsonl`: durable workflow and skill routing decisions

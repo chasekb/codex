@@ -2019,14 +2019,32 @@
       ],
       "title": "complete the codex project backlog open tasks. commit and push",
       "updated_at": "2026-05-16T05:17:41Z"
+    },
+    {
+      "created_at": "2026-05-16T05:33:23Z",
+      "details": "install recommended hermes skills. research state of the art and popular codex subagents and make recommendations that match my workflows",
+      "id": "REC-20260516-008",
+      "kind": "recommendation",
+      "priority": "medium",
+      "project_id": "global",
+      "source": "user_prompt",
+      "status": "open",
+      "summary": "install recommended hermes skills. research state of the art and popular codex subagents and make recommendations that match my workflows",
+      "tags": [
+        "backlog",
+        "project-management",
+        "recommendation"
+      ],
+      "title": "install recommended hermes skills. research state of the art and popular codex subagents and make re",
+      "updated_at": "2026-05-16T05:33:23Z"
     }
   ],
   "stats": {
-    "completed_tasks": 38,
-    "open_recommendations": 0,
+    "completed_tasks": 0,
+    "open_recommendations": 9,
     "open_tasks": 0
   },
-  "stats_scope": "project",
-  "updated_at": "2026-05-16T05:25:11Z",
+  "stats_scope": "global",
+  "updated_at": "2026-05-16T05:33:23Z",
   "version": 1
 }

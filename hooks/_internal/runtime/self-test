@@ -58,6 +58,8 @@ nelson_agent_catalog_out="$(hooks/_internal/routing/select-agent-catalog impleme
 echo "$nelson_agent_catalog_out" | tail -n1 | grep -qx 'nelson-coordinator' && pass select_agent_nelson_catalog || fail select_agent_nelson_catalog
 nelson_agent_out="$(hooks/_internal/routing/select-agent implement 0.9 "nelson orchestration background work" "$ROOT")"
 echo "$nelson_agent_out" | tail -n1 | grep -qx 'nelson-coordinator' && pass select_agent_nelson || fail select_agent_nelson
+hermes_example_out="$(hooks/_internal/routing/select-agent general 0.9 "Hermes coordinate a multi-step delegation plan for the subagent lifecycle with memory continuity" "$ROOT")"
+echo "$hermes_example_out" | tail -n1 | grep -qx 'hermes-delegate' && pass select_agent_hermes_example || fail select_agent_hermes_example
 coordination_mcp_out="$(bash "$ROOT/plugins/nelson/scripts/nelson-coordination-mcp.sh")"
 echo "$coordination_mcp_out" | grep -Fq '"agents": [' && pass nelson_coordination_mcp_agents || fail nelson_coordination_mcp_agents
 echo "$coordination_mcp_out" | grep -Fq '"commands": [' && pass nelson_coordination_mcp_commands || fail nelson_coordination_mcp_commands

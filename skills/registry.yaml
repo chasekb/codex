@@ -68,6 +68,34 @@ skills:
     file: core/task-decomposition/SKILL.md
     tags: [backlog, decomposition, tasks, planning, workflow]
     priority: 2
+  - id: spike
+    file: spike/SKILL.md
+    tags: [spike, prototype, experiment, feasibility, planning]
+    priority: 3
+  - id: subagent-driven-development
+    file: subagent-driven-development/SKILL.md
+    tags: [delegation, subagent, implementation, workflow, parallel]
+    priority: 3
+  - id: writing-plans
+    file: writing-plans/SKILL.md
+    tags: [planning, design, implementation, workflow, documentation]
+    priority: 3
+  - id: requesting-code-review
+    file: requesting-code-review/SKILL.md
+    tags: [code-review, security, verification, quality, pre-commit]
+    priority: 3
+  - id: github-pr-workflow
+    file: github-pr-workflow/SKILL.md
+    tags: [github, pull-requests, ci-cd, git, automation]
+    priority: 3
+  - id: github-code-review
+    file: github-code-review/SKILL.md
+    tags: [github, code-review, pull-requests, git, quality]
+    priority: 3
+  - id: test-driven-development
+    file: test-driven-development/SKILL.md
+    tags: [testing, tdd, development, quality, refactor]
+    priority: 3
   - id: skill-installer
     file: .system/skill-installer/SKILL.md
     tags: [system, install, skills]
